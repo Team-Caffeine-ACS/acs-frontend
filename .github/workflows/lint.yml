@@ -9,7 +9,7 @@ on:
     inputs:
       # Skip three formatting/linting related steps
       skip_linting:
-        description: 'Skip Java and Dockerfile linting? (true/false)'
+        description: 'Skip NextJS and Dockerfile linting? (true/false)'
         default: 'false'
         required: false
 
@@ -31,9 +31,11 @@ jobs:
         run: npm ci
 
       - name: Check Formatting (Prettier)
+        if: github.event.inputs.skip_linting != 'true'
         run: npx prettier --check .
 
       - name: Run Linter (ESLint)
+        if: github.event.inputs.skip_linting != 'true'
         run: npm run lint
 
       - name: Lint Dockerfiles
