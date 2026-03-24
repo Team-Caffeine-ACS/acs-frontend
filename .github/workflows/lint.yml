@@ -4,15 +4,6 @@ on:
   pull_request:
     branches: [main] # Trigger only on PRs targeting main
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-    inputs:
-      # Skip three formatting/linting related steps
-      skip_linting:
-        description: "Skip NextJS and Dockerfile linting? (true/false)"
-        default: "false"
-        required: false
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -31,16 +22,13 @@ jobs:
         run: npm ci
 
       - name: Check Formatting with Prettier
-        if: github.event.inputs.skip_linting != 'true'
-        continue-on-error: true
         run: npx prettier --list-different . | xargs -I{} sh -c 'echo "=== {} ===" && npx prettier {} | diff {} -'
 
       - name: Run Linter (ESLint)
-        if: github.event.inputs.skip_linting != 'true'
         run: npm run lint
 
       - name: Lint Dockerfiles
-        if: github.event.inputs.skip_linting != 'true'
+        continue-on-error: true # currently we don't have a Dockerfile for frontend
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: "**/Dockerfile*"
