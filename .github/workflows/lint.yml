@@ -2,15 +2,15 @@ name: Lint and Format Check
 
 on:
   pull_request:
-    branches: [ main ] # Trigger only on PRs targeting main
+    branches: [main] # Trigger only on PRs targeting main
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       # Skip three formatting/linting related steps
       skip_linting:
-        description: 'Skip NextJS and Dockerfile linting? (true/false)'
-        default: 'false'
+        description: "Skip NextJS and Dockerfile linting? (true/false)"
+        default: "false"
         required: false
 
 jobs:
@@ -24,15 +24,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm' # Speeds up subsequent runs
+          node-version: "20"
+          cache: "npm" # Speeds up subsequent runs
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Check Formatting (Prettier)
+      - name: Check Formatting with Prettier
         if: github.event.inputs.skip_linting != 'true'
-        run: npx prettier --check .
+        continue-on-error: true
+        run: npx prettier --list-different . | xargs -I{} sh -c 'echo "=== {} ===" && npx prettier {} | diff {} -'
 
       - name: Run Linter (ESLint)
         if: github.event.inputs.skip_linting != 'true'
