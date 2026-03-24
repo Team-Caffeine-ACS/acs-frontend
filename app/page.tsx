@@ -1,5 +1,4 @@
 import Image from "next/image";
-const unusedVariable = "this will trigger ESLint";
 
 export default function Home() {
   return (
