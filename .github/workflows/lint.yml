@@ -2,7 +2,7 @@ name: Lint and Format Check
 
 on:
   pull_request:
-    branches: [main] # Trigger only on PRs targeting main
+    branches: [ main ] # Trigger only on PRs targeting main
 
 jobs:
   lint:
