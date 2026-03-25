@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
+import ThemeRegistry from "./ThemeRegistry"; // ← lisa see
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,20 +20,19 @@ export default function RootLayout({
   return (
     <html lang="et">
       <body className={`${inter.className} bg-slate-50 text-slate-900 antialiased`}>
-        <div className="flex h-screen overflow-hidden">
-          {/* VASAK MENÜÜ */}
-          <AppSidebar />
-          
-          <div className="flex flex-1 flex-col overflow-hidden">
-            {/* ÜLEMINE RIBA */}
-            <AppHeader />
-            
-            {/* LEHE SISU (siia sisse pistetakse page.tsx) */}
-            <main className="flex-1 overflow-y-auto p-8">
-              {children}
-            </main>
+        <ThemeRegistry>   {/* ← PAKI KÕIK SELLE SISSE */}
+          <div className="flex h-screen overflow-hidden">
+            <AppSidebar />
+
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <AppHeader />
+
+              <main className="flex-1 overflow-y-auto p-8">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        </ThemeRegistry>
       </body>
     </html>
   );
