@@ -117,6 +117,12 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+
+/* Lisa Public Sans font, kui sa seda veel ei teinud */
+body {
+  font-family: 'Public Sans', sans-serif;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -127,4 +133,17 @@
   html {
     @apply font-sans;
   }
+}
+
+@layer base {
+  :root {
+    --primary: 221 83% 45%; /* #1152d4 */
+    --background: 240 10% 97%; /* #f6f6f8 */
+    /* ... muud ShadCN vaikeväärtused ... */
+  }
+}
+
+/* Lisa Public Sans font, kui sa seda veel ei teinud */
+body {
+  font-family: 'Public Sans', sans-serif;
 }

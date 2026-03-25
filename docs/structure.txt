@@ -1,0 +1,15 @@
+src/
+├── app/                        # Next.js App Router (pages and layouts)
+│   ├── layout.tsx              # General framework (font, theme)
+│   ├── page.tsx                # Dashboard
+│   └── search/                 # Folder: for search page
+│       └── page.tsx            # Search details view
+├── components/                 # Your “LEGO blocks”
+│   ├── layout/                 # Raamistiku komponendid
+│   │   ├── sidebar.tsx         # Vasak menüü
+│   │   ├── header.tsx          # Ülemine riba
+│   │   └── user-nav.tsx        # See "Mari Karu" profiili osa
+│   ├── ui/                     # UI components from ShadCN (see https://ui.shadcn.com) such as buttons, tables, etc.
+│   └── search/                 # Spetsiifilised komponendid otsingu jaoks
+│       ├── search-filters.tsx  # Filtrite paneel
+│       └── results-table.tsx   # Andmete tabel
