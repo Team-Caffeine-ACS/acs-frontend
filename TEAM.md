@@ -18,15 +18,15 @@ A short description of how the team works with the repository:
   | Branch pattern | Description                                        |
   |--------------- |----------------------------------------------------|
   | `main`         | Main development branch                            |
-  | `feature/*`    | Uus funktsionaalsus                                |
-  | `bugfix/*`     | Bugi parandus                                      |
-  | `hotfix/*`     | Kiire ja kriitiline parandus                       |
-  | `chore/*`      | Tehniline hooldus, refactor, config, cleanup       |
-  | `refactor/*`   | Koodi ümberkorraldus ilma funktsionaalse muutuseta |
-  | `docs/*`       | Dokumentatsioon                                    |
-  | `test/*`       | Testide lisamine/parandamine                       |
+  | `feature/*`    | New Feature                                        |
+  | `bugfix/*`     | Bug Fix                                            |
+  | `hotfix/*`     | Hotfix / Critical Fix                              |
+  | `chore/*`      | Technical Maintenance (Refactor / Config / Cleanup)|
+  | `refactor/*`   | Code Refactoring (No Functional Changes)           |
+  | `docs/*`       | Documentation                                      |
+  | `test/*`       | Tests (Additions / Improvements)                   |
   | `ci/*`         | CI/CD, GitHub Actions, pipeline                    |
-  | `build/*`      | Build-süsteem, dependency’d                        |
+  | `build/*`      | Build-system, dependencies                         |
   > Where "*" is remaining branch name.
 - Branch names should clearly describe the job that is being done in that branch.
 
