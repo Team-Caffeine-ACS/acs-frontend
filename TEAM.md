@@ -27,7 +27,7 @@ A short description of how the team works with the repository:
   | `test/*`       | Tests (Additions / Improvements)                   |
   | `ci/*`         | CI/CD, GitHub Actions, pipeline                    |
   | `build/*`      | Build-system, dependencies                         |
-  > Where "*" is remaining branch name.
+  Where "*" is the remaining branch name.
 - Branch names should clearly describe the job that is being done in that branch.
 
 ## Commits
