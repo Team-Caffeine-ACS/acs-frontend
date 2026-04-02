@@ -16,7 +16,7 @@ The application provides the user interface for interacting with the backend ser
 
 | Technology   | Version              |
 | ------------ | -------------------- |
-| Next.js      | 16.1.6               |
+| Next.js      | see package.json     |
 | Node.js      | 20.x                 |
 | Tailwind CSS | 4.x                  |
 | TypeScript   | included via Next.js |
