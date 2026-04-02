@@ -11,13 +11,13 @@ A short description of how the team works with the repository:
 
 ## Branches
 - Branch naming format: ` <prefix>/<ticket id>-<name of developer>-<brief explanation of what we do in branch> `.
-- There are two types of branches: main and development branch. Pushing directly to main is prohibited, 
-  instead work shall be done in development branch, reviewed and merged into main with Pull Request.
-  Type of development branch is defined with prefix before the name of branch.
+- There are two categories of branches: the protected long-lived `main` branch and short-lived development
+  branches (for example `feature/*`, `bugfix/*`, etc.). Pushing directly to `main` is prohibited; instead,
+  all work shall be done in these prefixed development branches, reviewed, and merged into `main` with a
+  Pull Request.
 - Prefixes used in project and their explanation:
   | Branch pattern | Description                                        |
-  |--------------- |----------------------------------------------------|
-  | `main`         | Main development branch                            |
+  | `main`         | Default long-lived branch; all reviewed work is merged here |
   | `feature/*`    | New Feature                                        |
   | `bugfix/*`     | Bug Fix                                            |
   | `hotfix/*`     | Hotfix / Critical Fix                              |
