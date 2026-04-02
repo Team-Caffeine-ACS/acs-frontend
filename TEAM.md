@@ -15,7 +15,7 @@ Our team uses a GitHub-based workflow where all changes are developed on topic b
 - Once requirements are met and reviews are approved, the pull request is merged into `main` by its creator.
 
 ## Branches
-- Branch naming format: ` <prefix>/<ticket id>-<name of developer>-<brief explanation of what we do in branch> `.
+- Branch naming format: `<prefix>/<ticket id>-<name of developer>-<brief explanation of what we do in branch>`.
 - There are two categories of branches: the protected long-lived `main` branch and short-lived development
   branches (for example `feature/*`, `bugfix/*`, etc.). Pushing directly to `main` is prohibited; instead,
   all work shall be done in these prefixed development branches, reviewed, and merged into `main` with a
