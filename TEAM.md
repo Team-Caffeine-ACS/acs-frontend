@@ -7,7 +7,12 @@
 - Ranno Männikust - https://github.com/s1blik
 
 ## Team Workflow
-A short description of how the team works with the repository:
+Our team uses a GitHub-based workflow where all changes are developed on topic branches, reviewed via pull requests, and merged into the main branch only after approval:
+- Work starts from a clearly defined task or issue.
+- A developer creates a properly named branch from `main` following the naming rules below.
+- Changes are committed in small, coherent steps and pushed regularly to the remote repository.
+- A pull request is opened, reviewed by at least one team member, and updated until all comments are resolved.
+- Once requirements are met and reviews are approved, the pull request is merged into `main` by its creator.
 
 ## Branches
 - Branch naming format: ` <prefix>/<ticket id>-<name of developer>-<brief explanation of what we do in branch> `.
