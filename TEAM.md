@@ -40,7 +40,7 @@ A short description of how the team works with the repository:
 - Are reviewed at least by one person
 - Review comments shall be clear and fully describing the point of reviewer. 
   There shall not be unclear comments, they should be technically full and respectful.
-- Are merged once all review comments are resolved, and all requiremens are satisfied.
+- Are merged once all review comments are resolved, and all requirements are satisfied.
 - Pull Request is merged only by it's creator.
 
 
