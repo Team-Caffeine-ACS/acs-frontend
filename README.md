@@ -9,7 +9,7 @@ The application provides the user interface for interacting with the backend ser
 
 ## Architecture
 
-* **Frontend**: 
+* **Frontend**: Next.js-based React application using the App Router, TypeScript, and Tailwind CSS for styling
 * **Containerization**: Docker for development environment
 
 ## Technical stack
