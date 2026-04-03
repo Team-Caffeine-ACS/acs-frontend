@@ -30,9 +30,24 @@ export function AppHeader() {
       {/* PAREM POOL: Navigatsioon ja Profiil */}
       <div className="flex items-center gap-6">
         <nav className="hidden items-center gap-6 lg:flex">
-          <a className="text-sm font-semibold text-primary border-b-2 border-primary py-5" href="#">Töölaud</a>
-          <a className="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="#">Aruanded</a>
-          <a className="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="#">Seaded</a>
+          <button
+            type="button"
+            className="text-sm font-semibold text-primary border-b-2 border-primary py-5"
+          >
+            Töölaud
+          </button>
+          <button
+            type="button"
+            className="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
+          >
+            Aruanded
+          </button>
+          <button
+            type="button"
+            className="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
+          >
+            Seaded
+          </button>
         </nav>
 
         <div className="flex items-center gap-3 border-l border-slate-200 dark:border-slate-700 pl-6">
