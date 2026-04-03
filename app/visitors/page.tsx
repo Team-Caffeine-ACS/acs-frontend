@@ -1,7 +1,15 @@
-import { 
-  FilterList, Search, FileDownload, Print, Person, 
-  Badge, MeetingRoom, CalendarMonth, Visibility, 
-  ChevronLeft, ChevronRight 
+import {
+  FilterList,
+  Search,
+  FileDownload,
+  Print,
+  Person,
+  Badge,
+  MeetingRoom,
+  CalendarMonth,
+  Visibility,
+  ChevronLeft,
+  ChevronRight,
 } from "@mui/icons-material";
 import { Button } from "@/components/ui/button";
 
@@ -24,19 +32,40 @@ export default function VisitorsSearchPage() {
             <h2 className="text-lg font-bold flex items-center gap-2 font-display uppercase tracking-tight">
               <FilterList className="text-primary" /> Otsingu filtrid
             </h2>
-            <Button variant="link" className="text-primary font-bold uppercase text-xs">
+            <Button
+              variant="link"
+              className="text-primary font-bold uppercase text-xs"
+            >
               Tühjenda kõik filtrid
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <FilterInput label="Külastaja nimi" placeholder="Ees- ja perekonnanimi" icon={<Person className="!text-sm" />} />
-            <FilterInput label="Dokumendi nr" placeholder="Pass või ID-kaart" icon={<Badge className="!text-sm" />} />
-            <FilterInput label="Vastuvõtja (Host)" placeholder="Töötaja nimi" icon={<MeetingRoom className="!text-sm" />} />
-            <FilterInput label="Ajavahemik" placeholder="01.01 - 31.01" icon={<CalendarMonth className="!text-sm" />} />
-            
+            <FilterInput
+              label="Külastaja nimi"
+              placeholder="Ees- ja perekonnanimi"
+              icon={<Person className="!text-sm" />}
+            />
+            <FilterInput
+              label="Dokumendi nr"
+              placeholder="Pass või ID-kaart"
+              icon={<Badge className="!text-sm" />}
+            />
+            <FilterInput
+              label="Vastuvõtja (Host)"
+              placeholder="Töötaja nimi"
+              icon={<MeetingRoom className="!text-sm" />}
+            />
+            <FilterInput
+              label="Ajavahemik"
+              placeholder="01.01 - 31.01"
+              icon={<CalendarMonth className="!text-sm" />}
+            />
+
             <div className="space-y-1.5 font-display">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Staatus</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                Staatus
+              </label>
               <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold text-slate-700">
                 <option>Kõik staatused</option>
                 <option>Hoones</option>
@@ -57,11 +86,18 @@ export default function VisitorsSearchPage() {
       <section className="flex-1 flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-4 px-2">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Leitud <span className="text-slate-900 dark:text-white">128</span> tulemust
+            Leitud <span className="text-slate-900 dark:text-white">128</span>{" "}
+            tulemust
           </p>
           <div className="flex gap-2">
-            <TableActionButton icon={<FileDownload className="!text-sm" />} label="EXCEL" />
-            <TableActionButton icon={<Print className="!text-sm" />} label="PRINDI" />
+            <TableActionButton
+              icon={<FileDownload className="!text-sm" />}
+              label="EXCEL"
+            />
+            <TableActionButton
+              icon={<Print className="!text-sm" />}
+              label="PRINDI"
+            />
           </div>
         </div>
 
@@ -77,8 +113,23 @@ export default function VisitorsSearchPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-              <VisitorResultRow name="Jüri Tamm" org="AS Logistika Grupp" doc="AA1234567" host="Andres Kuusk" status="Lahkunud" color="slate" />
-              <VisitorResultRow name="Anna-Maria Sepp" org="Eraisik" doc="EE9876543" host="Kati Karu" status="Hoones" color="emerald" isActive />
+              <VisitorResultRow
+                name="Jüri Tamm"
+                org="AS Logistika Grupp"
+                doc="AA1234567"
+                host="Andres Kuusk"
+                status="Lahkunud"
+                color="slate"
+              />
+              <VisitorResultRow
+                name="Anna-Maria Sepp"
+                org="Eraisik"
+                doc="EE9876543"
+                host="Kati Karu"
+                status="Hoones"
+                color="emerald"
+                isActive
+              />
             </tbody>
           </table>
         </div>
@@ -92,36 +143,64 @@ export default function VisitorsSearchPage() {
 function FilterInput({ label, placeholder, icon }: any) {
   return (
     <div className="space-y-1.5 font-display">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{label}</label>
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+        {label}
+      </label>
       <div className="relative">
-        <input className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-primary/20" placeholder={placeholder} />
-        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300">{icon}</div>
+        <input
+          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-primary/20"
+          placeholder={placeholder}
+        />
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300">
+          {icon}
+        </div>
       </div>
     </div>
   );
 }
 
-function VisitorResultRow({ name, org, doc, host, status, color, isActive }: any) {
+function VisitorResultRow({
+  name,
+  org,
+  doc,
+  host,
+  status,
+  color,
+  isActive,
+}: any) {
   return (
     <tr className="hover:bg-slate-50/50 transition-colors">
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className={`size-10 rounded-xl flex items-center justify-center font-black text-xs ${isActive ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'}`}>
-            {name.split(' ').map((n: any) => n[0]).join('')}
+          <div
+            className={`size-10 rounded-xl flex items-center justify-center font-black text-xs ${isActive ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-400"}`}
+          >
+            {name
+              .split(" ")
+              .map((n: any) => n[0])
+              .join("")}
           </div>
           <div>
             <p className="text-sm font-bold text-slate-900">{name}</p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{org}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              {org}
+            </p>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 text-xs font-mono font-bold text-slate-500 tracking-wider">{doc}</td>
+      <td className="px-6 py-4 text-xs font-mono font-bold text-slate-500 tracking-wider">
+        {doc}
+      </td>
       <td className="px-6 py-4">
         <p className="text-sm font-bold text-slate-700">{host}</p>
-        <p className="text-[10px] font-bold text-slate-400 uppercase">IT osakond</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase">
+          IT osakond
+        </p>
       </td>
       <td className="px-6 py-4 text-center">
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${color === 'emerald' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+        <span
+          className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${color === "emerald" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
+        >
           {status}
         </span>
       </td>

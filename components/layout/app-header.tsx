@@ -1,7 +1,7 @@
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import SearchIcon from '@mui/icons-material/Search';
-import ScheduleIcon from '@mui/icons-material/Schedule';
-import NotificationsIcon from '@mui/icons-material/Notifications';
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import SearchIcon from "@mui/icons-material/Search";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 import { Input } from "@/components/ui/input";
 
 export function AppHeader() {
@@ -20,9 +20,9 @@ export function AppHeader() {
 
         <div className="relative flex w-64 items-center">
           <SearchIcon className="absolute left-3 text-slate-400 text-[18px]" />
-          <Input 
-            className="w-full rounded-lg border-none bg-slate-100 py-2 pl-10 pr-4 text-sm placeholder-slate-500 focus:ring-2 focus:ring-primary dark:bg-slate-800" 
-            placeholder="Otsi külalist või kaarti..." 
+          <Input
+            className="w-full rounded-lg border-none bg-slate-100 py-2 pl-10 pr-4 text-sm placeholder-slate-500 focus:ring-2 focus:ring-primary dark:bg-slate-800"
+            placeholder="Otsi külalist või kaarti..."
           />
         </div>
       </div>
@@ -55,7 +55,7 @@ export function AppHeader() {
             <ScheduleIcon className="text-sm" />
             <span>14:30</span>
           </div>
-          
+
           <button
             className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors"
             aria-label="Ava teavitused"
@@ -65,9 +65,9 @@ export function AppHeader() {
           </button>
 
           <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200 border border-slate-200 dark:border-slate-700">
-            <img 
-              alt="User Profile" 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" 
+            <img
+              alt="User Profile"
+              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
               className="h-full w-full object-cover"
             />
           </div>

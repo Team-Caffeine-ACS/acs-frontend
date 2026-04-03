@@ -84,10 +84,9 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-
 /* Lisa Public Sans font, kui sa seda veel ei teinud */
 body {
-  font-family: 'Public Sans', sans-serif;
+  font-family: "Public Sans", sans-serif;
 }
 
 @layer base {
@@ -112,5 +111,5 @@ body {
 
 /* Lisa Public Sans font, kui sa seda veel ei teinud */
 body {
-  font-family: 'Public Sans', sans-serif;
+  font-family: "Public Sans", sans-serif;
 }

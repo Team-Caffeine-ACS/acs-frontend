@@ -19,17 +19,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="et">
-      <body className={`${inter.className} bg-slate-50 text-slate-900 antialiased`}>
-        <ThemeRegistry>   {/* ← PAKI KÕIK SELLE SISSE */}
+      <body
+        className={`${inter.className} bg-slate-50 text-slate-900 antialiased`}
+      >
+        <ThemeRegistry>
+          {" "}
+          {/* ← PAKI KÕIK SELLE SISSE */}
           <div className="flex h-screen overflow-hidden">
             <AppSidebar />
 
             <div className="flex flex-1 flex-col overflow-hidden">
               <AppHeader />
 
-              <main className="flex-1 overflow-y-auto p-8">
-                {children}
-              </main>
+              <main className="flex-1 overflow-y-auto p-8">{children}</main>
             </div>
           </div>
         </ThemeRegistry>
