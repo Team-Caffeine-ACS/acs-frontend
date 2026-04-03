@@ -126,7 +126,14 @@ function VisitorResultRow({ name, org, doc, host, status, color, isActive }: any
         </span>
       </td>
       <td className="px-6 py-4 text-right">
-        <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/5 rounded-xl"><Visibility /></Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-primary hover:bg-primary/5 rounded-xl"
+          aria-label="Vaata külastaja detaili"
+        >
+          <Visibility />
+        </Button>
       </td>
     </tr>
   );
