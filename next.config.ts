@@ -7,7 +7,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.dicebear.com', // <--- SEE RIDA ON PUUDU
+        hostname: 'api.dicebear.com',
         port: '',
         pathname: '/**',
       },
