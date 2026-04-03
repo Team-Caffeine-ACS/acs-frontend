@@ -8,12 +8,24 @@ import {
   MeetingRoom,
   CalendarMonth,
   Visibility,
-  ChevronLeft,
   ChevronRight,
 } from "@mui/icons-material";
+import React, { useId, useState} from 'react';
 import { Button } from "@/components/ui/button";
 
+
 export default function VisitorsSearchPage() {
+  const [searchParams, setSearchParams] = useState({
+    name: '',
+    doc: '',
+    host: '',
+    date: '',
+    status: 'Kõik staatused'
+  });
+  const updateParam = (key: string, value: string) => {
+    setSearchParams(prev => ({ ...prev, [key]: value }));
+  };
+  const statusSelectId = useId();
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500">
       {/* 1. Breadcrumbs / Header sisu */}
@@ -45,28 +57,42 @@ export default function VisitorsSearchPage() {
               label="Külastaja nimi"
               placeholder="Ees- ja perekonnanimi"
               icon={<Person className="!text-sm" />}
+              value={searchParams.name} 
+              onChange={(val) => updateParam('name', val)}
             />
             <FilterInput
               label="Dokumendi nr"
               placeholder="Pass või ID-kaart"
               icon={<Badge className="!text-sm" />}
+              value={searchParams.doc}
+              onChange={(val) => updateParam('doc', val)}
             />
             <FilterInput
               label="Vastuvõtja (Host)"
               placeholder="Töötaja nimi"
               icon={<MeetingRoom className="!text-sm" />}
+              value={searchParams.host}
+              onChange={(val) => updateParam('host', val)}
             />
             <FilterInput
               label="Ajavahemik"
               placeholder="01.01 - 31.01"
               icon={<CalendarMonth className="!text-sm" />}
+              value={searchParams.date}
+              onChange={(val) => updateParam('date', val)}
             />
 
             <div className="space-y-1.5 font-display">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+              <label 
+                htmlFor={statusSelectId}
+                className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                 Staatus
               </label>
-              <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold text-slate-700">
+              <select
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold text-slate-700"
+                value={searchParams.status}
+                onChange={(e) => updateParam('status', e.target.value)}
+              >
                 <option>Kõik staatused</option>
                 <option>Hoones</option>
                 <option>Lahkunud</option>
@@ -138,16 +164,45 @@ export default function VisitorsSearchPage() {
   );
 }
 
-// ABIKOMPONENDID
+interface FilterInputProps {
+  readonly label: string;
+  readonly placeholder: string;
+  readonly icon: React.ReactNode;
+  readonly value: string; // Lisa see
+  readonly onChange: (val: string) => void;
+}
 
-function FilterInput({ label, placeholder, icon }: any) {
+interface VisitorResultRowProps {
+  readonly name: string;
+  readonly org: string;
+  readonly doc: string;
+  readonly host: string;
+  readonly status: string;
+  readonly color: 'emerald' | 'slate' | 'amber';
+  readonly isActive?: boolean;
+}
+
+interface TableActionButtonProps {
+  readonly icon: React.ReactNode;
+  readonly label: string;
+}
+
+// ABIKOMPONENDID
+function FilterInput({ label, placeholder, icon, value, onChange }: Readonly<FilterInputProps>) {
+  const id = useId(); // See loob unikaalse ID automaatselt
   return (
     <div className="space-y-1.5 font-display">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+      <label 
+        htmlFor={id} // <--- 1. SEO SEOS ALGAB SIIT
+        className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 block"
+      >
         {label}
       </label>
       <div className="relative">
         <input
+          id={id} // <--- 2. JA LÕPPEB SIIN
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-primary/20"
           placeholder={placeholder}
         />
@@ -159,6 +214,7 @@ function FilterInput({ label, placeholder, icon }: any) {
   );
 }
 
+
 function VisitorResultRow({
   name,
   org,
@@ -167,7 +223,7 @@ function VisitorResultRow({
   status,
   color,
   isActive,
-}: any) {
+}: VisitorResultRowProps) {
   return (
     <tr className="hover:bg-slate-50/50 transition-colors">
       <td className="px-6 py-4">
@@ -177,7 +233,7 @@ function VisitorResultRow({
           >
             {name
               .split(" ")
-              .map((n: any) => n[0])
+              .map((n: string) => n[0])
               .join("")}
           </div>
           <div>
@@ -218,7 +274,7 @@ function VisitorResultRow({
   );
 }
 
-function TableActionButton({ icon, label }: any) {
+function TableActionButton({ icon, label }: TableActionButtonProps) {
   return (
     <button className="flex items-center gap-2 px-4 py-2 text-[10px] font-black border border-slate-100 rounded-xl bg-white hover:bg-slate-50 transition-all uppercase tracking-widest text-slate-500 shadow-sm">
       {icon} {label}

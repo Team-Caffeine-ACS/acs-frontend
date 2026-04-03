@@ -1,7 +1,6 @@
 import Link from "next/link";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import SecurityIcon from "@mui/icons-material/Security";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -192,9 +191,33 @@ export default function KeycardsPage() {
   );
 }
 
+interface BadgeProps {
+  initials?: string;
+  id: string;
+  level: string;
+  status: string;
+  user: string;
+  date: string;
+  time: string;
+  statusColor: 'green' | 'blue' | 'red';
+}
+
+interface PaginationBtnProps {
+  readonly icon: React.ReactNode;
+  readonly disabled?: boolean;      // Valikuline tõeväärtus
+}
+
+interface StatSmallProps {
+  readonly title: string;
+  readonly value: string | number; // väärtus võib olla nii tekst kui number
+  readonly trend: string;
+  readonly icon: React.ReactNode;   // See on tüüp ikoonide ja HTML-i jaoks
+  readonly color?: string;          // Küsimärk, sest sellel on vaikimisi väärtus
+}
+
 // ABIKOMPONENDID
 
-function FilterButton({ label }: { label: string }) {
+function FilterButton({ label }: Readonly<{ label: string }>) {
   return (
     <button className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white hover:shadow-sm transition-all">
       {label}
@@ -211,8 +234,8 @@ function KeycardRow({
   time,
   statusColor,
   initials,
-}: any) {
-  const badgeStyles: any = {
+}: Readonly<BadgeProps>) {
+  const badgeStyles: Record<string, string> = {
     green: "bg-emerald-50 text-emerald-600 border-emerald-100",
     blue: "bg-blue-50 text-blue-600 border-blue-100",
     red: "bg-rose-50 text-rose-600 border-rose-100",
@@ -275,7 +298,7 @@ function StatSmall({
   trend,
   icon,
   color = "text-slate-900",
-}: any) {
+}: StatSmallProps) {
   return (
     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
@@ -289,7 +312,7 @@ function StatSmall({
   );
 }
 
-function PaginationBtn({ icon, disabled }: any) {
+function PaginationBtn({ icon, disabled }: PaginationBtnProps) {
   return (
     <button
       disabled={disabled}
