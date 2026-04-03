@@ -165,7 +165,7 @@ interface KpiCardProps {
   readonly value: string | number;
   readonly change: string;
   readonly icon: React.ReactNode; // Ikooni jaoks
-  readonly trend: 'up' | 'down' | 'neutral'; // Lubame ainult need kolm varianti
+  readonly trend: "up" | "down" | "neutral"; // Lubame ainult need kolm varianti
 }
 
 interface VisitorRowProps {
@@ -173,7 +173,7 @@ interface VisitorRowProps {
   readonly org: string;
   readonly initials: string;
   readonly status: string;
-  readonly color: 'emerald' | 'slate' | 'amber'; // Lubame ainult need kolm
+  readonly color: "emerald" | "slate" | "amber"; // Lubame ainult need kolm
   readonly time: string;
 }
 
@@ -204,7 +204,14 @@ function KpiCard({ title, value, change, icon, trend }: KpiCardProps) {
   );
 }
 
-function VisitorRow({ name, org, initials, status, color, time }: VisitorRowProps) {
+function VisitorRow({
+  name,
+  org,
+  initials,
+  status,
+  color,
+  time,
+}: VisitorRowProps) {
   const statusStyles: Record<string, string> = {
     emerald: "bg-emerald-100 text-emerald-700",
     slate: "bg-slate-100 text-slate-600",

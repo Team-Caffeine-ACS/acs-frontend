@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import {
   FilterList,
   Search,
@@ -11,20 +11,19 @@ import {
   Visibility,
   ChevronRight,
 } from "@mui/icons-material";
-import React, { useId, useState} from 'react';
+import React, { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
-
 
 export default function VisitorsSearchPage() {
   const [searchParams, setSearchParams] = useState({
-    name: '',
-    doc: '',
-    host: '',
-    date: '',
-    status: 'Kõik staatused'
+    name: "",
+    doc: "",
+    host: "",
+    date: "",
+    status: "Kõik staatused",
   });
   const updateParam = (key: string, value: string) => {
-    setSearchParams(prev => ({ ...prev, [key]: value }));
+    setSearchParams((prev) => ({ ...prev, [key]: value }));
   };
   const statusSelectId = useId();
   return (
@@ -58,41 +57,42 @@ export default function VisitorsSearchPage() {
               label="Külastaja nimi"
               placeholder="Ees- ja perekonnanimi"
               icon={<Person className="!text-sm" />}
-              value={searchParams.name} 
-              onChange={(val) => updateParam('name', val)}
+              value={searchParams.name}
+              onChange={(val) => updateParam("name", val)}
             />
             <FilterInput
               label="Dokumendi nr"
               placeholder="Pass või ID-kaart"
               icon={<Badge className="!text-sm" />}
               value={searchParams.doc}
-              onChange={(val) => updateParam('doc', val)}
+              onChange={(val) => updateParam("doc", val)}
             />
             <FilterInput
               label="Vastuvõtja (Host)"
               placeholder="Töötaja nimi"
               icon={<MeetingRoom className="!text-sm" />}
               value={searchParams.host}
-              onChange={(val) => updateParam('host', val)}
+              onChange={(val) => updateParam("host", val)}
             />
             <FilterInput
               label="Ajavahemik"
               placeholder="01.01 - 31.01"
               icon={<CalendarMonth className="!text-sm" />}
               value={searchParams.date}
-              onChange={(val) => updateParam('date', val)}
+              onChange={(val) => updateParam("date", val)}
             />
 
             <div className="space-y-1.5 font-display">
-              <label 
+              <label
                 htmlFor={statusSelectId}
-                className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1"
+              >
                 Staatus
               </label>
               <select
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold text-slate-700"
                 value={searchParams.status}
-                onChange={(e) => updateParam('status', e.target.value)}
+                onChange={(e) => updateParam("status", e.target.value)}
               >
                 <option>Kõik staatused</option>
                 <option>Hoones</option>
@@ -179,7 +179,7 @@ interface VisitorResultRowProps {
   readonly doc: string;
   readonly host: string;
   readonly status: string;
-  readonly color: 'emerald' | 'slate' | 'amber';
+  readonly color: "emerald" | "slate" | "amber";
   readonly isActive?: boolean;
 }
 
@@ -189,11 +189,17 @@ interface TableActionButtonProps {
 }
 
 // ABIKOMPONENDID
-function FilterInput({ label, placeholder, icon, value, onChange }: Readonly<FilterInputProps>) {
+function FilterInput({
+  label,
+  placeholder,
+  icon,
+  value,
+  onChange,
+}: Readonly<FilterInputProps>) {
   const id = useId(); // See loob unikaalse ID automaatselt
   return (
     <div className="space-y-1.5 font-display">
-      <label 
+      <label
         htmlFor={id} // <--- 1. SEO SEOS ALGAB SIIT
         className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 block"
       >
@@ -214,7 +220,6 @@ function FilterInput({ label, placeholder, icon, value, onChange }: Readonly<Fil
     </div>
   );
 }
-
 
 function VisitorResultRow({
   name,

@@ -199,20 +199,20 @@ interface BadgeProps {
   user: string;
   date: string;
   time: string;
-  statusColor: 'green' | 'blue' | 'red';
+  statusColor: "green" | "blue" | "red";
 }
 
 interface PaginationBtnProps {
   readonly icon: React.ReactNode;
-  readonly disabled?: boolean;      // Valikuline tõeväärtus
+  readonly disabled?: boolean; // Valikuline tõeväärtus
 }
 
 interface StatSmallProps {
   readonly title: string;
   readonly value: string | number; // väärtus võib olla nii tekst kui number
   readonly trend: string;
-  readonly icon: React.ReactNode;   // See on tüüp ikoonide ja HTML-i jaoks
-  readonly color?: string;          // Küsimärk, sest sellel on vaikimisi väärtus
+  readonly icon: React.ReactNode; // See on tüüp ikoonide ja HTML-i jaoks
+  readonly color?: string; // Küsimärk, sest sellel on vaikimisi väärtus
 }
 
 // ABIKOMPONENDID

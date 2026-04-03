@@ -3,7 +3,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { Input } from "@/components/ui/input";
-import Image from 'next/image';
+import Image from "next/image";
 
 export function AppHeader() {
   return (
@@ -67,12 +67,12 @@ export function AppHeader() {
 
           <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200 border border-slate-200 dark:border-slate-700">
             <Image
-                alt="User Profile"
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                width={40}  // 10 * 4px
-                height={40} // 10 * 4px
-                className="h-full w-full object-cover"
-              />
+              alt="User Profile"
+              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+              width={40} // 10 * 4px
+              height={40} // 10 * 4px
+              className="h-full w-full object-cover"
+            />
           </div>
         </div>
       </div>
