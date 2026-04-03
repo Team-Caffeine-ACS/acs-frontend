@@ -56,7 +56,11 @@ export function AppHeader() {
             <span>14:30</span>
           </div>
           
-          <button className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors">
+          <button
+            className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors"
+            aria-label="Ava teavitused"
+            title="Ava teavitused"
+          >
             <NotificationsIcon className="text-[20px]" />
           </button>
 
