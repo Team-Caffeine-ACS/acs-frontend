@@ -22,7 +22,7 @@ jobs:
         run: npm ci
 
       - name: Check Formatting with Prettier
-        run: npx prettier --list-different . | xargs -I{} sh -c 'echo "=== {} ===" && npx prettier {} | diff {} -'
+        run: npx prettier --check .
 
       - name: Run Linter (ESLint)
         run: npm run lint

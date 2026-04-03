@@ -9,8 +9,8 @@ The application provides the user interface for interacting with the backend ser
 
 ## Architecture
 
-* **Frontend**: Next.js-based React application using the App Router, TypeScript, and Tailwind CSS for styling
-* **Containerization**: Docker for development environment
+- **Frontend**: Next.js-based React application using the App Router, TypeScript, and Tailwind CSS for styling
+- **Containerization**: Docker for development environment
 
 ## Technical stack
 
@@ -21,15 +21,14 @@ The application provides the user interface for interacting with the backend ser
 | Tailwind CSS | 4.x                  |
 | TypeScript   | included via Next.js |
 
-## Environment Setup 
+## Environment Setup
 
 1. Install Docker (just Engine is enough but you can also install the whole Desktop) https://docs.docker.com/engine/install/
 
-
 ### Prerequisites
 
-* Node.js 20+
-* npm
+- Node.js 20+
+- npm
 
 ### Install dependencies
 
@@ -38,7 +37,9 @@ npm install
 ```
 
 ## Development Commands
+
 ### Docker usage
+
 ```bash
 # Start full development environment
 docker compose up
@@ -98,12 +99,12 @@ npm run start
 
 Backend service is maintained in a separate repository:
 
-* Backend repo: <https://github.com/Team-Caffeine-ACS/acs-backend/>
+- Backend repo: <https://github.com/Team-Caffeine-ACS/acs-backend/>
 
 Current status:
 
-* Frontend Docker configuration is not yet included in this repository.
-* Backend repository includes a `Dockerfile`.
+- Frontend Docker configuration is not yet included in this repository.
+- Backend repository includes a `Dockerfile`.
 
 If you want to run frontend and backend together in Docker, define a shared `docker-compose.yml`
 in one repository and include both services there.
@@ -122,8 +123,8 @@ styles/         Global styles
 
 ## Team
 
-* Andrus Rähni – <https://github.com/mugulane>
-* Ilja Sokolov – <https://github.com/ohotnik523>
-* Martti Remmelgas – <https://github.com/dotmartti>
-* Mathias Ranna – <https://github.com/mathiasranna>
-* Ranno Männikust – <https://github.com/s1blik>
+- Andrus Rähni – <https://github.com/mugulane>
+- Ilja Sokolov – <https://github.com/ohotnik523>
+- Martti Remmelgas – <https://github.com/dotmartti>
+- Mathias Ranna – <https://github.com/mathiasranna>
+- Ranno Männikust – <https://github.com/s1blik>
