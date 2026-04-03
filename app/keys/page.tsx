@@ -64,7 +64,13 @@ export default function KeycardsPage() {
           <FilterButton label="Tase: Kõik" />
           <FilterButton label="Asukoht: Tallinn" />
           <div className="w-px h-6 bg-slate-100 mx-2" />
-          <button className="p-2 text-slate-400 hover:text-primary transition-colors"><RefreshIcon /></button>
+          <button
+            className="p-2 text-slate-400 hover:text-primary transition-colors"
+            aria-label="Värskenda filtreid"
+            title="Värskenda filtreid"
+          >
+            <RefreshIcon />
+          </button>
         </div>
       </div>
 
