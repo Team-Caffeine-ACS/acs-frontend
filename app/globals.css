@@ -108,8 +108,3 @@ body {
     /* ... muud ShadCN vaikeväärtused ... */
   }
 }
-
-/* Lisa Public Sans font, kui sa seda veel ei teinud */
-body {
-  font-family: "Public Sans", sans-serif;
-}
