@@ -136,6 +136,13 @@ When contributing documentation:
 
 Documentation updates may affect files such as `README.md`, `CONTRIBUTING.md`, and content under `docs/`.
 
+### Pull Requests
+
+- Keep pull requests focused and small.
+- Link the related issue when possible.
+- Make sure `npm run lint` passes before requesting review.
+- Update documentation when behavior or setup changes.
+
 ## Styleguides
 
 ### Branches
