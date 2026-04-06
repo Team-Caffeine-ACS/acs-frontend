@@ -29,10 +29,10 @@ And if you like the project, but just don't have time to contribute, that's fine
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the
-[ACS Frontend Code of Conduct](https://github.com/Team-Caffeine-ACS/acs-frontend/blob/https://github.com/Team-Caffeine-ACS/acs-frontend/tree/main/CODE_OF_CONDUCT.md).
-By participating, you are expected to uphold this code. Please report unacceptable behavior
-to <andrus@rahni.ee>.
+Everyone contributing to ACS Frontend, whether as a team member or external contributor, is expected to be respectful, constructive, and professional.
+Treat others with courtesy, welcome good-faith feedback, and keep discussions focused on the work rather than the person.
+Harassment, discrimination, personal attacks, or sharing private or sensitive information are not acceptable.
+If you experience or witness unacceptable behavior, please raise it through GitHub Discussions.
 
 ## I Have a Question
 
@@ -85,14 +85,14 @@ A good bug report shouldn't leave others needing to chase you up for more inform
 
 We use GitHub issues to track bugs and errors. If you run into an issue with the project:
 
-- Open an [Issue](https://github.com/Team-Caffeine-ACS/acs-frontend/issues/new). (Since we can't be sure at this point whether it is a bug or not, we ask you not to talk about a bug yet and not to label the issue.)
+- Open the [Bug report issue form](https://github.com/Team-Caffeine-ACS/acs-frontend/issues/new/choose) and fill in all required fields.
 - Explain the behavior you would expect and the actual behavior.
 - Please provide as much context as possible and describe the _reproduction steps_ that someone else can follow to recreate the issue on their own. This usually includes your code. For good bug reports you should isolate the problem and create a reduced test case.
 - Provide the information you collected in the previous section.
 
 Once it's filed:
 
-- The project team will label the issue accordingly.
+- The bug report template adds the `bug` label automatically. The project team may then add additional labels such as `needs-repro`, `needs-fix`, or `critical` as needed.
 - A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `needs-repro`. Bugs with the `needs-repro` tag will not be addressed until they are reproduced.
 - If the team is able to reproduce the issue, it will be marked `needs-fix`, as well as possibly other tags (such as `critical`).
 
@@ -138,6 +138,7 @@ Documentation updates may affect files such as `README.md`, `CONTRIBUTING.md`, a
 
 ### Pull Requests
 
+- Use the [Pull Request template](https://github.com/Team-Caffeine-ACS/acs-frontend/blob/main/.github/pull_request_template.md) when opening a pull request.
 - Keep pull requests focused and small.
 - Link the related issue when possible.
 - Make sure `npm run lint` passes before requesting review.
@@ -173,7 +174,13 @@ Where "\*" is the remaining branch name.
 
 ### Commits
 
-- Commit messages must clearly describe what was changed in that commit
+- Use the Conventional Commits format: `<type>: <short description>`.
+- Supported types include `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, and `build`.
+- Examples:
+  - `feat: add booking calendar`
+  - `fix: resolve hydration mismatch on homepage`
+  - `docs: clarify branch naming rules`
+- This format keeps commit history consistent and makes automated changelog generation easier.
 - There shouldn't be too many changes in one commit, for more transparent development.
   (More often commits but smaller is better, than rarer ones and bigger)
 - Commits shall be regularly pushed to GitHub, making the developing more transparent.
