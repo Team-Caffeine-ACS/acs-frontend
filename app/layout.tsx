@@ -10,10 +10,16 @@ export const metadata: Metadata = {
   description: "ACS-Frontend operatiivne vaade",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="et">
-      <body className={`${inter.className} bg-slate-50 text-slate-900 antialiased`}>
+      <body
+        className={`${inter.className} bg-slate-50 text-slate-900 antialiased`}
+      >
         <ThemeRegistry>{children}</ThemeRegistry>
       </body>
     </html>

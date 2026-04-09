@@ -51,10 +51,16 @@ export default function LoginPage() {
           Pääsla infosüsteem
         </div>
         <nav className="flex items-center gap-6">
-          <a href="#" className="text-sm font-semibold text-slate-600 hover:text-slate-900">
+          <a
+            href="#"
+            className="text-sm font-semibold text-slate-600 hover:text-slate-900"
+          >
             Abi
           </a>
-          <a href="#" className="text-sm font-semibold text-slate-600 hover:text-slate-900">
+          <a
+            href="#"
+            className="text-sm font-semibold text-slate-600 hover:text-slate-900"
+          >
             Kontakt
           </a>
           <button
@@ -115,7 +121,10 @@ export default function LoginPage() {
                   <label className="text-sm font-semibold text-slate-700">
                     Parool
                   </label>
-                  <a href="#" className="text-xs font-semibold text-blue-600 hover:underline">
+                  <a
+                    href="#"
+                    className="text-xs font-semibold text-blue-600 hover:underline"
+                  >
                     Unustasid parooli?
                   </a>
                 </div>
@@ -157,8 +166,12 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="w-full flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-colors text-sm tracking-wide"
               >
-                {isLoading ? "Sisselogimine…" : (
-                  <>Logi sisse <LoginIcon className="!text-base" /></>
+                {isLoading ? (
+                  "Sisselogimine…"
+                ) : (
+                  <>
+                    Logi sisse <LoginIcon className="!text-base" />
+                  </>
                 )}
               </button>
             </form>
