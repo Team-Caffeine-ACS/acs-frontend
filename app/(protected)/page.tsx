@@ -35,21 +35,14 @@ export default function DashboardPage() {
           </ol>
         </nav>
 
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              Töölaud
-            </h2>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tight">
-              Ülevaade külastustest ja ligipääsudest täna,{" "}
-              <span className="text-primary font-bold">24. mai</span>
-            </p>
-          </div>
-          <Link href="/visits/new">
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white font-black rounded-xl shadow-lg gap-2 uppercase tracking-widest text-xs px-6 py-5">
-              <AddIcon className="!text-base" /> Lisa külastus
-            </Button>
-          </Link>
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Töölaud
+          </h2>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tight">
+            Ülevaade külastustest ja ligipääsudest täna,{" "}
+            <span className="text-primary font-bold">24. mai</span>
+          </p>
         </div>
       </div>
 
@@ -159,14 +152,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* FLOATING ACTION BUTTON */}
-      <Link
-        href="/visits/new"
-        aria-label="Lisa uus külastus"
-        className="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-2xl hover:scale-110 active:scale-95 transition-all shadow-primary/40"
-      >
+      {/* FLOATING ACTION BUTTON (Arvutis võiks see olla kuskil nurgas) */}
+      <button className="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-2xl hover:scale-110 active:scale-95 transition-all shadow-primary/40">
         <AddIcon className="!text-3xl" />
-      </Link>
+      </button>
     </div>
   );
 }
