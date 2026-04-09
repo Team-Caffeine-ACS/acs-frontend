@@ -30,11 +30,21 @@ async function request<TResponse>(
 ): Promise<TResponse> {
   const { headers, signal, body } = options;
 
+  const authHeaders: Record<string, string> = {};
+  if (typeof document !== "undefined") {
+    const token = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith("token="))
+      ?.split("=")[1];
+    if (token) authHeaders["Authorization"] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
+      ...authHeaders,
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
