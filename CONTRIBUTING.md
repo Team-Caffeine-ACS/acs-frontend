@@ -50,6 +50,12 @@ We will then take care of the issue as soon as possible.
 
 To help us triage issues faster, please use the `question` label for support requests when possible. If relevant, also add a scope label such as `documentation`, `api`, `frontend`, `ui`, `layout`, `design`, `accessibility`, `testing`, `workflow`, `CI`, `infrastructure`, or `developer-experience`.
 
+When opening an issue, choose the template that best matches the type of work:
+
+- Use the `Bug` template when existing behavior is broken, incorrect, or has regressed.
+- Use the `Feature` template when proposing new functionality or a meaningful improvement to user-facing behavior.
+- Use the `Task` template when tracking a concrete implementation, maintenance, or technical work item with clear scope.
+
 ## I Want To Contribute
 
 ### Legal Notice
