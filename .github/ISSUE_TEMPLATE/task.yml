@@ -1,0 +1,65 @@
+name: Task
+description: Track a concrete piece of implementation or maintenance work
+title: "[Task]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for clearly scoped work items that are ready to track.
+
+        Include enough detail that someone else can pick up the task without extra clarification.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Briefly describe the task.
+      placeholder: Extract the booking page filter state into a shared hook.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why does this task exist and what is it connected to?
+      placeholder: This work supports the saved filters feature and reduces duplicated state handling across components.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe the expected implementation scope.
+      placeholder: Move filter state management into a reusable hook and update the booking page to consume it.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List the conditions that define done for this task.
+      placeholder: |
+        - Shared hook is added
+        - Existing filter behavior remains unchanged
+        - Relevant docs or tests are updated
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies or related issues
+      description: Link blockers, related issues, or follow-up work if applicable.
+      placeholder: Depends on #123
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Add technical notes, references, or implementation constraints.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues before opening this task.
+          required: true
+        - label: I included concrete acceptance criteria.
+          required: true
