@@ -50,6 +50,12 @@ We will then take care of the issue as soon as possible.
 
 To help us triage issues faster, please use the `question` label for support requests when possible. If relevant, also add a scope label such as `documentation`, `api`, `frontend`, `ui`, `layout`, `design`, `accessibility`, `testing`, `workflow`, `CI`, `infrastructure`, or `developer-experience`.
 
+When opening an issue, choose the template that best matches the type of work:
+
+- Use the `Bug` template when existing behavior is broken, incorrect, or has regressed.
+- Use the `Feature` template when proposing new functionality or a meaningful improvement to user-facing behavior.
+- Use the `Task` template when tracking a concrete implementation, maintenance, or technical work item with clear scope.
+
 ## I Want To Contribute
 
 ### Legal Notice
@@ -96,7 +102,7 @@ Once it's filed:
 - A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `needs-repro`. Bugs with the `needs-repro` tag will not be addressed until they are reproduced.
 - If the team is able to reproduce the issue, it will be marked `needs-fix`, as well as possibly other tags (such as `critical`).
 
-A bug report template is available here: [Bug report issue template](./.github/ISSUE_TEMPLATE/bug_report.yml). Please use it when opening issues so the report includes the information needed for reproduction and triage.
+A bug report template is available here: [Bug issue template](./.github/ISSUE_TEMPLATE/bug.yml). Please use it when opening issues so the report includes the information needed for reproduction and triage.
 
 ### Suggesting Enhancements
 
@@ -123,6 +129,8 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/Team-C
 - You may want to **include screenshots or screen recordings** which help you demonstrate the steps or point out the part which the suggestion is related to.
 - **Explain why this enhancement would be useful** to most ACS Frontend users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
 
+A feature request template is available here: [Feature issue template](./.github/ISSUE_TEMPLATE/feature.yml). Please use it for new features or significant product improvements so the request includes the problem, proposal, and expected impact.
+
 ### Improving The Documentation
 
 Improvements to the documentation are always welcome. This includes fixing typos, clarifying existing instructions, updating outdated examples, and adding missing explanations for setup, project structure, or contribution workflows.
@@ -135,6 +143,8 @@ When contributing documentation:
 - use clear language and explain project-specific conventions when needed
 
 Documentation updates may affect files such as `README.md`, `CONTRIBUTING.md`, and content under `docs/`.
+
+For concrete implementation or maintenance work that is ready to track, use the [Task issue template](./.github/ISSUE_TEMPLATE/task.yml) so the issue includes scope, acceptance criteria, and related dependencies.
 
 ### Pull Requests
 

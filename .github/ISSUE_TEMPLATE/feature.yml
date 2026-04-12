@@ -1,0 +1,60 @@
+name: Feature
+description: Propose a new feature or meaningful enhancement for ACS Frontend
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for new functionality or significant product improvements.
+
+        Focus on the user problem, the proposed behavior, and the expected value.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Briefly describe the requested feature.
+      placeholder: Add saved room filters so repeat users can book faster.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What user or product need does this address?
+      placeholder: Users need to reapply the same filters on every visit, which slows down repeat bookings.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the desired behavior, flow, or interface.
+      placeholder: Persist the user's selected filters and restore them when they return to the booking page.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe workarounds, rejected ideas, or competing approaches.
+      placeholder: A server-side preference API is another option, but local persistence may be enough initially.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected impact
+      description: Who benefits from this and how would success look?
+      placeholder: Returning users can start a booking faster and with less friction.
+  - type: textarea
+    id: references
+    attributes:
+      label: Supporting references
+      description: Add links, screenshots, mockups, or related issues if available.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues before opening this request.
+          required: true
+        - label: I described the user problem this feature should solve.
+          required: true
