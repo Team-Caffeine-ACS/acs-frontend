@@ -17,9 +17,9 @@ It provides the user interface for interacting with backend services maintained 
 
 | Technology   | Version |
 | ------------ | ------- |
-| Next.js      | 16.2.0  |
-| React        | 19.2.4  |
-| Node.js      | 20.9+   |
+| Next.js      | 16.2.x  |
+| React        | 19.2.x  |
+| Node.js      | 24.x    |
 | Tailwind CSS | 4.x     |
 | TypeScript   | 5.x     |
 
@@ -27,7 +27,7 @@ It provides the user interface for interacting with backend services maintained 
 
 ### Prerequisites
 
-- Node.js 20.9 or newer
+- Node.js 24.x
 - npm
 
 ### Install dependencies
@@ -54,10 +54,15 @@ npm run dev
 
 Open <http://localhost:3000> in your browser.
 
-### Run linting
+### Run lint/formatting
 
 ```bash
 npm run lint
+
+npx prettier --check . || npx prettier --list-different . | xargs -I{} sh -c 'echo "=== {} ===" && npx prettier {} | diff {} -'
+
+* if prettier caught problems, fix with
+npx prettier --write .
 ```
 
 ### Build the production version
