@@ -59,9 +59,7 @@ Open <http://localhost:3000> in your browser.
 ```bash
 npm run lint
 
-npx prettier --check . || npx prettier --list-different . | xargs -I{} sh -c 'echo "=== {} ===" && npx prettier {} | diff {} -'
-
-* if prettier caught problems, fix with
+npx prettier --check .
 npx prettier --write .
 ```
 
