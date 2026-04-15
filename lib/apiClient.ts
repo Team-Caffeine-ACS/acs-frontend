@@ -31,11 +31,10 @@ async function request<TResponse>(
   const { headers, signal, body } = options;
 
   const authHeaders: Record<string, string> = {};
-  if (typeof document !== "undefined") {
-    const token = document.cookie
-      .split("; ")
-      .find((c) => c.startsWith("token="))
-      ?.split("=")[1];
+  if (typeof window !== "undefined") {
+    const token =
+      localStorage.getItem("token") ??
+      document.cookie.split("; ").find((c) => c.startsWith("token="))?.slice("token=".length);
     if (token) authHeaders["Authorization"] = `Bearer ${token}`;
   }
 
