@@ -31,7 +31,7 @@ async function request<TResponse>(
   const { headers, signal, body } = options;
 
   const authHeaders: Record<string, string> = {};
-  if (typeof globalThis.window !== "undefined") {
+  if (globalThis.window !== undefined) {
     const token =
       localStorage.getItem("token") ??
       document.cookie
