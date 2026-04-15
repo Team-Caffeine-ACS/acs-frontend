@@ -13,6 +13,8 @@ interface KeycardPage {
 }
 
 export async function getAvailableKeycards(): Promise<KeycardResponse[]> {
-  const page = await apiClient.get<KeycardPage>("/api/keycards?status=available&size=200");
+  const page = await apiClient.get<KeycardPage>(
+    "/api/keycards?status=available&size=200",
+  );
   return page.content;
 }

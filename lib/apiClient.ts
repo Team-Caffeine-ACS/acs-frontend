@@ -34,7 +34,10 @@ async function request<TResponse>(
   if (typeof window !== "undefined") {
     const token =
       localStorage.getItem("token") ??
-      document.cookie.split("; ").find((c) => c.startsWith("token="))?.slice("token=".length);
+      document.cookie
+        .split("; ")
+        .find((c) => c.startsWith("token="))
+        ?.slice("token=".length);
     if (token) authHeaders["Authorization"] = `Bearer ${token}`;
   }
 

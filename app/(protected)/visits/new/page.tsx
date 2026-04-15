@@ -10,8 +10,14 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseIcon from "@mui/icons-material/Close";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Button } from "@/components/ui/button";
-import { getAccessPoints, type AccessPointResponse } from "@/lib/api/accessPoints";
-import { getDocumentTypes, type DocumentTypeResponse } from "@/lib/api/documentTypes";
+import {
+  getAccessPoints,
+  type AccessPointResponse,
+} from "@/lib/api/accessPoints";
+import {
+  getDocumentTypes,
+  type DocumentTypeResponse,
+} from "@/lib/api/documentTypes";
 import { getAvailableKeycards, type KeycardResponse } from "@/lib/api/keycards";
 import {
   createPerson,
@@ -34,14 +40,19 @@ export default function NewVisitPage() {
   // Reference data
   const [accessPoints, setAccessPoints] = useState<AccessPointResponse[]>([]);
   const [keycards, setKeycards] = useState<KeycardResponse[]>([]);
-  const [documentTypes, setDocumentTypes] = useState<DocumentTypeResponse[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<DocumentTypeResponse[]>(
+    [],
+  );
 
   // Visitor state
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<PersonInRoleResponse[]>([]);
+  const [searchResults, setSearchResults] = useState<PersonInRoleResponse[]>(
+    [],
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedVisitor, setSelectedVisitor] = useState<SelectedVisitor | null>(null);
+  const [selectedVisitor, setSelectedVisitor] =
+    useState<SelectedVisitor | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // New person form
@@ -56,7 +67,9 @@ export default function NewVisitPage() {
   const [hostQuery, setHostQuery] = useState("");
   const [hostResults, setHostResults] = useState<PersonInRoleResponse[]>([]);
   const [isSearchingHost, setIsSearchingHost] = useState(false);
-  const [selectedHost, setSelectedHost] = useState<PersonInRoleResponse | null>(null);
+  const [selectedHost, setSelectedHost] = useState<PersonInRoleResponse | null>(
+    null,
+  );
   const [comment, setComment] = useState("");
   const [keycardId, setKeycardId] = useState("");
 
@@ -87,7 +100,10 @@ export default function NewVisitPage() {
     setHasSearched(false);
     setSearchResults([]);
     try {
-      const results = await searchVisitors(searchQuery.trim(), searchAbortRef.current.signal);
+      const results = await searchVisitors(
+        searchQuery.trim(),
+        searchAbortRef.current.signal,
+      );
       setSearchResults(results);
       setHasSearched(true);
     } catch (e) {
@@ -103,7 +119,10 @@ export default function NewVisitPage() {
     hostAbortRef.current = new AbortController();
     setIsSearchingHost(true);
     try {
-      const results = await searchEmployees(hostQuery.trim(), hostAbortRef.current.signal);
+      const results = await searchEmployees(
+        hostQuery.trim(),
+        hostAbortRef.current.signal,
+      );
       setHostResults(results);
     } catch (e) {
       if (e instanceof Error && e.name !== "AbortError") setHostResults([]);
@@ -158,7 +177,9 @@ export default function NewVisitPage() {
       router.push("/");
     } catch (err) {
       setSubmitError(
-        err instanceof ApiError ? err.message : "Viga salvestamisel. Proovi uuesti.",
+        err instanceof ApiError
+          ? err.message
+          : "Viga salvestamisel. Proovi uuesti.",
       );
     } finally {
       setIsSubmitting(false);
@@ -170,9 +191,12 @@ export default function NewVisitPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       <div>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Lisa külastus</h2>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          Lisa külastus
+        </h2>
         <p className="text-sm text-slate-500 mt-1">
-          Registreerige uus külastus ja määrake külastajale vajalikud pääsuõigused.
+          Registreerige uus külastus ja määrake külastajale vajalikud
+          pääsuõigused.
         </p>
       </div>
 
@@ -189,8 +213,15 @@ export default function NewVisitPage() {
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setHasSearched(false); setSearchResults([]); }}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleVisitorSearch())}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setHasSearched(false);
+                    setSearchResults([]);
+                  }}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(), handleVisitorSearch())
+                  }
                   placeholder="Otsi olemasolevat külastajat nimega…"
                   className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                 />
@@ -212,7 +243,11 @@ export default function NewVisitPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setSelectedVisitor({ personId: r.personId, givenName: r.givenName, surname: r.surname });
+                          setSelectedVisitor({
+                            personId: r.personId,
+                            givenName: r.givenName,
+                            surname: r.surname,
+                          });
                           setShowCreateForm(false);
                           setSearchResults([]);
                         }}
@@ -222,9 +257,13 @@ export default function NewVisitPage() {
                           <span className="text-sm font-semibold text-slate-900">
                             {r.givenName} {r.surname}
                           </span>
-                          <span className="ml-2 text-xs text-slate-400">{r.roleName}</span>
+                          <span className="ml-2 text-xs text-slate-400">
+                            {r.roleName}
+                          </span>
                         </div>
-                        <span className="text-xs text-blue-600 font-semibold">Vali</span>
+                        <span className="text-xs text-blue-600 font-semibold">
+                          Vali
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -264,7 +303,8 @@ export default function NewVisitPage() {
             <div className="flex items-center justify-between px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="size-9 rounded-lg bg-blue-700 text-white flex items-center justify-center font-black text-xs">
-                  {selectedVisitor.givenName[0]}{selectedVisitor.surname[0]}
+                  {selectedVisitor.givenName[0]}
+                  {selectedVisitor.surname[0]}
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">
@@ -275,7 +315,11 @@ export default function NewVisitPage() {
               </div>
               <button
                 type="button"
-                onClick={() => { setSelectedVisitor(null); setSearchQuery(""); setHasSearched(false); }}
+                onClick={() => {
+                  setSelectedVisitor(null);
+                  setSearchQuery("");
+                  setHasSearched(false);
+                }}
                 className="text-slate-400 hover:text-slate-600"
                 aria-label="Eemalda valik"
               >
@@ -288,8 +332,14 @@ export default function NewVisitPage() {
           {showCreateForm && !selectedVisitor && (
             <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Uue külastaja andmed</p>
-                <button type="button" onClick={() => setShowCreateForm(false)} className="text-xs text-slate-400 hover:text-slate-600">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Uue külastaja andmed
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="text-xs text-slate-400 hover:text-slate-600"
+                >
                   ← Tagasi otsingusse
                 </button>
               </div>
@@ -334,7 +384,9 @@ export default function NewVisitPage() {
                   >
                     <option value="">Ilma dokumendita</option>
                     {documentTypes.map((dt) => (
-                      <option key={dt.id} value={dt.id}>{dt.name}</option>
+                      <option key={dt.id} value={dt.id}>
+                        {dt.name}
+                      </option>
                     ))}
                   </select>
                 </Field>
@@ -370,7 +422,9 @@ export default function NewVisitPage() {
               >
                 <option value="">Vali pääsupunkt</option>
                 {accessPoints.map((ap) => (
-                  <option key={ap.id} value={ap.id}>{ap.name}</option>
+                  <option key={ap.id} value={ap.id}>
+                    {ap.name}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -383,7 +437,11 @@ export default function NewVisitPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => { setSelectedHost(null); setHostQuery(""); setHostResults([]); }}
+                    onClick={() => {
+                      setSelectedHost(null);
+                      setHostQuery("");
+                      setHostResults([]);
+                    }}
                     className="text-slate-400 hover:text-slate-600 ml-2"
                     aria-label="Eemalda host"
                   >
@@ -396,8 +454,14 @@ export default function NewVisitPage() {
                     <input
                       type="text"
                       value={hostQuery}
-                      onChange={(e) => { setHostQuery(e.target.value); setHostResults([]); }}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleHostSearch())}
+                      onChange={(e) => {
+                        setHostQuery(e.target.value);
+                        setHostResults([]);
+                      }}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(), handleHostSearch())
+                      }
                       placeholder="Otsi töötajat…"
                       className={inputCls + " flex-1"}
                     />
@@ -416,11 +480,17 @@ export default function NewVisitPage() {
                         <li key={r.id}>
                           <button
                             type="button"
-                            onClick={() => { setSelectedHost(r); setHostResults([]); setHostQuery(""); }}
+                            onClick={() => {
+                              setSelectedHost(r);
+                              setHostResults([]);
+                              setHostQuery("");
+                            }}
                             className="w-full text-left px-3 py-2.5 hover:bg-blue-50 text-sm font-semibold text-slate-900 transition-colors"
                           >
                             {r.givenName} {r.surname}
-                            <span className="ml-2 text-xs text-slate-400 font-normal">{r.roleName}</span>
+                            <span className="ml-2 text-xs text-slate-400 font-normal">
+                              {r.roleName}
+                            </span>
                           </button>
                         </li>
                       ))}
@@ -456,7 +526,9 @@ export default function NewVisitPage() {
             >
               <option value="">Ilma kaardita</option>
               {keycards.map((kc) => (
-                <option key={kc.id} value={kc.id}>Kaart {kc.keycardNumber}</option>
+                <option key={kc.id} value={kc.id}>
+                  Kaart {kc.keycardNumber}
+                </option>
               ))}
             </select>
             {selectedKeycard && (
@@ -469,9 +541,9 @@ export default function NewVisitPage() {
           <div className="flex gap-2 px-3 py-3 bg-blue-50 rounded-lg text-xs text-slate-600">
             <InfoOutlinedIcon className="!text-base text-blue-500 shrink-0 mt-0.5" />
             <span>
-              Kiipkaardi väljastamisel aktiveerub see koheselt valitud pääsupunktides.
-              Külaline on kohustatud kaardi tagastama külastuse lõpus.
-              Kadunud kaardist teavitada viivitamatult administraatorit.
+              Kiipkaardi väljastamisel aktiveerub see koheselt valitud
+              pääsupunktides. Külaline on kohustatud kaardi tagastama külastuse
+              lõpus. Kadunud kaardist teavitada viivitamatult administraatorit.
             </span>
           </div>
         </Card>
@@ -531,7 +603,13 @@ function Card({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   const id = useId();
   return (
     <div className="space-y-1.5">

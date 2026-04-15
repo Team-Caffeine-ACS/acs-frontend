@@ -26,6 +26,11 @@ export interface CreateVisitResponse {
   keycardNumber: string | null;
 }
 
-export function createVisit(body: CreateVisitRequest): Promise<CreateVisitResponse> {
-  return apiClient.post<CreateVisitResponse, CreateVisitRequest>("/api/visits", body);
+export function createVisit(
+  body: CreateVisitRequest,
+): Promise<CreateVisitResponse> {
+  return apiClient.post<CreateVisitResponse, CreateVisitRequest>(
+    "/api/visits",
+    body,
+  );
 }
