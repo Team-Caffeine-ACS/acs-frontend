@@ -589,9 +589,9 @@ function Card({
   title,
   children,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
+  readonly icon: React.ReactNode;
+  readonly title: string;
+  readonly children: React.ReactNode;
 }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
@@ -607,8 +607,8 @@ function Field({
   label,
   children,
 }: {
-  label: string;
-  children: React.ReactNode;
+  readonly label: string;
+  readonly children: React.ReactNode;
 }) {
   const id = useId();
   return (
