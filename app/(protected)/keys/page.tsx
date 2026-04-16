@@ -175,7 +175,9 @@ export default function KeycardsPage() {
               ) : (
                 <EmptyRow
                   title={
-                    error ? "Võtmekaartide laadimine ebaõnnestus" : "Tulemusi ei leitud"
+                    error
+                      ? "Võtmekaartide laadimine ebaõnnestus"
+                      : "Tulemusi ei leitud"
                   }
                   description={
                     error ??
@@ -189,8 +191,9 @@ export default function KeycardsPage() {
 
         <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-6 py-4">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            Näitan <span className="text-slate-900">{filteredKeycards.length}</span>{" "}
-            / <span className="text-slate-900">{keycards.length}</span> kaardist
+            Näitan{" "}
+            <span className="text-slate-900">{filteredKeycards.length}</span> /{" "}
+            <span className="text-slate-900">{keycards.length}</span> kaardist
           </p>
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
             Ava detailvaade, et näha määramist ja kaardi olekut
@@ -264,7 +267,10 @@ function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
         )}
       </td>
       <td className="px-6 py-4">
-        <DateTimeStack value={keycard.assignedTime} emptyLabel="Pole väljastatud" />
+        <DateTimeStack
+          value={keycard.assignedTime}
+          emptyLabel="Pole väljastatud"
+        />
       </td>
       <td className="px-6 py-4">
         <DateTimeStack

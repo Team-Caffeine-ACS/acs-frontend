@@ -85,7 +85,9 @@ export default function KeycardDetailsPage() {
   }
 
   if (error) {
-    return <PageState title="Detailvaadet ei saanud avada" description={error} />;
+    return (
+      <PageState title="Detailvaadet ei saanud avada" description={error} />
+    );
   }
 
   if (isNotFound || !keycard) {
@@ -145,8 +147,8 @@ export default function KeycardDetailsPage() {
         <div className="flex items-start gap-2">
           <InfoOutlinedIcon className="mt-0.5 !text-base text-blue-600" />
           <p>
-            Praegune `GET /api/keycards/{"{cardId}"}` endpoint tagastab
-            aktiivse hoidja, hoidja `person_in_role` ID ning viimased teadaolevad
+            Praegune `GET /api/keycards/{"{cardId}"}` endpoint tagastab aktiivse
+            hoidja, hoidja `person_in_role` ID ning viimased teadaolevad
             väljastus- või tagastusajad. Väljastaja, vastuvõtulaud ja täielik
             ajalugu ei tule sellest response’ist veel kaasa.
           </p>
@@ -160,7 +162,10 @@ export default function KeycardDetailsPage() {
             title="Kaardi informatsioon"
           >
             <div className="grid gap-5 md:grid-cols-2">
-              <DetailField label="Kaardi number" value={keycard.keycardNumber} />
+              <DetailField
+                label="Kaardi number"
+                value={keycard.keycardNumber}
+              />
               <DetailField
                 label="Staatus"
                 value={getKeycardStatusLabel(keycard.status)}
