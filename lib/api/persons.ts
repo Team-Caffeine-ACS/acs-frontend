@@ -29,7 +29,7 @@ export function searchVisitors(
   signal?: AbortSignal,
 ): Promise<PersonInRoleResponse[]> {
   return apiClient.get<PersonInRoleResponse[]>(
-    `/api/persons/visitors/search?${new URLSearchParams({ q })}`,
+    `/api/persons/search?${new URLSearchParams({ q, role: "Visitor" })}`,
     { signal },
   );
 }
@@ -39,7 +39,7 @@ export function searchEmployees(
   signal?: AbortSignal,
 ): Promise<PersonInRoleResponse[]> {
   return apiClient.get<PersonInRoleResponse[]>(
-    `/api/persons/employees/search?${new URLSearchParams({ q })}`,
+    `/api/persons/search?${new URLSearchParams({ q, role: "Employee" })}`,
     { signal },
   );
 }
