@@ -1,4 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const LOG = process.env.NEXT_PUBLIC_DEBUG === "true";
 
 export class ApiError extends Error {
   constructor(
@@ -41,6 +42,8 @@ async function request<TResponse>(
     if (token) authHeaders["Authorization"] = `Bearer ${token}`;
   }
 
+  if (LOG) console.log(`[apiClient] --> ${method} ${BASE_URL}${path}`, body !== undefined ? body : "");
+
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
@@ -76,14 +79,18 @@ async function request<TResponse>(
         ? (errorData as Record<string, string>).message
         : `HTTP ${response.status}: ${response.statusText}`;
 
+    if (LOG) console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, errorData);
     throw new ApiError(response.status, message, errorData);
   }
 
   if (response.status === 204) {
+    if (LOG) console.log(`[apiClient] <-- ${method} ${path} 204 No Content`);
     return undefined as TResponse;
   }
 
-  return response.json() as Promise<TResponse>;
+  const data = await response.json();
+  if (LOG) console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, data);
+  return data as TResponse;
 }
 
 export const apiClient = {
