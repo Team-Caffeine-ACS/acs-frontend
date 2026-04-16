@@ -24,23 +24,50 @@ interface MutationOptions<TBody> extends RequestOptions {
   body?: TBody;
 }
 
+function getAuthHeaders(): Record<string, string> {
+  if (globalThis.window === undefined) return {};
+  const token =
+    localStorage.getItem("token") ??
+    document.cookie
+      .split("; ")
+      .find((c) => c.startsWith("token="))
+      ?.slice("token=".length);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function parseErrorData(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return undefined;
+  }
+}
+
+function extractErrorMessage(errorData: unknown, response: Response): string {
+  if (
+    typeof errorData === "object" &&
+    errorData !== null &&
+    "message" in errorData &&
+    typeof (errorData as Record<string, unknown>).message === "string"
+  ) {
+    return (errorData as Record<string, string>).message;
+  }
+  return `HTTP ${response.status}: ${response.statusText}`;
+}
+
+function handleUnauthorized(): never {
+  globalThis.localStorage.removeItem("token");
+  globalThis.document.cookie = "token=; path=/; max-age=0";
+  globalThis.window.location.href = "/login";
+  throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
+}
+
 async function request<TResponse>(
   method: HttpMethod,
   path: string,
   options: RequestOptions & { body?: unknown } = {},
 ): Promise<TResponse> {
   const { headers, signal, body } = options;
-
-  const authHeaders: Record<string, string> = {};
-  if (globalThis.window !== undefined) {
-    const token =
-      localStorage.getItem("token") ??
-      document.cookie
-        .split("; ")
-        .find((c) => c.startsWith("token="))
-        ?.slice("token=".length);
-    if (token) authHeaders["Authorization"] = `Bearer ${token}`;
-  }
 
   if (LOG) console.log(`[apiClient] --> ${method} ${BASE_URL}${path}`, body !== undefined ? body : "");
 
@@ -49,7 +76,7 @@ async function request<TResponse>(
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
-      ...authHeaders,
+      ...getAuthHeaders(),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -57,28 +84,14 @@ async function request<TResponse>(
   });
 
   if (!response.ok) {
-    if (response.status === 401 && globalThis.window !== undefined) {
-      globalThis.localStorage.removeItem("token");
-      globalThis.document.cookie = "token=; path=/; max-age=0";
-      globalThis.window.location.href = "/login";
-      throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
+    if (response.status === 401) {
+      if (globalThis.window === undefined) {
+        throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
+      }
+      handleUnauthorized();
     }
-
-    let errorData: unknown;
-    try {
-      errorData = await response.json();
-    } catch {
-      errorData = undefined;
-    }
-
-    const message =
-      typeof errorData === "object" &&
-      errorData !== null &&
-      "message" in errorData &&
-      typeof (errorData as Record<string, unknown>).message === "string"
-        ? (errorData as Record<string, string>).message
-        : `HTTP ${response.status}: ${response.statusText}`;
-
+    const errorData = await parseErrorData(response);
+    const message = extractErrorMessage(errorData, response);
     if (LOG) console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, errorData);
     throw new ApiError(response.status, message, errorData);
   }
