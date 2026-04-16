@@ -55,9 +55,9 @@ async function request<TResponse>(
 
   if (!response.ok) {
     if (response.status === 401 && globalThis.window !== undefined) {
-      localStorage.removeItem("token");
-      document.cookie = "token=; path=/; max-age=0";
-      window.location.href = "/login";
+      globalThis.localStorage.removeItem("token");
+      globalThis.document.cookie = "token=; path=/; max-age=0";
+      globalThis.window.location.href = "/login";
       throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
     }
 
