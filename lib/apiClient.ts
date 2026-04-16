@@ -62,7 +62,11 @@ function handleUnauthorized(): never {
   throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
 }
 
-async function throwForResponse(method: HttpMethod, path: string, response: Response): Promise<never> {
+async function throwForResponse(
+  method: HttpMethod,
+  path: string,
+  response: Response,
+): Promise<never> {
   if (response.status === 401) {
     if (globalThis.window === undefined) {
       throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
@@ -71,7 +75,11 @@ async function throwForResponse(method: HttpMethod, path: string, response: Resp
   }
   const errorData = await parseErrorData(response);
   const message = extractErrorMessage(errorData, response);
-  if (LOG) console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, errorData);
+  if (LOG)
+    console.log(
+      `[apiClient] <-- ${method} ${path} ${response.status}`,
+      errorData,
+    );
   throw new ApiError(response.status, message, errorData);
 }
 
@@ -82,7 +90,11 @@ async function request<TResponse>(
 ): Promise<TResponse> {
   const { headers, signal, body } = options;
 
-  if (LOG) console.log(`[apiClient] --> ${method} ${BASE_URL}${path}`, body === undefined ? "" : body);
+  if (LOG)
+    console.log(
+      `[apiClient] --> ${method} ${BASE_URL}${path}`,
+      body === undefined ? "" : body,
+    );
 
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
@@ -106,7 +118,8 @@ async function request<TResponse>(
   }
 
   const data = await response.json();
-  if (LOG) console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, data);
+  if (LOG)
+    console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, data);
   return data as TResponse;
 }
 
