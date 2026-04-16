@@ -1,4 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const LOG = process.env.NEXT_PUBLIC_DEBUG === "true";
 
 export class ApiError extends Error {
   constructor(
@@ -23,6 +24,65 @@ interface MutationOptions<TBody> extends RequestOptions {
   body?: TBody;
 }
 
+function getAuthHeaders(): Record<string, string> {
+  if (globalThis.window === undefined) return {};
+  const token =
+    localStorage.getItem("token") ??
+    document.cookie
+      .split("; ")
+      .find((c) => c.startsWith("token="))
+      ?.slice("token=".length);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function parseErrorData(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return undefined;
+  }
+}
+
+function extractErrorMessage(errorData: unknown, response: Response): string {
+  if (
+    typeof errorData === "object" &&
+    errorData !== null &&
+    "message" in errorData &&
+    typeof (errorData as Record<string, unknown>).message === "string"
+  ) {
+    return (errorData as Record<string, string>).message;
+  }
+  return `HTTP ${response.status}: ${response.statusText}`;
+}
+
+function handleUnauthorized(): never {
+  globalThis.localStorage.removeItem("token");
+  globalThis.document.cookie = "token=; path=/; max-age=0";
+  globalThis.window.location.href = "/login";
+  throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
+}
+
+async function throwForResponse(
+  method: HttpMethod,
+  path: string,
+  response: Response,
+): Promise<never> {
+  if (response.status === 401) {
+    if (globalThis.window === undefined) {
+      throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
+    }
+    handleUnauthorized();
+  }
+  const errorData = await parseErrorData(response);
+  const message = extractErrorMessage(errorData, response);
+  if (LOG)
+    console.log(
+      `[apiClient] <-- ${method} ${path} ${response.status}`,
+      errorData,
+    );
+  throw new ApiError(response.status, message, errorData);
+}
+
 async function request<TResponse>(
   method: HttpMethod,
   path: string,
@@ -30,21 +90,18 @@ async function request<TResponse>(
 ): Promise<TResponse> {
   const { headers, signal, body } = options;
 
-  const authHeaders: Record<string, string> = {};
-  if (typeof document !== "undefined") {
-    const token = document.cookie
-      .split("; ")
-      .find((c) => c.startsWith("token="))
-      ?.split("=")[1];
-    if (token) authHeaders["Authorization"] = `Bearer ${token}`;
-  }
+  if (LOG)
+    console.log(
+      `[apiClient] --> ${method} ${BASE_URL}${path}`,
+      body === undefined ? "" : body,
+    );
 
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
-      ...authHeaders,
+      ...getAuthHeaders(),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -52,29 +109,18 @@ async function request<TResponse>(
   });
 
   if (!response.ok) {
-    let errorData: unknown;
-    try {
-      errorData = await response.json();
-    } catch {
-      errorData = undefined;
-    }
-
-    const message =
-      typeof errorData === "object" &&
-      errorData !== null &&
-      "message" in errorData &&
-      typeof (errorData as Record<string, unknown>).message === "string"
-        ? (errorData as Record<string, string>).message
-        : `HTTP ${response.status}: ${response.statusText}`;
-
-    throw new ApiError(response.status, message, errorData);
+    await throwForResponse(method, path, response);
   }
 
   if (response.status === 204) {
+    if (LOG) console.log(`[apiClient] <-- ${method} ${path} 204 No Content`);
     return undefined as TResponse;
   }
 
-  return response.json() as Promise<TResponse>;
+  const data = await response.json();
+  if (LOG)
+    console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, data);
+  return data as TResponse;
 }
 
 export const apiClient = {
