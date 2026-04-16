@@ -28,8 +28,9 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { token } = await login({ email, password });
-      document.cookie = `token=${token}; path=/; SameSite=Strict`;
+      const { accessToken } = await login({ email, password });
+      document.cookie = `token=${accessToken}; path=/; SameSite=Strict`;
+      localStorage.setItem("token", accessToken);
       router.push("/");
     } catch (err) {
       setError(
