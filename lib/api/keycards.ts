@@ -1,20 +1,202 @@
 import { apiClient } from "@/lib/apiClient";
 
+export type KeycardStatus = "available" | "in_use" | "disabled";
+
+export interface PageMetadata {
+  size: number;
+  number: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export interface KeycardResponse {
   id: string;
   keycardNumber: string;
-  status: string;
+  active: boolean;
+  status: KeycardStatus;
   assignedUser: string | null;
+  assignedTime: string | null;
   lastReturnTime: string | null;
+  validUntil: string | null;
 }
 
-interface KeycardPage {
+export interface KeycardDetailResponse extends KeycardResponse {
+  assignedPersonInRoleId: string | null;
+}
+
+export interface KeycardListPage {
   content: KeycardResponse[];
+  page: PageMetadata | null;
+}
+
+interface KeycardQueryOptions {
+  page?: number;
+  size?: number;
+  search?: string;
+  status?: KeycardStatus;
+}
+
+interface RawPagedResponse {
+  content?: unknown[];
+  page?: Partial<PageMetadata>;
+}
+
+type UnknownRecord = Record<string, unknown>;
+
+export async function getKeycards(
+  options: KeycardQueryOptions = {},
+): Promise<KeycardListPage> {
+  const params = new URLSearchParams();
+  params.set("page", String(options.page ?? 0));
+  params.set("size", String(options.size ?? 100));
+
+  if (options.search) {
+    params.set("search", options.search);
+  }
+
+  if (options.status) {
+    params.set("status", options.status);
+  }
+
+  const page = await apiClient.get<RawPagedResponse>(
+    `/api/keycards?${params.toString()}`,
+  );
+
+  return {
+    content: Array.isArray(page.content)
+      ? page.content.map(mapKeycardSummary).filter(isDefined)
+      : [],
+    page: page.page ? mapPageMetadata(page.page) : null,
+  };
 }
 
 export async function getAvailableKeycards(): Promise<KeycardResponse[]> {
-  const page = await apiClient.get<KeycardPage>(
-    "/api/keycards?status=available&size=200",
-  );
+  const page = await getKeycards({ status: "available", size: 200 });
   return page.content;
+}
+
+export async function getKeycard(
+  cardId: string,
+): Promise<KeycardDetailResponse> {
+  const raw = await apiClient.get<unknown>(`/api/keycards/${cardId}`);
+  const record = asRecord(raw);
+
+  if (!record) {
+    throw new Error("Võtmekaardi andmeid ei õnnestunud töödelda.");
+  }
+
+  const summary = mapKeycardSummary(record);
+
+  if (!summary) {
+    throw new Error("Võtmekaardi andmeid ei õnnestunud töödelda.");
+  }
+
+  return {
+    ...summary,
+    assignedPersonInRoleId: pickString(record, ["assignedPersonInRoleId"]),
+  };
+}
+
+export function getKeycardStatusLabel(status: KeycardStatus): string {
+  switch (status) {
+    case "available":
+      return "Saadaval";
+    case "in_use":
+      return "Kasutuses";
+    case "disabled":
+      return "Deaktiveeritud";
+  }
+}
+
+function mapPageMetadata(page: Partial<PageMetadata>): PageMetadata {
+  return {
+    size: Number(page.size ?? 0),
+    number: Number(page.number ?? 0),
+    totalElements: Number(page.totalElements ?? 0),
+    totalPages: Number(page.totalPages ?? 0),
+  };
+}
+
+function mapKeycardSummary(raw: unknown): KeycardResponse | null {
+  const record = asRecord(raw);
+
+  if (!record) {
+    return null;
+  }
+
+  const id = pickString(record, ["id"]);
+  const keycardNumber = pickString(record, ["keycardNumber"]);
+
+  if (!id || !keycardNumber) {
+    return null;
+  }
+
+  const active = pickBoolean(record, ["active"]) ?? true;
+  const assignedUser = pickString(record, ["assignedUser"]);
+  const assignedTime = pickString(record, ["assignedTime"]);
+  const lastReturnTime = pickString(record, ["lastReturnTime"]);
+  const validUntil = pickString(record, ["validUntil"]);
+
+  return {
+    id,
+    keycardNumber,
+    active,
+    status: normalizeStatus(active, assignedUser, assignedTime),
+    assignedUser,
+    assignedTime,
+    lastReturnTime,
+    validUntil,
+  };
+}
+
+function normalizeStatus(
+  active: boolean,
+  assignedUser: string | null,
+  assignedTime: string | null,
+): KeycardStatus {
+  if (!active) {
+    return "disabled";
+  }
+
+  if (assignedUser || assignedTime) {
+    return "in_use";
+  }
+
+  return "available";
+}
+
+function pickString(record: UnknownRecord, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function pickBoolean(record: UnknownRecord, keys: string[]): boolean | null {
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === "boolean") {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function asRecord(value: unknown): UnknownRecord | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as UnknownRecord;
+}
+
+function isDefined<TValue>(value: TValue | null): value is TValue {
+  return value !== null;
 }
