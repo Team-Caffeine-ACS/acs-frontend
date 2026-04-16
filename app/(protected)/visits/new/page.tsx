@@ -81,11 +81,7 @@ export default function NewVisitPage() {
   const hostAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      getAccessPoints(),
-      getAvailableKeycards(),
-      getDocumentTypes(),
-    ])
+    Promise.all([getAccessPoints(), getAvailableKeycards(), getDocumentTypes()])
       .then(([ap, kc, dt]) => {
         setAccessPoints(ap);
         setKeycards(kc);
