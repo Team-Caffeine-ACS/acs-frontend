@@ -85,11 +85,17 @@ export default function NewVisitPage() {
       getAccessPoints(),
       getAvailableKeycards(),
       getDocumentTypes(),
-    ]).then(([ap, kc, dt]) => {
-      setAccessPoints(ap);
-      setKeycards(kc);
-      setDocumentTypes(dt);
-    });
+    ])
+      .then(([ap, kc, dt]) => {
+        setAccessPoints(ap);
+        setKeycards(kc);
+        setDocumentTypes(dt);
+      })
+      .catch((err) => {
+        if (err instanceof ApiError) {
+          setSubmitError(err.message);
+        }
+      });
   }, []);
 
   const handleVisitorSearch = async () => {
