@@ -81,7 +81,6 @@ eslint.config.mjs  ESLint configuration
 postcss.config.mjs PostCSS configuration
 ```
 
-
 ## Team
 
 - Andrus Rähni - <https://github.com/mugulane>
