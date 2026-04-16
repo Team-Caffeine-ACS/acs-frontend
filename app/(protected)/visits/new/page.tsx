@@ -168,7 +168,7 @@ export default function NewVisitPage() {
         personId = selectedVisitor!.personId;
       }
 
-      await createVisit({
+      const createdVisit = await createVisit({
         personId,
         accessPointId,
         keycardId: keycardId || undefined,
@@ -176,7 +176,7 @@ export default function NewVisitPage() {
         comment: comment.trim() || undefined,
       });
 
-      router.push("/");
+      router.push(`/visits/${createdVisit.visitId}`);
     } catch (err) {
       setSubmitError(
         err instanceof ApiError
