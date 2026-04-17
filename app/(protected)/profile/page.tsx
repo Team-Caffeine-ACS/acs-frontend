@@ -26,10 +26,14 @@ const inputCls =
 const SKELETON_KEYS = ["sk-a", "sk-b", "sk-c", "sk-d"];
 
 function validatePassword(password: string, confirm: string): string | null {
-  if (password.length < 8) return "Parool peab olema vähemalt 8 tähemärki pikk.";
-  if (!/[A-Z]/.test(password)) return "Parool peab sisaldama vähemalt ühte suurtähte.";
-  if (!/[a-z]/.test(password)) return "Parool peab sisaldama vähemalt ühte väiketähte.";
-  if (!/[^A-Za-z0-9]/.test(password)) return "Parool peab sisaldama vähemalt ühte erimärki.";
+  if (password.length < 8)
+    return "Parool peab olema vähemalt 8 tähemärki pikk.";
+  if (!/[A-Z]/.test(password))
+    return "Parool peab sisaldama vähemalt ühte suurtähte.";
+  if (!/[a-z]/.test(password))
+    return "Parool peab sisaldama vähemalt ühte väiketähte.";
+  if (!/[^A-Za-z0-9]/.test(password))
+    return "Parool peab sisaldama vähemalt ühte erimärki.";
   if (password !== confirm) return "Paroolid ei kattu.";
   return null;
 }
@@ -118,7 +122,9 @@ export default function ProfilePage() {
   }
 
   const { person } = me;
-  const displayName = person ? `${person.givenName} ${person.surname}` : me.email;
+  const displayName = person
+    ? `${person.givenName} ${person.surname}`
+    : me.email;
   const initials = person
     ? `${person.givenName[0]}${person.surname[0]}`.toUpperCase()
     : me.email[0].toUpperCase();
@@ -146,12 +152,36 @@ export default function ProfilePage() {
         <Row icon={<ShieldIcon />} label="Roll" value={ROLE_LABELS[me.role]} />
         {person ? (
           <>
-            <Row icon={<BadgeIcon />} label="Eesnimi" value={person.givenName} />
-            <Row icon={<BadgeIcon />} label="Perekonnanimi" value={person.surname} />
-            <Row icon={<FingerprintIcon />} label="Isikukood" value={person.socialSecurityNumber} />
-            <Row icon={<WorkIcon />} label="Ametinimetus" value={person.jobTitle} />
-            <Row icon={<AccountTreeIcon />} label="Osakond" value={person.department} />
-            <Row icon={<BusinessIcon />} label="Organisatsioon" value={person.organization} />
+            <Row
+              icon={<BadgeIcon />}
+              label="Eesnimi"
+              value={person.givenName}
+            />
+            <Row
+              icon={<BadgeIcon />}
+              label="Perekonnanimi"
+              value={person.surname}
+            />
+            <Row
+              icon={<FingerprintIcon />}
+              label="Isikukood"
+              value={person.socialSecurityNumber}
+            />
+            <Row
+              icon={<WorkIcon />}
+              label="Ametinimetus"
+              value={person.jobTitle}
+            />
+            <Row
+              icon={<AccountTreeIcon />}
+              label="Osakond"
+              value={person.department}
+            />
+            <Row
+              icon={<BusinessIcon />}
+              label="Organisatsioon"
+              value={person.organization}
+            />
           </>
         ) : (
           <div className="px-6 py-4 text-sm text-slate-400">
@@ -169,7 +199,10 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-1.5">
-            <label htmlFor="new-email" className="block text-sm font-medium text-slate-700">
+            <label
+              htmlFor="new-email"
+              className="block text-sm font-medium text-slate-700"
+            >
               Uus e-post
             </label>
             <input
@@ -190,7 +223,10 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="new-password" className="block text-sm font-medium text-slate-700">
+            <label
+              htmlFor="new-password"
+              className="block text-sm font-medium text-slate-700"
+            >
               Uus parool
             </label>
             <input
@@ -205,7 +241,10 @@ export default function ProfilePage() {
 
           {newPassword && (
             <div className="space-y-1.5">
-              <label htmlFor="confirm-password" className="block text-sm font-medium text-slate-700">
+              <label
+                htmlFor="confirm-password"
+                className="block text-sm font-medium text-slate-700"
+              >
                 Korda parooli
               </label>
               <input
@@ -258,7 +297,9 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-4 px-6 py-4">
-      <span className="text-slate-400 shrink-0 [&>svg]:text-[20px]">{icon}</span>
+      <span className="text-slate-400 shrink-0 [&>svg]:text-[20px]">
+        {icon}
+      </span>
       <div className="min-w-0">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           {label}
