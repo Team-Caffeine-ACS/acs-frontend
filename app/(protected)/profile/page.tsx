@@ -23,11 +23,21 @@ const ROLE_LABELS: Record<MeResponse["role"], string> = {
 const inputCls =
   "w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition";
 
+const SKELETON_KEYS = ["sk-a", "sk-b", "sk-c", "sk-d"];
+
+function validatePassword(password: string, confirm: string): string | null {
+  if (password.length < 8) return "Parool peab olema vähemalt 8 tähemärki pikk.";
+  if (!/[A-Z]/.test(password)) return "Parool peab sisaldama vähemalt ühte suurtähte.";
+  if (!/[a-z]/.test(password)) return "Parool peab sisaldama vähemalt ühte väiketähte.";
+  if (!/[^A-Za-z0-9]/.test(password)) return "Parool peab sisaldama vähemalt ühte erimärki.";
+  if (password !== confirm) return "Paroolid ei kattu.";
+  return null;
+}
+
 export default function ProfilePage() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Edit form state
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -52,25 +62,11 @@ export default function ProfilePage() {
       setSaveError("Sisesta uus e-post ja/või uus parool.");
       return;
     }
+
     if (newPassword) {
-      if (newPassword.length < 8) {
-        setSaveError("Parool peab olema vähemalt 8 tähemärki pikk.");
-        return;
-      }
-      if (!/[A-Z]/.test(newPassword)) {
-        setSaveError("Parool peab sisaldama vähemalt ühte suurtähte.");
-        return;
-      }
-      if (!/[a-z]/.test(newPassword)) {
-        setSaveError("Parool peab sisaldama vähemalt ühte väiketähte.");
-        return;
-      }
-      if (!/[^A-Za-z0-9]/.test(newPassword)) {
-        setSaveError("Parool peab sisaldama vähemalt ühte erimärki.");
-        return;
-      }
-      if (newPassword !== confirmPassword) {
-        setSaveError("Paroolid ei kattu.");
+      const passwordError = validatePassword(newPassword, confirmPassword);
+      if (passwordError) {
+        setSaveError(passwordError);
         return;
       }
     }
@@ -84,9 +80,9 @@ export default function ProfilePage() {
       await updateMe(body);
       if (newEmail) {
         // JWT subject is the old email — token is now stale, must re-login.
-        localStorage.removeItem("token");
-        document.cookie = "token=; path=/; max-age=0";
-        window.location.href = "/login";
+        globalThis.localStorage.removeItem("token");
+        globalThis.document.cookie = "token=; path=/; max-age=0";
+        globalThis.window.location.href = "/login";
         return;
       }
       setNewPassword("");
@@ -114,17 +110,15 @@ export default function ProfilePage() {
   if (!me) {
     return (
       <div className="max-w-xl mx-auto space-y-4 animate-pulse">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-16 rounded-2xl bg-slate-100" />
+        {SKELETON_KEYS.map((key) => (
+          <div key={key} className="h-16 rounded-2xl bg-slate-100" />
         ))}
       </div>
     );
   }
 
   const { person } = me;
-  const displayName = person
-    ? `${person.givenName} ${person.surname}`
-    : me.email;
+  const displayName = person ? `${person.givenName} ${person.surname}` : me.email;
   const initials = person
     ? `${person.givenName[0]}${person.surname[0]}`.toUpperCase()
     : me.email[0].toUpperCase();
@@ -152,36 +146,12 @@ export default function ProfilePage() {
         <Row icon={<ShieldIcon />} label="Roll" value={ROLE_LABELS[me.role]} />
         {person ? (
           <>
-            <Row
-              icon={<BadgeIcon />}
-              label="Eesnimi"
-              value={person.givenName}
-            />
-            <Row
-              icon={<BadgeIcon />}
-              label="Perekonnanimi"
-              value={person.surname}
-            />
-            <Row
-              icon={<FingerprintIcon />}
-              label="Isikukood"
-              value={person.socialSecurityNumber}
-            />
-            <Row
-              icon={<WorkIcon />}
-              label="Ametinimetus"
-              value={person.jobTitle}
-            />
-            <Row
-              icon={<AccountTreeIcon />}
-              label="Osakond"
-              value={person.department}
-            />
-            <Row
-              icon={<BusinessIcon />}
-              label="Organisatsioon"
-              value={person.organization}
-            />
+            <Row icon={<BadgeIcon />} label="Eesnimi" value={person.givenName} />
+            <Row icon={<BadgeIcon />} label="Perekonnanimi" value={person.surname} />
+            <Row icon={<FingerprintIcon />} label="Isikukood" value={person.socialSecurityNumber} />
+            <Row icon={<WorkIcon />} label="Ametinimetus" value={person.jobTitle} />
+            <Row icon={<AccountTreeIcon />} label="Osakond" value={person.department} />
+            <Row icon={<BusinessIcon />} label="Organisatsioon" value={person.organization} />
           </>
         ) : (
           <div className="px-6 py-4 text-sm text-slate-400">
@@ -199,10 +169,11 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700">
+            <label htmlFor="new-email" className="block text-sm font-medium text-slate-700">
               Uus e-post
             </label>
             <input
+              id="new-email"
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
@@ -219,10 +190,11 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700">
+            <label htmlFor="new-password" className="block text-sm font-medium text-slate-700">
               Uus parool
             </label>
             <input
+              id="new-password"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -233,10 +205,11 @@ export default function ProfilePage() {
 
           {newPassword && (
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-700">
+              <label htmlFor="confirm-password" className="block text-sm font-medium text-slate-700">
                 Korda parooli
               </label>
               <input
+                id="confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -285,9 +258,7 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-4 px-6 py-4">
-      <span className="text-slate-400 shrink-0 [&>svg]:text-[20px]">
-        {icon}
-      </span>
+      <span className="text-slate-400 shrink-0 [&>svg]:text-[20px]">{icon}</span>
       <div className="min-w-0">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           {label}
