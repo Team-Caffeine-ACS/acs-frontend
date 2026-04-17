@@ -19,13 +19,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run Jest tests with coverage
-        run: npm test -- --coverage --passWithNoTests
+        run: npm test
 
       # ❗ IMPORTANT:
       # SonarCloud GitHub App will automatically pick up the analysis.
