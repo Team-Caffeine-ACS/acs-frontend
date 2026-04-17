@@ -8,6 +8,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import KeyIcon from "@mui/icons-material/Key";
 import HistoryIcon from "@mui/icons-material/History";
 import SettingsIcon from "@mui/icons-material/Settings";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 export function AppSidebar() {
   const pathname = usePathname(); // 3. Haara praegune aadress (nt "/" või "/visitors")
@@ -89,16 +90,31 @@ export function AppSidebar() {
         </Link>
       </nav>
 
-      <div className="mt-auto rounded-xl bg-slate-50 p-4 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-          Süsteemi olek
-        </p>
-        <div className="mt-2 flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 tracking-tight">
-            Kõik töökorras
+      <div className="mt-auto space-y-3">
+        <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            Süsteemi olek
           </p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 tracking-tight">
+              Kõik töökorras
+            </p>
+          </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            localStorage.removeItem("token");
+            document.cookie = "token=; path=/; max-age=0";
+            window.location.href = "/login";
+          }}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400 transition-all"
+        >
+          <LogoutIcon className="text-[20px]" />
+          <span className="text-sm">Logi välja</span>
+        </button>
       </div>
     </aside>
   );
