@@ -8,18 +8,18 @@ const config = {
 
   testMatch: [
     "**/__tests__/**/*.(test|spec).(ts|tsx)",
-    "**/?(*.)+(test|spec).(ts|tsx)"
+    "**/?(*.)+(test|spec).(ts|tsx)",
   ],
 
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/$1"
+    "^@/(.*)$": "<rootDir>/$1",
   },
 
   setupFilesAfterEnv: ["<rootDir>/setupTests.ts"],
 
   collectCoverage: true,
   coverageReporters: ["lcov", "text-summary"],
-  coverageDirectory: "coverage"
+  coverageDirectory: "coverage",
 };
 
 export default config;

@@ -110,22 +110,26 @@ The frontend project uses Jest and Istanbul to generate code coverage reports.
 Coverage is automatically collected during CI and uploaded to SonarCloud, which provides file‑level and line‑level visibility.
 
 **Running tests locally**
-``` Bash
+
+```Bash
 
 npm test
 ```
+
 To generate a coverage report:
 
-```Bash 
+```Bash
 
 npm test -- --coverage
 ```
 
 This produces:
+
 ```Code
 
 coverage/lcov.info
 ```
+
 **SonarCloud configuration**
 
 The repository includes a sonar-project.properties file that configures SonarCloud to read Jest coverage:
