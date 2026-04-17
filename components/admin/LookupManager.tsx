@@ -89,7 +89,9 @@ export function LookupManager({ api }: Props) {
       setRecords((prev) => prev.map((r) => (r.id === id ? updated : r)));
       setEditId(null);
     } catch (err) {
-      setEditError(err instanceof ApiError ? err.message : "Viga salvestamisel.");
+      setEditError(
+        err instanceof ApiError ? err.message : "Viga salvestamisel.",
+      );
     } finally {
       setIsSavingEdit(false);
     }
@@ -102,7 +104,9 @@ export function LookupManager({ api }: Props) {
       setRecords((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       // Re-surface delete errors via edit error slot for visibility
-      setEditError(err instanceof ApiError ? err.message : "Viga kustutamisel.");
+      setEditError(
+        err instanceof ApiError ? err.message : "Viga kustutamisel.",
+      );
     } finally {
       setDeletingId(null);
     }
@@ -163,7 +167,10 @@ export function LookupManager({ api }: Props) {
         ) : (
           <ul className="divide-y divide-slate-100">
             {records.map((record) => (
-              <li key={record.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition-colors">
+              <li
+                key={record.id}
+                className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition-colors"
+              >
                 {editId === record.id ? (
                   <>
                     <input

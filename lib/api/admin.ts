@@ -7,8 +7,7 @@ export interface LookupRecord {
 
 function crudFor(base: string) {
   return {
-    list: (): Promise<LookupRecord[]> =>
-      apiClient.get<LookupRecord[]>(base),
+    list: (): Promise<LookupRecord[]> => apiClient.get<LookupRecord[]>(base),
     create: (name: string): Promise<LookupRecord> =>
       apiClient.post<LookupRecord, { name: string }>(base, { name }),
     update: (id: string, name: string): Promise<LookupRecord> =>
