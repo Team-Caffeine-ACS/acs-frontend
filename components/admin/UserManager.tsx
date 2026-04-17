@@ -205,32 +205,16 @@ export function UserManager() {
             {users.map((user) => (
               <li key={user.id} className="bg-white hover:bg-slate-50 transition-colors">
                 {editId === user.id ? (
-                  <div className="px-4 py-3 space-y-3">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Muuda kasutajat</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="block text-xs font-medium text-slate-600">Uus e-post</label>
-                        <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)}
-                          maxLength={255} className={inputCls} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="block text-xs font-medium text-slate-600">Uus parool</label>
-                        <input type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)}
-                          placeholder="Jäta tühjaks, kui ei muuda" className={inputCls} />
-                      </div>
-                    </div>
-                    {editError && <p className="text-xs font-semibold text-rose-600">{editError}</p>}
-                    <div className="flex justify-end gap-2">
-                      <button type="button" onClick={cancelEdit}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
-                        <CloseIcon className="!text-base" /> Tühista
-                      </button>
-                      <button type="button" onClick={() => handleSaveEdit(user.id)} disabled={isSavingEdit}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-colors">
-                        <CheckIcon className="!text-base" /> Salvesta
-                      </button>
-                    </div>
-                  </div>
+                  <EditUserForm
+                    email={editEmail}
+                    password={editPassword}
+                    error={editError}
+                    isSaving={isSavingEdit}
+                    onEmailChange={setEditEmail}
+                    onPasswordChange={setEditPassword}
+                    onSave={() => handleSaveEdit(user.id)}
+                    onCancel={cancelEdit}
+                  />
                 ) : (
                   <div className="flex items-center gap-3 px-4 py-3">
                     <div className="size-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
@@ -260,6 +244,51 @@ export function UserManager() {
             ))}
           </ul>
         )}
+      </div>
+    </div>
+  );
+}
+
+interface EditUserFormProps {
+  readonly email: string;
+  readonly password: string;
+  readonly error: string | null;
+  readonly isSaving: boolean;
+  readonly onEmailChange: (v: string) => void;
+  readonly onPasswordChange: (v: string) => void;
+  readonly onSave: () => void;
+  readonly onCancel: () => void;
+}
+
+function EditUserForm({ email, password, error, isSaving, onEmailChange, onPasswordChange, onSave, onCancel }: EditUserFormProps) {
+  const editEmailId = useId();
+  const editPasswordId = useId();
+
+  return (
+    <div className="px-4 py-3 space-y-3">
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Muuda kasutajat</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label htmlFor={editEmailId} className="block text-xs font-medium text-slate-600">Uus e-post</label>
+          <input id={editEmailId} type="email" value={email} onChange={(e) => onEmailChange(e.target.value)}
+            maxLength={255} className={inputCls} />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor={editPasswordId} className="block text-xs font-medium text-slate-600">Uus parool</label>
+          <input id={editPasswordId} type="password" value={password} onChange={(e) => onPasswordChange(e.target.value)}
+            placeholder="Jäta tühjaks, kui ei muuda" className={inputCls} />
+        </div>
+      </div>
+      {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onCancel}
+          className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+          <CloseIcon className="!text-base" /> Tühista
+        </button>
+        <button type="button" onClick={onSave} disabled={isSaving}
+          className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-colors">
+          <CheckIcon className="!text-base" /> Salvesta
+        </button>
       </div>
     </div>
   );
