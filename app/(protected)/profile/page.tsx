@@ -94,7 +94,9 @@ export default function ProfilePage() {
       setSaveSuccess(true);
     } catch (err) {
       setSaveError(
-        err instanceof ApiError ? err.message : "Salvestamine ebaõnnestus. Proovi uuesti.",
+        err instanceof ApiError
+          ? err.message
+          : "Salvestamine ebaõnnestus. Proovi uuesti.",
       );
     } finally {
       setIsSaving(false);
@@ -120,7 +122,9 @@ export default function ProfilePage() {
   }
 
   const { person } = me;
-  const displayName = person ? `${person.givenName} ${person.surname}` : me.email;
+  const displayName = person
+    ? `${person.givenName} ${person.surname}`
+    : me.email;
   const initials = person
     ? `${person.givenName[0]}${person.surname[0]}`.toUpperCase()
     : me.email[0].toUpperCase();
@@ -148,12 +152,36 @@ export default function ProfilePage() {
         <Row icon={<ShieldIcon />} label="Roll" value={ROLE_LABELS[me.role]} />
         {person ? (
           <>
-            <Row icon={<BadgeIcon />} label="Eesnimi" value={person.givenName} />
-            <Row icon={<BadgeIcon />} label="Perekonnanimi" value={person.surname} />
-            <Row icon={<FingerprintIcon />} label="Isikukood" value={person.socialSecurityNumber} />
-            <Row icon={<WorkIcon />} label="Ametinimetus" value={person.jobTitle} />
-            <Row icon={<AccountTreeIcon />} label="Osakond" value={person.department} />
-            <Row icon={<BusinessIcon />} label="Organisatsioon" value={person.organization} />
+            <Row
+              icon={<BadgeIcon />}
+              label="Eesnimi"
+              value={person.givenName}
+            />
+            <Row
+              icon={<BadgeIcon />}
+              label="Perekonnanimi"
+              value={person.surname}
+            />
+            <Row
+              icon={<FingerprintIcon />}
+              label="Isikukood"
+              value={person.socialSecurityNumber}
+            />
+            <Row
+              icon={<WorkIcon />}
+              label="Ametinimetus"
+              value={person.jobTitle}
+            />
+            <Row
+              icon={<AccountTreeIcon />}
+              label="Osakond"
+              value={person.department}
+            />
+            <Row
+              icon={<BusinessIcon />}
+              label="Organisatsioon"
+              value={person.organization}
+            />
           </>
         ) : (
           <div className="px-6 py-4 text-sm text-slate-400">
@@ -184,7 +212,8 @@ export default function ProfilePage() {
             />
             {newEmail && (
               <p className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                Ettevaatust! E-posti vahetamisel logitakse teid automaatselt välja ja te peate uue e-posti aadressiga uuesti sisse logima.
+                Ettevaatust! E-posti vahetamisel logitakse teid automaatselt
+                välja ja te peate uue e-posti aadressiga uuesti sisse logima.
               </p>
             )}
           </div>
@@ -256,7 +285,9 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-4 px-6 py-4">
-      <span className="text-slate-400 shrink-0 [&>svg]:text-[20px]">{icon}</span>
+      <span className="text-slate-400 shrink-0 [&>svg]:text-[20px]">
+        {icon}
+      </span>
       <div className="min-w-0">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           {label}
