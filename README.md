@@ -104,6 +104,42 @@ postcss.config.mjs PostCSS configuration
 
 As the frontend grows, shared UI, API, utility, and type modules can be added as dedicated top-level directories.
 
+## Test Coverage & SonarCloud Integration
+
+The frontend project uses Jest and Istanbul to generate code coverage reports.
+Coverage is automatically collected during CI and uploaded to SonarCloud, which provides file‑level and line‑level visibility.
+
+**Running tests locally**
+``` Bash
+
+npm test
+```
+To generate a coverage report:
+
+```Bash 
+
+npm test -- --coverage
+```
+
+This produces:
+```Code
+
+coverage/lcov.info
+```
+**SonarCloud configuration**
+
+The repository includes a sonar-project.properties file that configures SonarCloud to read Jest coverage:
+
+```Code
+
+sonar.javascript.lcov.reportPaths=coverage/lcov.info
+```
+
+**CI integration**
+
+- A GitHub Actions workflow (frontend-coverage.yml) runs Jest with coverage on every push and pull request.
+- The SonarCloud GitHub App automatically imports the LCOV report and updates the PR with coverage results.
+
 ## Team
 
 - Andrus Rähni - <https://github.com/mugulane>
