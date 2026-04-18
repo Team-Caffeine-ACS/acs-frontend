@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 
 export function AppHeader() {
+  const currentDate = new Intl.DateTimeFormat("et-EE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date());
+
   return (
     <header className="flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-8 dark:border-slate-800 dark:bg-slate-900 z-10 shrink-0">
       <div className="flex items-center gap-8">
@@ -28,7 +34,6 @@ export function AppHeader() {
         </div>
       </div>
 
-      {/* PAREM POOL: Navigatsioon ja Profiil */}
         <div className="flex items-center gap-6">
         <nav className="hidden items-center gap-6 lg:flex">
           <Link
@@ -52,9 +57,11 @@ export function AppHeader() {
         </nav>
 
         <div className="flex items-center gap-3 border-l border-slate-200 dark:border-slate-700 pl-6">
-          <div className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm shadow-primary/20">
+          <div className="flex items-center gap-2 rounded-lg bg-[#1152d4] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[#1152d4]/20">
             <ScheduleIcon className="text-sm" />
             <span>14:30</span>
+            <span className="text-white/60">|</span>
+            <span>{currentDate}</span>
           </div>
 
           <button
