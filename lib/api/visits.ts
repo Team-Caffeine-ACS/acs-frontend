@@ -338,10 +338,8 @@ export async function getVisits(
   searchParams.set("size", String(params?.size ?? 50));
 
   const query = searchParams.toString();
-  const raw = await apiClient.get<unknown>(
-    `/api/visits${query ? `?${query}` : ""}`,
-    { signal },
-  );
+  const path = query ? `/api/visits?${query}` : "/api/visits";
+  const raw = await apiClient.get<unknown>(path, { signal });
 
   return normalizeVisitListResponse(raw);
 }

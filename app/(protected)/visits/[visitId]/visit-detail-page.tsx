@@ -794,6 +794,13 @@ function VisitAuditLogSection({
   readonly timelineState: RequestState<VisitTimelineEvent[]>;
   readonly reversedTimeline: VisitTimelineEvent[];
 }) {
+  const isLoadingInitialTimeline =
+    timelineState.isLoading && !timelineState.data;
+  const shouldShowEmptyAuditLog =
+    !timelineState.isLoading &&
+    !timelineState.error &&
+    reversedTimeline.length === 0;
+
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
@@ -805,13 +812,9 @@ function VisitAuditLogSection({
       </div>
 
       <div className="divide-y divide-slate-100">
-        {timelineState.isLoading && !timelineState.data ? (
-          <SectionSkeleton lines={3} />
-        ) : null}
+        {isLoadingInitialTimeline ? <SectionSkeleton lines={3} /> : null}
 
-        {!timelineState.isLoading &&
-        !timelineState.error &&
-        reversedTimeline.length === 0 ? (
+        {shouldShowEmptyAuditLog ? (
           <EmptyState
             title="Auditi logi puudub"
             description="Backend ei tagastanud selle külastuse kohta ühtegi logisündmust."
@@ -870,6 +873,15 @@ function VisitTimelineSection({
   readonly sortedTimeline: VisitTimelineEvent[];
   readonly onRetry: () => void;
 }) {
+  const isLoadingInitialTimeline =
+    timelineState.isLoading && !timelineState.data;
+  const hasTimelineError = timelineState.error != null;
+  const hasTimelineEvents = !hasTimelineError && sortedTimeline.length > 0;
+  const shouldShowEmptyTimeline =
+    !timelineState.isLoading &&
+    !hasTimelineError &&
+    sortedTimeline.length === 0;
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
       <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-8">
@@ -877,11 +889,9 @@ function VisitTimelineSection({
         Külastuse ajajoon
       </div>
 
-      {timelineState.isLoading && !timelineState.data ? (
-        <SectionSkeleton lines={4} />
-      ) : null}
+      {isLoadingInitialTimeline ? <SectionSkeleton lines={4} /> : null}
 
-      {timelineState.error ? (
+      {hasTimelineError ? (
         <SectionError
           title="Ajajoont ei saanud laadida"
           description={timelineState.error}
@@ -891,11 +901,12 @@ function VisitTimelineSection({
         />
       ) : null}
 
-      {!timelineState.error && sortedTimeline.length > 0 ? (
+      {hasTimelineEvents ? (
         <ol className="space-y-10">
           {sortedTimeline.map((event, index) => {
             const copy = getTimelineEventCopy(event.eventType);
             const isLast = index === sortedTimeline.length - 1;
+            const hasTrailingConnector = !isLast;
 
             return (
               <li key={event.id} className="relative flex gap-5">
@@ -908,7 +919,7 @@ function VisitTimelineSection({
                   >
                     <TimelineEventIcon eventType={event.eventType} />
                   </div>
-                  {!isLast ? (
+                  {hasTrailingConnector ? (
                     <div className="absolute top-12 h-[calc(100%+1.5rem)] w-px bg-primary/25" />
                   ) : null}
                 </div>
@@ -930,9 +941,7 @@ function VisitTimelineSection({
         </ol>
       ) : null}
 
-      {!timelineState.isLoading &&
-      !timelineState.error &&
-      sortedTimeline.length === 0 ? (
+      {shouldShowEmptyTimeline ? (
         <EmptyState
           title="Ajajoone sündmusi pole"
           description="MVP-s kuvatakse ainult sündmused, mida `/timeline` endpoint päriselt tagastab."
@@ -963,6 +972,11 @@ function VisitKeycardSection({
   readonly keycardState: RequestState<KeycardResponse>;
   readonly onRetry: () => void;
 }) {
+  const hasLinkedCard = linkedCardId != null;
+  const hasKeycardData = keycardState.data != null;
+  const hasKeycardError = keycardState.error != null;
+  const shouldShowMissingCardState = !hasLinkedCard;
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
       <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-6">
@@ -970,18 +984,18 @@ function VisitKeycardSection({
         Seotud võtmekaart
       </div>
 
-      {!linkedCardId ? (
+      {shouldShowMissingCardState ? (
         <EmptyState
           title="Kiipkaart puudub"
           description="Selle külastuse detailandmed ei sisalda seotud kaardi ID-d."
         />
       ) : null}
 
-      {linkedCardId && keycardState.isLoading ? (
+      {hasLinkedCard && keycardState.isLoading ? (
         <SectionSkeleton lines={2} />
       ) : null}
 
-      {linkedCardId && keycardState.error ? (
+      {hasLinkedCard && hasKeycardError ? (
         <SectionError
           title="Kiipkaardi andmeid ei saanud laadida"
           description={keycardState.error}
@@ -991,7 +1005,7 @@ function VisitKeycardSection({
         />
       ) : null}
 
-      {linkedCardId && keycardState.data ? (
+      {hasLinkedCard && hasKeycardData ? (
         <div className="space-y-5">
           <MetaRow
             label="Kaardi number"
