@@ -110,6 +110,10 @@ export default function KeycardDetailsPage() {
       "Kaart ei ole hetkel välja antud. Viimane teadaolev sündmus on tagastus.";
   }
 
+  const canReturnKeycard =
+    keycard.status === "in_use" &&
+    Boolean(keycard.assignedUser || keycard.assignedTime);
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 animate-in fade-in duration-500">
       <div className="space-y-4">
@@ -139,12 +143,22 @@ export default function KeycardDetailsPage() {
             <p className="max-w-2xl text-slate-500">{currentStateText}</p>
           </div>
 
-          <Button asChild variant="outline" className="gap-2 rounded-xl">
-            <Link href="/keys">
-              <ArrowBackIcon className="!text-base" />
-              Tagasi nimekirja
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            {canReturnKeycard ? (
+              <Button asChild className="gap-2 rounded-xl">
+                <Link href={`/keys/${keycard.id}/return`}>
+                  <AssignmentReturnIcon className="!text-base" />
+                  Tagasta kaart
+                </Link>
+              </Button>
+            ) : null}
+            <Button asChild variant="outline" className="gap-2 rounded-xl">
+              <Link href="/keys">
+                <ArrowBackIcon className="!text-base" />
+                Tagasi nimekirja
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 

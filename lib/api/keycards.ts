@@ -24,6 +24,10 @@ export interface KeycardDetailResponse extends KeycardResponse {
   assignedPersonInRoleId: string | null;
 }
 
+export interface ReturnKeycardRequest {
+  returnAccessPointId: string;
+}
+
 export interface KeycardListPage {
   content: KeycardResponse[];
   page: PageMetadata | null;
@@ -95,6 +99,16 @@ export async function getKeycard(
     ...summary,
     assignedPersonInRoleId: pickString(record, ["assignedPersonInRoleId"]),
   };
+}
+
+export function returnKeycard(
+  cardId: string,
+  body: ReturnKeycardRequest,
+): Promise<KeycardDetailResponse> {
+  return apiClient.post<KeycardDetailResponse, ReturnKeycardRequest>(
+    `/api/keycards/${cardId}/return`,
+    body,
+  );
 }
 
 export function getKeycardStatusLabel(status: KeycardStatus): string {
