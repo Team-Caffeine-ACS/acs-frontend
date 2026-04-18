@@ -72,14 +72,25 @@ export function AppHeader() {
             <NotificationsIcon className="text-[20px]" />
           </button>
 
-          <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200 border border-slate-200 dark:border-slate-700">
-            <Image
-              alt="User Profile"
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-              width={40} // 10 * 4px
-              height={40} // 10 * 4px
-              className="h-full w-full object-cover"
-            />
+          <div className="flex items-center gap-3 border-l border-slate-200 dark:border-slate-700 pl-6">
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                Mari Maasikas
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Administraator
+              </span>
+            </div>
+
+            <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200 border border-slate-200 dark:border-slate-700">
+              <Image
+                alt="User Profile"
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                width={40} // 10 * 4px
+                height={40} // 10 * 4px
+                className="h-full w-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </div>
