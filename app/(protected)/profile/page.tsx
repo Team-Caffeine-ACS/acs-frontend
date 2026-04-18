@@ -229,7 +229,8 @@ export default function ProfilePage() {
             >
               Uus parool{" "}
               <span className="text-xs font-normal text-slate-400">
-                (vähemalt 1 väike täht, 1 suur täht, 1 erisümbol, vähemalt 8 sümbolit)
+                (vähemalt 1 väike täht, 1 suur täht, 1 erisümbol, vähemalt 8
+                sümbolit)
               </span>
             </label>
             <input
