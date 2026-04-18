@@ -1,3 +1,4 @@
+import Link from "next/link";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import SearchIcon from "@mui/icons-material/Search";
 import ScheduleIcon from "@mui/icons-material/Schedule";
@@ -8,16 +9,15 @@ import Image from "next/image";
 export function AppHeader() {
   return (
     <header className="flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-8 dark:border-slate-800 dark:bg-slate-900 z-10 shrink-0">
-      {/* VASAK POOL: Logo ja Otsing */}
       <div className="flex items-center gap-8">
-        <div className="flex items-center text-primary">
+        <Link href="/" className="flex items-center text-primary">
           <div className="size-10 flex items-center justify-center rounded-xl">
             <VerifiedUserIcon className="text-[22px]" color="primary" />
           </div>
           <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight whitespace-nowrap">
             Pääsla infosüsteem
           </h2>
-        </div>
+        </Link>
 
         <div className="relative flex w-64 items-center">
           <SearchIcon className="absolute left-3 text-slate-400 text-[18px]" />
@@ -29,26 +29,26 @@ export function AppHeader() {
       </div>
 
       {/* PAREM POOL: Navigatsioon ja Profiil */}
-      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6">
         <nav className="hidden items-center gap-6 lg:flex">
-          <button
-            type="button"
+          <Link
+            href="/"
             className="text-sm font-semibold text-primary border-b-2 border-primary py-5"
           >
             Töölaud
-          </button>
-          <button
-            type="button"
+          </Link>
+          <Link
+            href="/reports"
             className="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
           >
             Aruanded
-          </button>
-          <button
-            type="button"
+          </Link>
+          <Link
+            href="/settings"
             className="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
           >
-            Seaded
-          </button>
+            Settings
+          </Link>
         </nav>
 
         <div className="flex items-center gap-3 border-l border-slate-200 dark:border-slate-700 pl-6">
