@@ -44,7 +44,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 
   try {
-    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const normalizedPayload = payload.replaceAll("-", "+").replaceAll("_", "/");
     const padding = "=".repeat((4 - (normalizedPayload.length % 4)) % 4);
     const decodedPayload = globalThis.atob(normalizedPayload + padding);
     return JSON.parse(decodedPayload) as Record<string, unknown>;

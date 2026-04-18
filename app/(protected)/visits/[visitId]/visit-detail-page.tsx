@@ -201,7 +201,7 @@ function getTimelineEventCopy(eventType: string): {
     default:
       return {
         eyebrow: "Sündmus",
-        title: eventType.replace(/_/g, " ").toLowerCase(),
+        title: eventType.replaceAll("_", " ").toLowerCase(),
         description: "Sündmus tagastati backendist.",
         iconClassName: "bg-slate-100 text-slate-600 ring-slate-100",
       };

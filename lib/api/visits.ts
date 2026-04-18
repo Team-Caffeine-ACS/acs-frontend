@@ -72,10 +72,13 @@ export interface VisitDetailResponse {
   keycardNumber: string | null;
 }
 
-export type VisitTimelineEventType =
+type KnownVisitTimelineEventType =
   | "ARRIVAL_REGISTERED"
-  | "DEPARTURE_REGISTERED"
-  | string;
+  | "DEPARTURE_REGISTERED";
+
+export type VisitTimelineEventType =
+  | KnownVisitTimelineEventType
+  | (string & {});
 
 export interface VisitTimelineEvent {
   id: string;
@@ -258,7 +261,7 @@ export function deriveVisitStatus(
 ): VisitStatusKey {
   const normalizedStatus = status
     ?.trim()
-    .replace(/[\s-]+/g, "_")
+    .replaceAll(/[\s-]+/g, "_")
     .toLowerCase();
 
   const mappedStatus: Record<string, VisitStatusKey> = {
