@@ -9,6 +9,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Brightness2OutlinedIcon from "@mui/icons-material/Brightness2Outlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -20,10 +22,25 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { Input } from "@/components/ui/input";
 
+const THEME_STORAGE_KEY = "theme";
+
 export function AppHeader() {
   const router = useRouter();
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (globalThis.window === undefined) {
+      return false;
+    }
+
+    const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
+
+    if (storedTheme !== null) {
+      return storedTheme === "dark";
+    }
+
+    return globalThis.document.documentElement.classList.contains("dark");
+  });
   const isMenuOpen = Boolean(menuAnchorEl);
 
   useEffect(() => {
@@ -53,6 +70,17 @@ export function AppHeader() {
     };
   }, []);
 
+  useEffect(() => {
+    const root = globalThis.document.documentElement;
+
+    root.classList.toggle("dark", isDarkMode);
+    root.style.colorScheme = isDarkMode ? "dark" : "light";
+    globalThis.localStorage.setItem(
+      THEME_STORAGE_KEY,
+      isDarkMode ? "dark" : "light",
+    );
+  }, [isDarkMode]);
+
   const currentDate = currentDateTime
     ? new Intl.DateTimeFormat("et-EE", {
         day: "2-digit",
@@ -74,6 +102,10 @@ export function AppHeader() {
 
   function handleCloseUserMenu() {
     setMenuAnchorEl(null);
+  }
+
+  function handleToggleTheme() {
+    setIsDarkMode((currentValue) => !currentValue);
   }
 
   function handleLogout() {
@@ -141,6 +173,20 @@ export function AppHeader() {
             type="button"
           >
             <NotificationsIcon className="text-[20px]" />
+          </button>
+
+          <button
+            className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+            aria-label={isDarkMode ? "Lülita hele teema" : "Lülita tume teema"}
+            title={isDarkMode ? "Lülita hele teema" : "Lülita tume teema"}
+            type="button"
+            onClick={handleToggleTheme}
+          >
+            {isDarkMode ? (
+              <LightModeOutlinedIcon className="text-[20px]" />
+            ) : (
+              <Brightness2OutlinedIcon className="text-[20px]" />
+            )}
           </button>
 
           <button
