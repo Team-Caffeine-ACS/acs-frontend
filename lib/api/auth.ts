@@ -30,7 +30,11 @@ async function requestSession<TResponse>(
   const data = await parseErrorData(response);
 
   if (!response.ok) {
-    throw new ApiError(response.status, extractErrorMessage(data, response), data);
+    throw new ApiError(
+      response.status,
+      extractErrorMessage(data, response),
+      data,
+    );
   }
 
   return data as TResponse;

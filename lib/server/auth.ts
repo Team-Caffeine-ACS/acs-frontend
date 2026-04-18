@@ -37,7 +37,9 @@ export async function postAuthToBackend(
   });
 }
 
-export async function readJsonResponse<T>(response: Response): Promise<T | null> {
+export async function readJsonResponse<T>(
+  response: Response,
+): Promise<T | null> {
   try {
     return (await response.json()) as T;
   } catch {
@@ -57,13 +59,15 @@ function decodeJwtPayload(token: string): JwtPayload {
     throw new Error("Refresh token payload is missing.");
   }
 
-  const base64 = payload.replaceAll('-', "+").replaceAll('_', "/");
+  const base64 = payload.replaceAll("-", "+").replaceAll("_", "/");
   const paddedBase64 = base64.padEnd(
     base64.length + ((4 - (base64.length % 4)) % 4),
     "=",
   );
 
-  return JSON.parse(Buffer.from(paddedBase64, "base64").toString("utf8")) as JwtPayload;
+  return JSON.parse(
+    Buffer.from(paddedBase64, "base64").toString("utf8"),
+  ) as JwtPayload;
 }
 
 function getRefreshTokenMaxAgeSeconds(refreshToken: string): number {
@@ -80,7 +84,9 @@ function getRefreshTokenMaxAgeSeconds(refreshToken: string): number {
   return Math.max(0, Math.floor(payload.exp - Date.now() / 1000));
 }
 
-export async function setRefreshTokenCookie(refreshToken: string): Promise<void> {
+export async function setRefreshTokenCookie(
+  refreshToken: string,
+): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
     httpOnly: true,

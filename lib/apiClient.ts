@@ -1,4 +1,8 @@
-import { clearStoredAccessToken, getStoredAccessToken, setStoredAccessToken } from "@/lib/auth/accessToken";
+import {
+  clearStoredAccessToken,
+  getStoredAccessToken,
+  setStoredAccessToken,
+} from "@/lib/auth/accessToken";
 import { LOGIN_PATH } from "@/lib/auth/constants";
 import { logout, refreshAccessToken } from "@/lib/api/auth";
 import { ApiError, extractErrorMessage, parseErrorData } from "@/lib/api/error";
@@ -83,13 +87,13 @@ async function handleUnauthorized(): Promise<never> {
 
 async function refreshStoredAccessToken(): Promise<string> {
   refreshRequest ??= refreshAccessToken()
-      .then(({ accessToken }) => {
-        setStoredAccessToken(accessToken);
-        return accessToken;
-      })
-      .finally(() => {
-        refreshRequest = null;
-      });
+    .then(({ accessToken }) => {
+      setStoredAccessToken(accessToken);
+      return accessToken;
+    })
+    .finally(() => {
+      refreshRequest = null;
+    });
 
   return refreshRequest;
 }
