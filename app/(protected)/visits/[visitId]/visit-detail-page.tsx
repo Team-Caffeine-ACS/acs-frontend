@@ -46,8 +46,8 @@ interface RequestState<T> {
 }
 
 const NOT_AVAILABLE = "Pole saadaval";
-const EXIT_ALLOWED_ROLES = ["ADMIN", "SECURITY_CHIEF", "RECEPTIONIST"];
-const EDIT_ALLOWED_ROLES = ["ADMIN", "SECURITY_CHIEF"];
+const EXIT_ALLOWED_ROLES = new Set(["ADMIN", "SECURITY_CHIEF", "RECEPTIONIST"]);
+const EDIT_ALLOWED_ROLES = new Set(["ADMIN", "SECURITY_CHIEF"]);
 
 function createInitialState<T>(data: T | null = null): RequestState<T> {
   return {
@@ -224,10 +224,10 @@ export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
   const roleInfo = useMemo(() => getCurrentUserRoleInfo(), []);
   const canEdit =
     roleInfo.hasRoleInfo &&
-    roleInfo.roles.some((role) => EDIT_ALLOWED_ROLES.includes(role));
+    roleInfo.roles.some((role) => EDIT_ALLOWED_ROLES.has(role));
   const canRegisterDeparture =
     !roleInfo.hasRoleInfo ||
-    roleInfo.roles.some((role) => EXIT_ALLOWED_ROLES.includes(role));
+    roleInfo.roles.some((role) => EXIT_ALLOWED_ROLES.has(role));
 
   const detail = detailState.data;
   const timeline = timelineState.data ?? [];
