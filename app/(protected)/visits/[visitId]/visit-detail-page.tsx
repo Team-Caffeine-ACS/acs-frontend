@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -230,7 +236,9 @@ interface VisitDetailViewModel {
   readonly isRegisteringDeparture: boolean;
   readonly actionError: string | null;
   readonly actionMessage: string | null;
-  readonly refreshDetail: (signal?: AbortSignal) => Promise<VisitDetailResponse | null>;
+  readonly refreshDetail: (
+    signal?: AbortSignal,
+  ) => Promise<VisitDetailResponse | null>;
   readonly refreshTimeline: (
     signal?: AbortSignal,
   ) => Promise<VisitTimelineEvent[] | null>;
@@ -350,11 +358,7 @@ function getAuditEventIconClass(iconClassName: string): string {
     : "bg-slate-100 text-slate-500";
 }
 
-function TimelineEventIcon({
-  eventType,
-}: {
-  readonly eventType: string;
-}) {
+function TimelineEventIcon({ eventType }: { readonly eventType: string }) {
   if (eventType === "ARRIVAL_REGISTERED") {
     return <LoginIcon className="!text-lg" />;
   }
@@ -376,8 +380,14 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
 
   const permissions = useMemo(() => getVisitPermissions(), []);
   const detail = detailState.data;
-  const timeline = useMemo(() => timelineState.data ?? [], [timelineState.data]);
-  const sortedTimeline = useMemo(() => sortTimelineEvents(timeline), [timeline]);
+  const timeline = useMemo(
+    () => timelineState.data ?? [],
+    [timelineState.data],
+  );
+  const sortedTimeline = useMemo(
+    () => sortTimelineEvents(timeline),
+    [timeline],
+  );
   const reversedTimeline = useMemo(
     () => [...sortedTimeline].reverse(),
     [sortedTimeline],
@@ -534,10 +544,7 @@ interface VisitDetailContentProps {
   readonly model: VisitDetailViewModel;
 }
 
-function VisitDetailContent({
-  visitId,
-  model,
-}: VisitDetailContentProps) {
+function VisitDetailContent({ visitId, model }: VisitDetailContentProps) {
   const router = useRouter();
 
   return (
@@ -630,7 +637,8 @@ function VisitPageHeader({
             </span>
           </div>
           <p className="text-slate-500 text-sm md:text-base">
-            Külastuse ID <span className="font-semibold text-slate-700">{visitId}</span>
+            Külastuse ID{" "}
+            <span className="font-semibold text-slate-700">{visitId}</span>
             {" · "}
             Alustatud{" "}
             <span className="font-semibold text-slate-700">
@@ -828,7 +836,9 @@ function VisitAuditLogSection({
                   <TimelineEventIcon eventType={event.eventType} />
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900">{copy.title}</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {copy.title}
+                  </p>
                   <p className="text-sm text-slate-500">
                     {event.description ?? copy.description}
                   </p>
