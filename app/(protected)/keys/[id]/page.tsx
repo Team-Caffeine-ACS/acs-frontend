@@ -99,11 +99,16 @@ export default function KeycardDetailsPage() {
     );
   }
 
-  const currentStateText = keycard.assignedUser
-    ? "Kaart on hetkel välja antud. Aktiivne hoidja ja väljastamise aeg on teada."
-    : keycard.lastReturnTime
-      ? "Kaart ei ole hetkel välja antud. Viimane teadaolev sündmus on tagastus."
-      : "Kaardil ei ole praegu aktiivset hoidjat ega tagastusajalugu.";
+  let currentStateText =
+    "Kaardil ei ole praegu aktiivset hoidjat ega tagastusajalugu.";
+
+  if (keycard.assignedUser) {
+    currentStateText =
+      "Kaart on hetkel välja antud. Aktiivne hoidja ja väljastamise aeg on teada.";
+  } else if (keycard.lastReturnTime) {
+    currentStateText =
+      "Kaart ei ole hetkel välja antud. Viimane teadaolev sündmus on tagastus.";
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 animate-in fade-in duration-500">
