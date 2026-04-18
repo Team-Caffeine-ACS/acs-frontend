@@ -27,7 +27,7 @@ export function AppHeader() {
   const isMenuOpen = Boolean(menuAnchorEl);
 
   useEffect(() => {
-    let intervalId: ReturnType<typeof window.setInterval> | undefined;
+    let intervalId: ReturnType<typeof globalThis.setInterval> | undefined;
 
     const updateDateTime = () => {
       setCurrentDateTime(new Date());
@@ -39,16 +39,16 @@ export function AppHeader() {
     const millisecondsUntilNextMinute =
       (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = globalThis.setTimeout(() => {
       updateDateTime();
-      intervalId = window.setInterval(updateDateTime, 60_000);
+      intervalId = globalThis.setInterval(updateDateTime, 60_000);
     }, millisecondsUntilNextMinute);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      globalThis.clearTimeout(timeoutId);
 
       if (intervalId) {
-        window.clearInterval(intervalId);
+        globalThis.clearInterval(intervalId);
       }
     };
   }, []);
