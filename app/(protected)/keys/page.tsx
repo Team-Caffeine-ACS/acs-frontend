@@ -106,7 +106,9 @@ export default function KeycardsPage() {
   } else {
     tableBodyContent = (
       <EmptyRow
-        title={error ? "Võtmekaartide laadimine ebaõnnestus" : "Tulemusi ei leitud"}
+        title={
+          error ? "Võtmekaartide laadimine ebaõnnestus" : "Tulemusi ei leitud"
+        }
         description={
           error ??
           "Muuda otsingut või kontrolli, kas võtmekaardid on süsteemis olemas."
@@ -185,7 +187,9 @@ export default function KeycardsPage() {
                 <th className="px-6 py-5 text-right">Tegevus</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">{tableBodyContent}</tbody>
+            <tbody className="divide-y divide-slate-100">
+              {tableBodyContent}
+            </tbody>
           </table>
         </div>
 
