@@ -26,7 +26,7 @@ import {
   type PersonInRoleResponse,
 } from "@/lib/api/persons";
 import { createVisit } from "@/lib/api/visits";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 
 interface SelectedVisitor {
   personId: string;

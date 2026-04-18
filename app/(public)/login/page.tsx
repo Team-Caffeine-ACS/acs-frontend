@@ -11,8 +11,9 @@ import LoginIcon from "@mui/icons-material/Login";
 import SecurityIcon from "@mui/icons-material/Security";
 import LanguageIcon from "@mui/icons-material/Language";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
+import { setStoredAccessToken } from "@/lib/auth/accessToken";
 import { login } from "@/lib/api/auth";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,9 +30,8 @@ export default function LoginPage() {
 
     try {
       const { accessToken } = await login({ email, password });
-      document.cookie = `token=${accessToken}; path=/; SameSite=Strict`;
-      localStorage.setItem("token", accessToken);
-      router.push("/");
+      setStoredAccessToken(accessToken);
+      router.replace("/");
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 401

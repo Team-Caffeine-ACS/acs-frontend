@@ -1,16 +1,10 @@
+import { clearStoredAccessToken, getStoredAccessToken, setStoredAccessToken } from "@/lib/auth/accessToken";
+import { LOGIN_PATH } from "@/lib/auth/constants";
+import { logout, refreshAccessToken } from "@/lib/api/auth";
+import { ApiError, extractErrorMessage, parseErrorData } from "@/lib/api/error";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const LOG = process.env.NEXT_PUBLIC_DEBUG === "true";
-
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-    public readonly data?: unknown,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -24,42 +18,63 @@ interface MutationOptions<TBody> extends RequestOptions {
   body?: TBody;
 }
 
-function getAuthHeaders(): Record<string, string> {
-  if (globalThis.window === undefined) return {};
-  const token =
-    localStorage.getItem("token") ??
-    document.cookie
-      .split("; ")
-      .find((c) => c.startsWith("token="))
-      ?.slice("token=".length);
-  return token ? { Authorization: `Bearer ${token}` } : {};
+let refreshRequest: Promise<string> | null = null;
+
+function getAuthHeaders(
+  accessToken = getStoredAccessToken(),
+): Record<string, string> {
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 }
 
-async function parseErrorData(response: Response): Promise<unknown> {
+async function parseResponse<TResponse>(
+  method: HttpMethod,
+  path: string,
+  response: Response,
+): Promise<TResponse> {
+  if (response.status === 204) {
+    if (LOG) console.log(`[apiClient] <-- ${method} ${path} 204 No Content`);
+    return undefined as TResponse;
+  }
+
+  const data = (await response.json()) as TResponse;
+  if (LOG)
+    console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, data);
+  return data;
+}
+
+async function clearSession(): Promise<void> {
+  clearStoredAccessToken();
+
+  if (globalThis.window === undefined) return;
+
   try {
-    return await response.json();
+    await logout();
   } catch {
-    return undefined;
+    // Best effort cleanup of the HttpOnly refresh cookie.
   }
 }
 
-function extractErrorMessage(errorData: unknown, response: Response): string {
-  if (
-    typeof errorData === "object" &&
-    errorData !== null &&
-    "message" in errorData &&
-    typeof (errorData as Record<string, unknown>).message === "string"
-  ) {
-    return (errorData as Record<string, string>).message;
-  }
-  return `HTTP ${response.status}: ${response.statusText}`;
-}
+async function handleUnauthorized(): Promise<never> {
+  await clearSession();
 
-function handleUnauthorized(): never {
-  globalThis.localStorage.removeItem("token");
-  globalThis.document.cookie = "token=; path=/; max-age=0";
-  globalThis.window.location.href = "/login";
+  if (globalThis.window !== undefined) {
+    globalThis.window.location.href = LOGIN_PATH;
+  }
+
   throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
+}
+
+async function refreshStoredAccessToken(): Promise<string> {
+  refreshRequest ??= refreshAccessToken()
+      .then(({ accessToken }) => {
+        setStoredAccessToken(accessToken);
+        return accessToken;
+      })
+      .finally(() => {
+        refreshRequest = null;
+      });
+
+  return refreshRequest;
 }
 
 async function throwForResponse(
@@ -67,12 +82,6 @@ async function throwForResponse(
   path: string,
   response: Response,
 ): Promise<never> {
-  if (response.status === 401) {
-    if (globalThis.window === undefined) {
-      throw new ApiError(401, "Seanss on aegunud. Palun logige uuesti sisse.");
-    }
-    handleUnauthorized();
-  }
   const errorData = await parseErrorData(response);
   const message = extractErrorMessage(errorData, response);
   if (LOG)
@@ -89,6 +98,7 @@ async function request<TResponse>(
   options: RequestOptions & { body?: unknown } = {},
 ): Promise<TResponse> {
   const { headers, signal, body } = options;
+  const serializedBody = body !== undefined ? JSON.stringify(body) : undefined;
 
   if (LOG)
     console.log(
@@ -96,31 +106,49 @@ async function request<TResponse>(
       body === undefined ? "" : body,
     );
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...getAuthHeaders(),
-      ...headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal,
-  });
+  const executeRequest = (accessToken?: string | null) =>
+    fetch(`${BASE_URL}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...getAuthHeaders(accessToken),
+        ...headers,
+      },
+      body: serializedBody,
+      signal,
+    });
 
-  if (!response.ok) {
-    await throwForResponse(method, path, response);
+  const response = await executeRequest();
+
+  if (response.ok) {
+    return parseResponse<TResponse>(method, path, response);
   }
 
-  if (response.status === 204) {
-    if (LOG) console.log(`[apiClient] <-- ${method} ${path} 204 No Content`);
-    return undefined as TResponse;
+  if (response.status === 401 && globalThis.window !== undefined) {
+    try {
+      const freshAccessToken = await refreshStoredAccessToken();
+      const retryResponse = await executeRequest(freshAccessToken);
+
+      if (retryResponse.ok) {
+        return parseResponse<TResponse>(method, path, retryResponse);
+      }
+
+      if (retryResponse.status === 401) {
+        return handleUnauthorized();
+      }
+
+      return throwForResponse(method, path, retryResponse);
+    } catch (error) {
+      if (error instanceof ApiError && error.status !== 401) {
+        throw error;
+      }
+
+      return handleUnauthorized();
+    }
   }
 
-  const data = await response.json();
-  if (LOG)
-    console.log(`[apiClient] <-- ${method} ${path} ${response.status}`, data);
-  return data as TResponse;
+  return throwForResponse(method, path, response);
 }
 
 export const apiClient = {
