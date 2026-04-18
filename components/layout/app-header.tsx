@@ -10,9 +10,9 @@ export function AppHeader() {
     <header className="flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-8 dark:border-slate-800 dark:bg-slate-900 z-10 shrink-0">
       {/* VASAK POOL: Logo ja Otsing */}
       <div className="flex items-center gap-8">
-        <div className="flex items-center gap-3 text-primary">
-          <div className="size-8 flex items-center justify-center rounded-lg bg-primary/10">
-            <VerifiedUserIcon className="text-[20px]" />
+        <div className="flex items-center text-primary">
+          <div className="size-10 flex items-center justify-center rounded-xl">
+            <VerifiedUserIcon className="text-[22px]" color="primary" />
           </div>
           <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight whitespace-nowrap">
             Pääsla infosüsteem
