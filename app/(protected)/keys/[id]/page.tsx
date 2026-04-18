@@ -100,11 +100,11 @@ export default function KeycardDetailsPage() {
   }
 
   let currentStateText =
-    "Kaardil ei ole praegu aktiivset hoidjat ega tagastusajalugu.";
+    "Kaardil ei ole praegu aktiivset kasutajat ega tagastusajalugu.";
 
   if (keycard.assignedUser) {
     currentStateText =
-      "Kaart on hetkel välja antud. Aktiivne hoidja ja väljastamise aeg on teada.";
+      "Kaart on hetkel välja antud. Aktiivne kaardi kasutaja ja väljastamise aeg on teada.";
   } else if (keycard.lastReturnTime) {
     currentStateText =
       "Kaart ei ole hetkel välja antud. Viimane teadaolev sündmus on tagastus.";
@@ -152,10 +152,11 @@ export default function KeycardDetailsPage() {
         <div className="flex items-start gap-2">
           <InfoOutlinedIcon className="mt-0.5 !text-base text-blue-600" />
           <p>
-            Praegune `GET /api/keycards/{"{cardId}"}` endpoint tagastab aktiivse
-            hoidja, hoidja `person_in_role` ID ning viimased teadaolevad
-            väljastus- või tagastusajad. Väljastaja, vastuvõtulaud ja täielik
-            ajalugu ei tule sellest response’ist veel kaasa.
+            Praegune `GET /api/keycards/{"{cardId}"}` endpoint tagastab
+            aktiivse kaardi kasutaja, kaardi kasutaja `person_in_role` ID ning
+            viimased teadaolevad väljastus- või tagastusajad. Kaardi kasutaja
+            rolli nimetust, väljastajat, vastuvõtulauda ja täielikku ajalugu
+            sellest response’ist veel ei tule.
           </p>
         </div>
       </div>
@@ -192,13 +193,13 @@ export default function KeycardDetailsPage() {
           >
             <div className="grid gap-5 md:grid-cols-2">
               <DetailField
-                label="Praegune kasutaja"
+                label="Kaardi kasutaja"
                 value={keycard.assignedUser ?? "Aktiivne kasutaja puudub"}
                 accent={Boolean(keycard.assignedUser)}
               />
               <DetailField
-                label="Hoidja person_in_role ID"
-                value={keycard.assignedPersonInRoleId ?? "Seos puudub"}
+                label="Kaardi kasutaja roll"
+                value={getAssignedRoleLabel(keycard.assignedPersonInRoleId)}
               />
               <DetailField
                 label="Väljastamise aeg"
@@ -207,14 +208,6 @@ export default function KeycardDetailsPage() {
               <DetailField
                 label="Viimati tagastatud"
                 value={formatDateTime(keycard.lastReturnTime, "Puudub")}
-              />
-              <DetailField
-                label="Külastaja seos"
-                value={
-                  keycard.assignedPersonInRoleId
-                    ? "Aktiivne"
-                    : "Eemaldatud või puudub"
-                }
               />
             </div>
           </SectionCard>
@@ -379,4 +372,12 @@ function formatDateTime(value: string | null, emptyLabel: string): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function getAssignedRoleLabel(assignedPersonInRoleId: string | null): string {
+  if (!assignedPersonInRoleId) {
+    return "Puudub";
+  }
+
+  return "Pole detailvaates saadaval";
 }
