@@ -166,11 +166,11 @@ export default function KeycardDetailsPage() {
         <div className="flex items-start gap-2">
           <InfoOutlinedIcon className="mt-0.5 !text-base text-blue-600" />
           <p>
-            Praegune `GET /api/keycards/{"{cardId}"}` endpoint tagastab
-            aktiivse kaardi kasutaja, kaardi kasutaja `person_in_role` ID ning
-            viimased teadaolevad väljastus- või tagastusajad. Kaardi kasutaja
-            rolli nimetust, väljastajat, vastuvõtulauda ja täielikku ajalugu
-            sellest response’ist veel ei tule.
+            Praegune `GET /api/keycards/{"{cardId}"}` endpoint tagastab aktiivse
+            kaardi kasutaja, kaardi kasutaja `person_in_role` ID ning viimased
+            teadaolevad väljastus- või tagastusajad. Kaardi kasutaja rolli
+            nimetust, väljastajat, vastuvõtulauda ja täielikku ajalugu sellest
+            response’ist veel ei tule.
           </p>
         </div>
       </div>

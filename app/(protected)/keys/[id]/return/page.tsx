@@ -11,7 +11,10 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PersonIcon from "@mui/icons-material/Person";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Button } from "@/components/ui/button";
-import { getAccessPoints, type AccessPointResponse } from "@/lib/api/accessPoints";
+import {
+  getAccessPoints,
+  type AccessPointResponse,
+} from "@/lib/api/accessPoints";
 import { ApiError } from "@/lib/apiClient";
 import {
   getKeycard,
@@ -97,7 +100,9 @@ export default function ReturnKeycardPage() {
   }
 
   if (error && !keycard) {
-    return <PageState title="Tagastusvaadet ei saanud avada" description={error} />;
+    return (
+      <PageState title="Tagastusvaadet ei saanud avada" description={error} />
+    );
   }
 
   if (isNotFound || !keycard) {
@@ -243,8 +248,7 @@ export default function ReturnKeycardPage() {
               <div className="flex items-start gap-2">
                 <InfoOutlinedIcon className="mt-0.5 !text-base text-blue-600" />
                 <p>
-                  Swaggeri järgi vajab tagastus ainult välja
-                  {" "}
+                  Swaggeri järgi vajab tagastus ainult välja{" "}
                   <code>returnAccessPointId</code>. Tagastuse kellaaeg lisatakse
                   backendis automaatselt.
                 </p>
@@ -262,7 +266,9 @@ export default function ReturnKeycardPage() {
               <select
                 id="returnAccessPointId"
                 value={selectedAccessPointId}
-                onChange={(event) => setSelectedAccessPointId(event.target.value)}
+                onChange={(event) =>
+                  setSelectedAccessPointId(event.target.value)
+                }
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
                 disabled={isSubmitting || accessPoints.length === 0}
               >
@@ -347,7 +353,13 @@ function DetailField({
       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
         {label}
       </p>
-      <p className={accent ? "text-sm font-semibold text-primary" : "text-sm font-semibold text-slate-900"}>
+      <p
+        className={
+          accent
+            ? "text-sm font-semibold text-primary"
+            : "text-sm font-semibold text-slate-900"
+        }
+      >
         {value}
       </p>
     </div>
