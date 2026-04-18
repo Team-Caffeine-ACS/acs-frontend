@@ -26,6 +26,23 @@ function getAuthHeaders(
   return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 }
 
+function serializeRequestBody(body: unknown): string | undefined {
+  if (body === undefined) {
+    return undefined;
+  }
+
+  return JSON.stringify(body);
+}
+
+function logRequest(method: HttpMethod, path: string, body: unknown): void {
+  if (LOG) {
+    console.log(
+      `[apiClient] --> ${method} ${BASE_URL}${path}`,
+      body === undefined ? "" : body,
+    );
+  }
+}
+
 async function parseResponse<TResponse>(
   method: HttpMethod,
   path: string,
@@ -92,21 +109,14 @@ async function throwForResponse(
   throw new ApiError(response.status, message, errorData);
 }
 
-async function request<TResponse>(
+function createRequestExecutor(
   method: HttpMethod,
   path: string,
-  options: RequestOptions & { body?: unknown } = {},
-): Promise<TResponse> {
-  const { headers, signal, body } = options;
-  const serializedBody = body !== undefined ? JSON.stringify(body) : undefined;
-
-  if (LOG)
-    console.log(
-      `[apiClient] --> ${method} ${BASE_URL}${path}`,
-      body === undefined ? "" : body,
-    );
-
-  const executeRequest = (accessToken?: string | null) =>
+  headers: Record<string, string> | undefined,
+  signal: AbortSignal | undefined,
+  serializedBody: string | undefined,
+) {
+  return (accessToken?: string | null) =>
     fetch(`${BASE_URL}${path}`, {
       method,
       headers: {
@@ -118,6 +128,54 @@ async function request<TResponse>(
       body: serializedBody,
       signal,
     });
+}
+
+function canRefreshUnauthorizedResponse(response: Response): boolean {
+  return response.status === 401 && globalThis.window !== undefined;
+}
+
+async function retryRequestAfterRefresh<TResponse>(
+  method: HttpMethod,
+  path: string,
+  executeRequest: (accessToken?: string | null) => Promise<Response>,
+): Promise<TResponse> {
+  try {
+    const freshAccessToken = await refreshStoredAccessToken();
+    const retryResponse = await executeRequest(freshAccessToken);
+
+    if (retryResponse.ok) {
+      return parseResponse<TResponse>(method, path, retryResponse);
+    }
+
+    if (retryResponse.status === 401) {
+      return handleUnauthorized();
+    }
+
+    return throwForResponse(method, path, retryResponse);
+  } catch (error) {
+    if (error instanceof ApiError && error.status !== 401) {
+      throw error;
+    }
+
+    return handleUnauthorized();
+  }
+}
+
+async function request<TResponse>(
+  method: HttpMethod,
+  path: string,
+  options: RequestOptions & { body?: unknown } = {},
+): Promise<TResponse> {
+  const { headers, signal, body } = options;
+  const serializedBody = serializeRequestBody(body);
+  logRequest(method, path, body);
+  const executeRequest = createRequestExecutor(
+    method,
+    path,
+    headers,
+    signal,
+    serializedBody,
+  );
 
   const response = await executeRequest();
 
@@ -125,27 +183,8 @@ async function request<TResponse>(
     return parseResponse<TResponse>(method, path, response);
   }
 
-  if (response.status === 401 && globalThis.window !== undefined) {
-    try {
-      const freshAccessToken = await refreshStoredAccessToken();
-      const retryResponse = await executeRequest(freshAccessToken);
-
-      if (retryResponse.ok) {
-        return parseResponse<TResponse>(method, path, retryResponse);
-      }
-
-      if (retryResponse.status === 401) {
-        return handleUnauthorized();
-      }
-
-      return throwForResponse(method, path, retryResponse);
-    } catch (error) {
-      if (error instanceof ApiError && error.status !== 401) {
-        throw error;
-      }
-
-      return handleUnauthorized();
-    }
+  if (canRefreshUnauthorizedResponse(response)) {
+    return retryRequestAfterRefresh<TResponse>(method, path, executeRequest);
   }
 
   return throwForResponse(method, path, response);

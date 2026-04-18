@@ -100,12 +100,16 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email */}
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700 block">
+                <label
+                  htmlFor="login-email"
+                  className="text-sm font-semibold text-slate-700 block"
+                >
                   Kasutajatunnus
                 </label>
                 <div className="relative">
                   <PersonOutlineIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 !text-lg" />
                   <input
+                    id="login-email"
                     type="email"
                     required
                     value={email}
@@ -119,7 +123,10 @@ export default function LoginPage() {
               {/* Password */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-slate-700">
+                  <label
+                    htmlFor="login-password"
+                    className="text-sm font-semibold text-slate-700"
+                  >
                     Parool
                   </label>
                   <button
@@ -132,6 +139,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <LockOutlinedIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 !text-lg" />
                   <input
+                    id="login-password"
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
