@@ -227,7 +227,10 @@ export default function ProfilePage() {
               htmlFor="new-password"
               className="block text-sm font-medium text-slate-700"
             >
-              Uus parool
+              Uus parool{" "}
+              <span className="text-xs font-normal text-slate-400">
+                (vähemalt 1 väike täht, 1 suur täht, 1 erisümbol, vähemalt 8 sümbolit)
+              </span>
             </label>
             <input
               id="new-password"
