@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -208,8 +208,161 @@ function getTimelineEventCopy(eventType: string): {
   }
 }
 
-export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
-  const router = useRouter();
+interface VisitDetailViewModel {
+  readonly detailState: RequestState<VisitDetailResponse>;
+  readonly timelineState: RequestState<VisitTimelineEvent[]>;
+  readonly keycardState: RequestState<KeycardResponse>;
+  readonly detail: VisitDetailResponse | null;
+  readonly canEdit: boolean;
+  readonly canRegisterDeparture: boolean;
+  readonly statusKey: VisitStatusKey | "loading";
+  readonly statusPresentation: {
+    label: string;
+    className: string;
+  };
+  readonly arrivalTime: string | null;
+  readonly departureTime: string | null;
+  readonly linkedCardId: string | null;
+  readonly keycardNumber: string | null;
+  readonly displayName: string;
+  readonly sortedTimeline: VisitTimelineEvent[];
+  readonly reversedTimeline: VisitTimelineEvent[];
+  readonly isRegisteringDeparture: boolean;
+  readonly actionError: string | null;
+  readonly actionMessage: string | null;
+  readonly refreshDetail: (signal?: AbortSignal) => Promise<VisitDetailResponse | null>;
+  readonly refreshTimeline: (
+    signal?: AbortSignal,
+  ) => Promise<VisitTimelineEvent[] | null>;
+  readonly refreshKeycard: (
+    cardId: string,
+    signal?: AbortSignal,
+  ) => Promise<KeycardResponse | null>;
+  readonly handleRegisterDeparture: () => Promise<void>;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+async function loadIntoState<T>({
+  load,
+  setState,
+  fallback,
+  signal,
+}: Readonly<{
+  load: () => Promise<T>;
+  setState: Dispatch<SetStateAction<RequestState<T>>>;
+  fallback: string;
+  signal?: AbortSignal;
+}>): Promise<T | null> {
+  setState((current) => ({
+    data: signal ? null : current.data,
+    isLoading: true,
+    error: null,
+  }));
+
+  try {
+    const data = await load();
+    setState({
+      data,
+      isLoading: false,
+      error: null,
+    });
+    return data;
+  } catch (error) {
+    if (isAbortError(error)) {
+      return null;
+    }
+
+    setState({
+      data: null,
+      isLoading: false,
+      error: getErrorMessage(error, fallback),
+    });
+    return null;
+  }
+}
+
+function getVisitPermissions() {
+  const roleInfo = getCurrentUserRoleInfo();
+
+  return {
+    canEdit:
+      roleInfo.hasRoleInfo &&
+      roleInfo.roles.some((role) => EDIT_ALLOWED_ROLES.has(role)),
+    canRegisterDeparture:
+      !roleInfo.hasRoleInfo ||
+      roleInfo.roles.some((role) => EXIT_ALLOWED_ROLES.has(role)),
+  };
+}
+
+function sortTimelineEvents(
+  events: VisitTimelineEvent[],
+): VisitTimelineEvent[] {
+  return [...events].sort((left, right) => {
+    const leftTime = left.occurredAt ? new Date(left.occurredAt).getTime() : 0;
+    const rightTime = right.occurredAt
+      ? new Date(right.occurredAt).getTime()
+      : 0;
+    return leftTime - rightTime;
+  });
+}
+
+function deriveStatusKey(
+  detail: VisitDetailResponse | null,
+  timelineState: RequestState<VisitTimelineEvent[]>,
+  timeline: VisitTimelineEvent[],
+): VisitStatusKey | "loading" {
+  if (detail?.status != null) {
+    return deriveVisitStatus(detail.status, timeline);
+  }
+
+  if (timelineState.isLoading && !timelineState.data) {
+    return "loading";
+  }
+
+  if (timelineState.error && !timelineState.data) {
+    return "unknown";
+  }
+
+  return deriveVisitStatus(null, timeline);
+}
+
+function getDepartureButtonLabel(
+  statusKey: VisitStatusKey | "loading",
+  isRegisteringDeparture: boolean,
+): string {
+  if (statusKey === "departed") {
+    return "Lahkumine registreeritud";
+  }
+
+  if (isRegisteringDeparture) {
+    return "Registreerin lahkumist...";
+  }
+
+  return "Registreeri lahkumine";
+}
+
+function getAuditEventIconClass(iconClassName: string): string {
+  return iconClassName.includes("text-white")
+    ? "bg-primary/10 text-primary"
+    : "bg-slate-100 text-slate-500";
+}
+
+function TimelineEventIcon({
+  eventType,
+}: {
+  readonly eventType: string;
+}) {
+  if (eventType === "ARRIVAL_REGISTERED") {
+    return <LoginIcon className="!text-lg" />;
+  }
+
+  return <LogoutIcon className="!text-lg" />;
+}
+
+function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
   const [detailState, setDetailState] =
     useState<RequestState<VisitDetailResponse>>(createInitialState());
   const [timelineState, setTimelineState] =
@@ -221,35 +374,16 @@ export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const roleInfo = useMemo(() => getCurrentUserRoleInfo(), []);
-  const canEdit =
-    roleInfo.hasRoleInfo &&
-    roleInfo.roles.some((role) => EDIT_ALLOWED_ROLES.has(role));
-  const canRegisterDeparture =
-    !roleInfo.hasRoleInfo ||
-    roleInfo.roles.some((role) => EXIT_ALLOWED_ROLES.has(role));
-
+  const permissions = useMemo(() => getVisitPermissions(), []);
   const detail = detailState.data;
-  const timeline = timelineState.data ?? [];
-  const sortedTimeline = [...timeline].sort((left, right) => {
-    const leftTime = left.occurredAt ? new Date(left.occurredAt).getTime() : 0;
-    const rightTime = right.occurredAt
-      ? new Date(right.occurredAt).getTime()
-      : 0;
-    return leftTime - rightTime;
-  });
-  const reversedTimeline = [...sortedTimeline].reverse();
-
-  const statusKey: VisitStatusKey | "loading" =
-    detail?.status != null
-      ? deriveVisitStatus(detail.status, timeline)
-      : timelineState.isLoading && !timelineState.data
-        ? "loading"
-        : timelineState.error && !timelineState.data
-          ? "unknown"
-          : deriveVisitStatus(null, timeline);
+  const timeline = useMemo(() => timelineState.data ?? [], [timelineState.data]);
+  const sortedTimeline = useMemo(() => sortTimelineEvents(timeline), [timeline]);
+  const reversedTimeline = useMemo(
+    () => [...sortedTimeline].reverse(),
+    [sortedTimeline],
+  );
+  const statusKey = deriveStatusKey(detail, timelineState, timeline);
   const statusPresentation = getStatusPresentation(statusKey);
-
   const arrivalTime = detail?.arrivalTime ?? getArrivalFromTimeline(timeline);
   const departureTime = detail?.exitTime ?? getDepartureFromTimeline(timeline);
   const linkedCardId = detail?.cardId ?? null;
@@ -258,93 +392,30 @@ export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
   const displayName = buildDisplayName(detail);
 
   async function refreshDetail(signal?: AbortSignal) {
-    setDetailState((current) => ({
-      data: signal ? null : current.data,
-      isLoading: true,
-      error: null,
-    }));
-
-    try {
-      const nextDetail = await getVisitDetail(visitId, signal);
-      setDetailState({
-        data: nextDetail,
-        isLoading: false,
-        error: null,
-      });
-      return nextDetail;
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return null;
-      }
-
-      setDetailState({
-        data: null,
-        isLoading: false,
-        error: getErrorMessage(
-          error,
-          "Külastuse andmete laadimine ebaõnnestus.",
-        ),
-      });
-      return null;
-    }
+    return loadIntoState({
+      load: () => getVisitDetail(visitId, signal),
+      setState: setDetailState,
+      fallback: "Külastuse andmete laadimine ebaõnnestus.",
+      signal,
+    });
   }
 
   async function refreshTimeline(signal?: AbortSignal) {
-    setTimelineState((current) => ({
-      data: signal ? null : current.data,
-      isLoading: true,
-      error: null,
-    }));
-
-    try {
-      const nextTimeline = await getVisitTimeline(visitId, signal);
-      setTimelineState({
-        data: nextTimeline,
-        isLoading: false,
-        error: null,
-      });
-      return nextTimeline;
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return null;
-      }
-
-      setTimelineState({
-        data: null,
-        isLoading: false,
-        error: getErrorMessage(error, "Külastuse ajajoont ei saanud laadida."),
-      });
-      return null;
-    }
+    return loadIntoState({
+      load: () => getVisitTimeline(visitId, signal),
+      setState: setTimelineState,
+      fallback: "Külastuse ajajoont ei saanud laadida.",
+      signal,
+    });
   }
 
   async function refreshKeycard(cardId: string, signal?: AbortSignal) {
-    setKeycardState((current) => ({
-      data: signal ? null : current.data,
-      isLoading: true,
-      error: null,
-    }));
-
-    try {
-      const nextKeycard = await getKeycardById(cardId, signal);
-      setKeycardState({
-        data: nextKeycard,
-        isLoading: false,
-        error: null,
-      });
-      return nextKeycard;
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return null;
-      }
-
-      setKeycardState({
-        data: null,
-        isLoading: false,
-        error: getErrorMessage(error, "Seotud võtmekaarti ei saanud laadida."),
-      });
-      return null;
-    }
+    return loadIntoState({
+      load: () => getKeycardById(cardId, signal),
+      setState: setKeycardState,
+      fallback: "Seotud võtmekaarti ei saanud laadida.",
+      signal,
+    });
   }
 
   useEffect(() => {
@@ -356,51 +427,18 @@ export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
     setTimelineState(createInitialState());
     setKeycardState(createInitialState<KeycardResponse>(null));
 
-    void getVisitDetail(visitId, controller.signal)
-      .then((nextDetail) => {
-        setDetailState({
-          data: nextDetail,
-          isLoading: false,
-          error: null,
-        });
-      })
-      .catch((error) => {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
-
-        setDetailState({
-          data: null,
-          isLoading: false,
-          error: getErrorMessage(
-            error,
-            "Külastuse andmete laadimine ebaõnnestus.",
-          ),
-        });
-      });
-
-    void getVisitTimeline(visitId, controller.signal)
-      .then((nextTimeline) => {
-        setTimelineState({
-          data: nextTimeline,
-          isLoading: false,
-          error: null,
-        });
-      })
-      .catch((error) => {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
-
-        setTimelineState({
-          data: null,
-          isLoading: false,
-          error: getErrorMessage(
-            error,
-            "Külastuse ajajoont ei saanud laadida.",
-          ),
-        });
-      });
+    void loadIntoState({
+      load: () => getVisitDetail(visitId, controller.signal),
+      setState: setDetailState,
+      fallback: "Külastuse andmete laadimine ebaõnnestus.",
+      signal: controller.signal,
+    });
+    void loadIntoState({
+      load: () => getVisitTimeline(visitId, controller.signal),
+      setState: setTimelineState,
+      fallback: "Külastuse ajajoont ei saanud laadida.",
+      signal: controller.signal,
+    });
 
     return () => controller.abort();
   }, [visitId]);
@@ -417,34 +455,12 @@ export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
       return () => controller.abort();
     }
 
-    setKeycardState({
-      data: null,
-      isLoading: true,
-      error: null,
+    void loadIntoState({
+      load: () => getKeycardById(linkedCardId, controller.signal),
+      setState: setKeycardState,
+      fallback: "Seotud võtmekaarti ei saanud laadida.",
+      signal: controller.signal,
     });
-
-    void getKeycardById(linkedCardId, controller.signal)
-      .then((nextKeycard) => {
-        setKeycardState({
-          data: nextKeycard,
-          isLoading: false,
-          error: null,
-        });
-      })
-      .catch((error) => {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
-
-        setKeycardState({
-          data: null,
-          isLoading: false,
-          error: getErrorMessage(
-            error,
-            "Seotud võtmekaarti ei saanud laadida.",
-          ),
-        });
-      });
 
     return () => controller.abort();
   }, [linkedCardId]);
@@ -467,394 +483,545 @@ export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
     }
   }
 
-  if (detailState.isLoading && !detail) {
-    return <VisitDetailSkeleton />;
-  }
+  return {
+    detailState,
+    timelineState,
+    keycardState,
+    detail,
+    canEdit: permissions.canEdit,
+    canRegisterDeparture: permissions.canRegisterDeparture,
+    statusKey,
+    statusPresentation,
+    arrivalTime,
+    departureTime,
+    linkedCardId,
+    keycardNumber,
+    displayName,
+    sortedTimeline,
+    reversedTimeline,
+    isRegisteringDeparture,
+    actionError,
+    actionMessage,
+    refreshDetail,
+    refreshTimeline,
+    refreshKeycard,
+    handleRegisterDeparture,
+  };
+}
 
-  if (detailState.error && !detail) {
-    return (
-      <div className="mx-auto max-w-7xl space-y-6 animate-in fade-in duration-500">
-        <Breadcrumb />
-        <SectionError
-          title="Külastuse andmeid ei saanud avada"
-          description={detailState.error}
-          actionLabel="Proovi uuesti"
-          onAction={() => void refreshDetail()}
-        />
-      </div>
-    );
-  }
+function VisitDetailErrorState({
+  error,
+  onRetry,
+}: {
+  readonly error: string;
+  readonly onRetry: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 animate-in fade-in duration-500">
+      <Breadcrumb />
+      <SectionError
+        title="Külastuse andmeid ei saanud avada"
+        description={error}
+        actionLabel="Proovi uuesti"
+        onAction={onRetry}
+      />
+    </div>
+  );
+}
+
+interface VisitDetailContentProps {
+  readonly visitId: string;
+  readonly model: VisitDetailViewModel;
+}
+
+function VisitDetailContent({
+  visitId,
+  model,
+}: VisitDetailContentProps) {
+  const router = useRouter();
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-        <div className="space-y-4">
-          <Breadcrumb />
-          <div className="space-y-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-3xl font-black tracking-tight text-slate-900">
-                Külastuse üksikasjad
-              </h1>
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]",
-                  statusPresentation.className,
-                )}
-              >
-                {statusPresentation.label}
-              </span>
-            </div>
-            <p className="text-slate-500 text-sm md:text-base">
-              Külastuse ID{" "}
-              <span className="font-semibold text-slate-700">{visitId}</span>
-              {" · "}
-              Alustatud{" "}
-              <span className="font-semibold text-slate-700">
-                {formatDateTime(arrivalTime)}
-              </span>
-            </p>
-          </div>
-        </div>
+      <VisitPageHeader
+        visitId={visitId}
+        arrivalTime={model.arrivalTime}
+        canEdit={model.canEdit}
+        statusPresentation={model.statusPresentation}
+      />
 
-        <div className="flex gap-3 flex-wrap">
-          {canEdit ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled
-              className="gap-2 bg-white px-6 py-6 text-base font-bold shadow-sm"
-              title="Muutmise voog lisatakse eraldi sammuna."
-            >
-              <EditOutlinedIcon className="!text-base" />
-              Muuda andmeid
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            className="gap-2 bg-primary px-6 py-6 text-base font-bold text-white shadow-xl shadow-primary/20"
-            disabled
-            title="Printimise backend-tugi ei ole veel olemas."
-          >
-            <PrintOutlinedIcon className="!text-base" />
-            Prindi luba
-          </Button>
-        </div>
-      </div>
-
-      {actionError ? (
-        <InlineMessage variant="error">{actionError}</InlineMessage>
+      {model.actionError ? (
+        <InlineMessage variant="error">{model.actionError}</InlineMessage>
       ) : null}
-      {actionMessage ? (
-        <InlineMessage variant="success">{actionMessage}</InlineMessage>
+      {model.actionMessage ? (
+        <InlineMessage variant="success">{model.actionMessage}</InlineMessage>
       ) : null}
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,1.05fr)] gap-8">
         <div className="space-y-8">
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="h-3 bg-primary" />
-            <div className="p-8 space-y-8">
-              <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
-                <BadgeOutlinedIcon className="text-primary !text-2xl" />
-                Külastaja kaart
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)] gap-8 items-start">
-                <div className="rounded-2xl bg-[linear-gradient(180deg,#ffd0b7_0%,#ffc1a3_100%)] p-6 shadow-inner">
-                  <div className="aspect-[4/5] rounded-2xl bg-[radial-gradient(circle_at_top,#25354d_0%,#132033_65%,#0f172a_100%)] flex items-center justify-center text-6xl font-black text-white shadow-lg">
-                    {getInitials(displayName)}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-                  <InfoField
-                    label="Nimi"
-                    value={displayName}
-                    prominent
-                    icon={<PersonOutlineOutlinedIcon className="!text-base" />}
-                  />
-                  <InfoField
-                    label="Isikukood"
-                    value={formatFieldValue(detail?.personalIdCode)}
-                    icon={<BadgeOutlinedIcon className="!text-base" />}
-                  />
-                  <InfoField
-                    label="Organisatsioon"
-                    value={formatFieldValue(detail?.organization)}
-                    icon={<BusinessOutlinedIcon className="!text-base" />}
-                  />
-                  <InfoField
-                    label="Osakond"
-                    value={formatFieldValue(detail?.department)}
-                    icon={<BusinessOutlinedIcon className="!text-base" />}
-                  />
-                  <InfoField
-                    label="Võõrustaja"
-                    value={formatFieldValue(detail?.hostName)}
-                    icon={<MeetingRoomOutlinedIcon className="!text-base" />}
-                    linkLike={detail?.hostName != null}
-                  />
-                  <InfoField
-                    label="Külastuse põhjus"
-                    value={formatFieldValue(detail?.visitReason)}
-                    icon={
-                      <AssignmentTurnedInOutlinedIcon className="!text-base" />
-                    }
-                  />
-                  <InfoField
-                    label="Kaart"
-                    value={formatFieldValue(keycardNumber ?? linkedCardId)}
-                    icon={<CreditCardOutlinedIcon className="!text-base" />}
-                  />
-                  <InfoField
-                    label="Lahkumise aeg"
-                    value={formatDateTime(departureTime)}
-                    icon={<AccessTimeIcon className="!text-base" />}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 bg-slate-50/60 p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="py-6 text-base font-bold"
-                onClick={() => router.push("/visits")}
-              >
-                <ArrowBackIcon className="!text-base" />
-                Tagasta nimekirja
-              </Button>
-              {canRegisterDeparture ? (
-                <Button
-                  type="button"
-                  className="bg-primary hover:bg-primary/90 py-6 text-base font-black text-white shadow-lg shadow-primary/20"
-                  disabled={isRegisteringDeparture || statusKey === "departed"}
-                  onClick={() => void handleRegisterDeparture()}
-                >
-                  <LogoutIcon className="!text-base" />
-                  {statusKey === "departed"
-                    ? "Lahkumine registreeritud"
-                    : isRegisteringDeparture
-                      ? "Registreerin lahkumist..."
-                      : "Registreeri lahkumine"}
-                </Button>
-              ) : null}
-            </div>
-          </section>
-
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
-                <HistoryOutlinedIcon className="text-primary !text-2xl" />
-                Auditi logi
-              </div>
-              <span className="text-sm font-bold text-primary">
-                Vaata kõiki
-              </span>
-            </div>
-
-            <div className="divide-y divide-slate-100">
-              {timelineState.isLoading && !timelineState.data ? (
-                <SectionSkeleton lines={3} />
-              ) : null}
-
-              {!timelineState.isLoading &&
-              !timelineState.error &&
-              reversedTimeline.length === 0 ? (
-                <EmptyState
-                  title="Auditi logi puudub"
-                  description="Backend ei tagastanud selle külastuse kohta ühtegi logisündmust."
-                />
-              ) : null}
-
-              {reversedTimeline.map((event) => {
-                const copy = getTimelineEventCopy(event.eventType);
-
-                return (
-                  <div
-                    key={`${event.id}-audit`}
-                    className="px-8 py-5 flex items-start justify-between gap-6"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={cn(
-                          "mt-1 flex size-12 items-center justify-center rounded-full",
-                          copy.iconClassName.includes("text-white")
-                            ? "bg-primary/10 text-primary"
-                            : "bg-slate-100 text-slate-500",
-                        )}
-                      >
-                        {event.eventType === "ARRIVAL_REGISTERED" ? (
-                          <LoginIcon className="!text-lg" />
-                        ) : (
-                          <LogoutIcon className="!text-lg" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold text-slate-900">
-                          {copy.title}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          {event.description ?? copy.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <p className="text-lg font-semibold text-slate-900">
-                        {formatTime(event.occurredAt)}
-                      </p>
-                      <p className="text-sm text-slate-400">
-                        {formatDateTime(event.occurredAt)}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+          <VisitVisitorCardSection
+            detail={model.detail}
+            displayName={model.displayName}
+            departureTime={model.departureTime}
+            keycardNumber={model.keycardNumber}
+            linkedCardId={model.linkedCardId}
+            canRegisterDeparture={model.canRegisterDeparture}
+            isRegisteringDeparture={model.isRegisteringDeparture}
+            statusKey={model.statusKey}
+            onBack={() => router.push("/visits")}
+            onRegisterDeparture={() => void model.handleRegisterDeparture()}
+          />
+          <VisitAuditLogSection
+            timelineState={model.timelineState}
+            reversedTimeline={model.reversedTimeline}
+          />
         </div>
 
         <div className="space-y-8">
-          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
-            <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-8">
-              <TimelineOutlinedIcon className="text-primary !text-2xl" />
-              Külastuse ajajoon
-            </div>
-
-            {timelineState.isLoading && !timelineState.data ? (
-              <SectionSkeleton lines={4} />
-            ) : null}
-
-            {timelineState.error ? (
-              <SectionError
-                title="Ajajoont ei saanud laadida"
-                description={timelineState.error}
-                actionLabel="Proovi uuesti"
-                onAction={() => void refreshTimeline()}
-                compact
-              />
-            ) : null}
-
-            {!timelineState.error && sortedTimeline.length > 0 ? (
-              <ol className="space-y-10">
-                {sortedTimeline.map((event, index) => {
-                  const copy = getTimelineEventCopy(event.eventType);
-                  const isLast = index === sortedTimeline.length - 1;
-
-                  return (
-                    <li key={event.id} className="relative flex gap-5">
-                      <div className="relative flex shrink-0 flex-col items-center">
-                        <div
-                          className={cn(
-                            "relative z-10 flex size-12 items-center justify-center rounded-full ring-4",
-                            copy.iconClassName,
-                          )}
-                        >
-                          {event.eventType === "ARRIVAL_REGISTERED" ? (
-                            <LoginIcon className="!text-lg" />
-                          ) : (
-                            <LogoutIcon className="!text-lg" />
-                          )}
-                        </div>
-                        {!isLast ? (
-                          <div className="absolute top-12 h-[calc(100%+1.5rem)] w-px bg-primary/25" />
-                        ) : null}
-                      </div>
-
-                      <div className="pb-2">
-                        <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">
-                          {copy.eyebrow} • {formatTime(event.occurredAt)}
-                        </p>
-                        <p className="mt-2 text-2xl font-bold leading-tight text-slate-900">
-                          {copy.title}
-                        </p>
-                        <p className="mt-2 text-lg leading-8 text-slate-500">
-                          {event.description ?? copy.description}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            ) : null}
-
-            {!timelineState.isLoading &&
-            !timelineState.error &&
-            sortedTimeline.length === 0 ? (
-              <EmptyState
-                title="Ajajoone sündmusi pole"
-                description="MVP-s kuvatakse ainult sündmused, mida `/timeline` endpoint päriselt tagastab."
-              />
-            ) : null}
-
-            <div className="mt-10 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 flex items-start gap-3">
-              <InfoOutlinedIcon className="text-primary mt-0.5" />
-              <div>
-                <p className="text-lg font-bold text-primary">
-                  Turvameeldetuletus
-                </p>
-                <p className="text-sm text-primary/80 leading-6">
-                  Detailvaates kuvatakse ainult backendist saadaolevad väljad.
-                  Auditlogi ja ajajoon põhinevad praegu samadel reaalselt
-                  tagastatud sündmustel.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
-            <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-6">
-              <CreditCardOutlinedIcon className="text-primary !text-2xl" />
-              Seotud võtmekaart
-            </div>
-
-            {!linkedCardId ? (
-              <EmptyState
-                title="Kiipkaart puudub"
-                description="Selle külastuse detailandmed ei sisalda seotud kaardi ID-d."
-              />
-            ) : null}
-
-            {linkedCardId && keycardState.isLoading ? (
-              <SectionSkeleton lines={2} />
-            ) : null}
-
-            {linkedCardId && keycardState.error ? (
-              <SectionError
-                title="Kiipkaardi andmeid ei saanud laadida"
-                description={keycardState.error}
-                actionLabel="Laadi kaart uuesti"
-                onAction={() => void refreshKeycard(linkedCardId)}
-                compact
-              />
-            ) : null}
-
-            {linkedCardId && keycardState.data ? (
-              <div className="space-y-5">
-                <MetaRow
-                  label="Kaardi number"
-                  value={formatFieldValue(keycardState.data.keycardNumber)}
-                />
-                <MetaRow
-                  label="Staatus"
-                  value={formatFieldValue(keycardState.data.status)}
-                />
-                <MetaRow
-                  label="Määratud kasutaja"
-                  value={formatFieldValue(keycardState.data.assignedUser)}
-                />
-                <MetaRow
-                  label="Viimati tagastatud"
-                  value={formatDateTime(keycardState.data.lastReturnTime)}
-                />
-              </div>
-            ) : null}
-          </section>
+          <VisitTimelineSection
+            timelineState={model.timelineState}
+            sortedTimeline={model.sortedTimeline}
+            onRetry={() => void model.refreshTimeline()}
+          />
+          <VisitKeycardSection
+            linkedCardId={model.linkedCardId}
+            keycardState={model.keycardState}
+            onRetry={() =>
+              model.linkedCardId
+                ? void model.refreshKeycard(model.linkedCardId)
+                : undefined
+            }
+          />
         </div>
       </div>
     </div>
   );
+}
+
+function VisitPageHeader({
+  visitId,
+  arrivalTime,
+  canEdit,
+  statusPresentation,
+}: {
+  readonly visitId: string;
+  readonly arrivalTime: string | null;
+  readonly canEdit: boolean;
+  readonly statusPresentation: {
+    label: string;
+    className: string;
+  };
+}) {
+  return (
+    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+      <div className="space-y-4">
+        <Breadcrumb />
+        <div className="space-y-1">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900">
+              Külastuse üksikasjad
+            </h1>
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]",
+                statusPresentation.className,
+              )}
+            >
+              {statusPresentation.label}
+            </span>
+          </div>
+          <p className="text-slate-500 text-sm md:text-base">
+            Külastuse ID <span className="font-semibold text-slate-700">{visitId}</span>
+            {" · "}
+            Alustatud{" "}
+            <span className="font-semibold text-slate-700">
+              {formatDateTime(arrivalTime)}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <div className="flex gap-3 flex-wrap">
+        {canEdit ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled
+            className="gap-2 bg-white px-6 py-6 text-base font-bold shadow-sm"
+            title="Muutmise voog lisatakse eraldi sammuna."
+          >
+            <EditOutlinedIcon className="!text-base" />
+            Muuda andmeid
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          className="gap-2 bg-primary px-6 py-6 text-base font-bold text-white shadow-xl shadow-primary/20"
+          disabled
+          title="Printimise backend-tugi ei ole veel olemas."
+        >
+          <PrintOutlinedIcon className="!text-base" />
+          Prindi luba
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function VisitVisitorCardSection({
+  detail,
+  displayName,
+  departureTime,
+  keycardNumber,
+  linkedCardId,
+  canRegisterDeparture,
+  isRegisteringDeparture,
+  statusKey,
+  onBack,
+  onRegisterDeparture,
+}: {
+  readonly detail: VisitDetailResponse | null;
+  readonly displayName: string;
+  readonly departureTime: string | null;
+  readonly keycardNumber: string | null;
+  readonly linkedCardId: string | null;
+  readonly canRegisterDeparture: boolean;
+  readonly isRegisteringDeparture: boolean;
+  readonly statusKey: VisitStatusKey | "loading";
+  readonly onBack: () => void;
+  readonly onRegisterDeparture: () => void;
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="h-3 bg-primary" />
+      <div className="p-8 space-y-8">
+        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
+          <BadgeOutlinedIcon className="text-primary !text-2xl" />
+          Külastaja kaart
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)] gap-8 items-start">
+          <div className="rounded-2xl bg-[linear-gradient(180deg,#ffd0b7_0%,#ffc1a3_100%)] p-6 shadow-inner">
+            <div className="aspect-[4/5] rounded-2xl bg-[radial-gradient(circle_at_top,#25354d_0%,#132033_65%,#0f172a_100%)] flex items-center justify-center text-6xl font-black text-white shadow-lg">
+              {getInitials(displayName)}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+            <InfoField
+              label="Nimi"
+              value={displayName}
+              prominent
+              icon={<PersonOutlineOutlinedIcon className="!text-base" />}
+            />
+            <InfoField
+              label="Isikukood"
+              value={formatFieldValue(detail?.personalIdCode)}
+              icon={<BadgeOutlinedIcon className="!text-base" />}
+            />
+            <InfoField
+              label="Organisatsioon"
+              value={formatFieldValue(detail?.organization)}
+              icon={<BusinessOutlinedIcon className="!text-base" />}
+            />
+            <InfoField
+              label="Osakond"
+              value={formatFieldValue(detail?.department)}
+              icon={<BusinessOutlinedIcon className="!text-base" />}
+            />
+            <InfoField
+              label="Võõrustaja"
+              value={formatFieldValue(detail?.hostName)}
+              icon={<MeetingRoomOutlinedIcon className="!text-base" />}
+              linkLike={detail?.hostName != null}
+            />
+            <InfoField
+              label="Külastuse põhjus"
+              value={formatFieldValue(detail?.visitReason)}
+              icon={<AssignmentTurnedInOutlinedIcon className="!text-base" />}
+            />
+            <InfoField
+              label="Kaart"
+              value={formatFieldValue(keycardNumber ?? linkedCardId)}
+              icon={<CreditCardOutlinedIcon className="!text-base" />}
+            />
+            <InfoField
+              label="Lahkumise aeg"
+              value={formatDateTime(departureTime)}
+              icon={<AccessTimeIcon className="!text-base" />}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-slate-100 bg-slate-50/60 p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="py-6 text-base font-bold"
+          onClick={onBack}
+        >
+          <ArrowBackIcon className="!text-base" />
+          Tagasta nimekirja
+        </Button>
+        {canRegisterDeparture ? (
+          <Button
+            type="button"
+            className="bg-primary hover:bg-primary/90 py-6 text-base font-black text-white shadow-lg shadow-primary/20"
+            disabled={isRegisteringDeparture || statusKey === "departed"}
+            onClick={onRegisterDeparture}
+          >
+            <LogoutIcon className="!text-base" />
+            {getDepartureButtonLabel(statusKey, isRegisteringDeparture)}
+          </Button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function VisitAuditLogSection({
+  timelineState,
+  reversedTimeline,
+}: {
+  readonly timelineState: RequestState<VisitTimelineEvent[]>;
+  readonly reversedTimeline: VisitTimelineEvent[];
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
+          <HistoryOutlinedIcon className="text-primary !text-2xl" />
+          Auditi logi
+        </div>
+        <span className="text-sm font-bold text-primary">Vaata kõiki</span>
+      </div>
+
+      <div className="divide-y divide-slate-100">
+        {timelineState.isLoading && !timelineState.data ? (
+          <SectionSkeleton lines={3} />
+        ) : null}
+
+        {!timelineState.isLoading &&
+        !timelineState.error &&
+        reversedTimeline.length === 0 ? (
+          <EmptyState
+            title="Auditi logi puudub"
+            description="Backend ei tagastanud selle külastuse kohta ühtegi logisündmust."
+          />
+        ) : null}
+
+        {reversedTimeline.map((event) => {
+          const copy = getTimelineEventCopy(event.eventType);
+
+          return (
+            <div
+              key={`${event.id}-audit`}
+              className="px-8 py-5 flex items-start justify-between gap-6"
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className={cn(
+                    "mt-1 flex size-12 items-center justify-center rounded-full",
+                    getAuditEventIconClass(copy.iconClassName),
+                  )}
+                >
+                  <TimelineEventIcon eventType={event.eventType} />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-slate-900">{copy.title}</p>
+                  <p className="text-sm text-slate-500">
+                    {event.description ?? copy.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right shrink-0">
+                <p className="text-lg font-semibold text-slate-900">
+                  {formatTime(event.occurredAt)}
+                </p>
+                <p className="text-sm text-slate-400">
+                  {formatDateTime(event.occurredAt)}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function VisitTimelineSection({
+  timelineState,
+  sortedTimeline,
+  onRetry,
+}: {
+  readonly timelineState: RequestState<VisitTimelineEvent[]>;
+  readonly sortedTimeline: VisitTimelineEvent[];
+  readonly onRetry: () => void;
+}) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
+      <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-8">
+        <TimelineOutlinedIcon className="text-primary !text-2xl" />
+        Külastuse ajajoon
+      </div>
+
+      {timelineState.isLoading && !timelineState.data ? (
+        <SectionSkeleton lines={4} />
+      ) : null}
+
+      {timelineState.error ? (
+        <SectionError
+          title="Ajajoont ei saanud laadida"
+          description={timelineState.error}
+          actionLabel="Proovi uuesti"
+          onAction={onRetry}
+          compact
+        />
+      ) : null}
+
+      {!timelineState.error && sortedTimeline.length > 0 ? (
+        <ol className="space-y-10">
+          {sortedTimeline.map((event, index) => {
+            const copy = getTimelineEventCopy(event.eventType);
+            const isLast = index === sortedTimeline.length - 1;
+
+            return (
+              <li key={event.id} className="relative flex gap-5">
+                <div className="relative flex shrink-0 flex-col items-center">
+                  <div
+                    className={cn(
+                      "relative z-10 flex size-12 items-center justify-center rounded-full ring-4",
+                      copy.iconClassName,
+                    )}
+                  >
+                    <TimelineEventIcon eventType={event.eventType} />
+                  </div>
+                  {!isLast ? (
+                    <div className="absolute top-12 h-[calc(100%+1.5rem)] w-px bg-primary/25" />
+                  ) : null}
+                </div>
+
+                <div className="pb-2">
+                  <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">
+                    {copy.eyebrow} • {formatTime(event.occurredAt)}
+                  </p>
+                  <p className="mt-2 text-2xl font-bold leading-tight text-slate-900">
+                    {copy.title}
+                  </p>
+                  <p className="mt-2 text-lg leading-8 text-slate-500">
+                    {event.description ?? copy.description}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      ) : null}
+
+      {!timelineState.isLoading &&
+      !timelineState.error &&
+      sortedTimeline.length === 0 ? (
+        <EmptyState
+          title="Ajajoone sündmusi pole"
+          description="MVP-s kuvatakse ainult sündmused, mida `/timeline` endpoint päriselt tagastab."
+        />
+      ) : null}
+
+      <div className="mt-10 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 flex items-start gap-3">
+        <InfoOutlinedIcon className="text-primary mt-0.5" />
+        <div>
+          <p className="text-lg font-bold text-primary">Turvameeldetuletus</p>
+          <p className="text-sm text-primary/80 leading-6">
+            Detailvaates kuvatakse ainult backendist saadaolevad väljad.
+            Auditlogi ja ajajoon põhinevad praegu samadel reaalselt tagastatud
+            sündmustel.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function VisitKeycardSection({
+  linkedCardId,
+  keycardState,
+  onRetry,
+}: {
+  readonly linkedCardId: string | null;
+  readonly keycardState: RequestState<KeycardResponse>;
+  readonly onRetry: () => void;
+}) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
+      <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-6">
+        <CreditCardOutlinedIcon className="text-primary !text-2xl" />
+        Seotud võtmekaart
+      </div>
+
+      {!linkedCardId ? (
+        <EmptyState
+          title="Kiipkaart puudub"
+          description="Selle külastuse detailandmed ei sisalda seotud kaardi ID-d."
+        />
+      ) : null}
+
+      {linkedCardId && keycardState.isLoading ? (
+        <SectionSkeleton lines={2} />
+      ) : null}
+
+      {linkedCardId && keycardState.error ? (
+        <SectionError
+          title="Kiipkaardi andmeid ei saanud laadida"
+          description={keycardState.error}
+          actionLabel="Laadi kaart uuesti"
+          onAction={onRetry}
+          compact
+        />
+      ) : null}
+
+      {linkedCardId && keycardState.data ? (
+        <div className="space-y-5">
+          <MetaRow
+            label="Kaardi number"
+            value={formatFieldValue(keycardState.data.keycardNumber)}
+          />
+          <MetaRow
+            label="Staatus"
+            value={formatFieldValue(keycardState.data.status)}
+          />
+          <MetaRow
+            label="Määratud kasutaja"
+            value={formatFieldValue(keycardState.data.assignedUser)}
+          />
+          <MetaRow
+            label="Viimati tagastatud"
+            value={formatDateTime(keycardState.data.lastReturnTime)}
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
+  const model = useVisitDetailPageModel(visitId);
+
+  if (model.detailState.isLoading && !model.detail) {
+    return <VisitDetailSkeleton />;
+  }
+
+  if (model.detailState.error && !model.detail) {
+    return (
+      <VisitDetailErrorState
+        error={model.detailState.error}
+        onRetry={() => void model.refreshDetail()}
+      />
+    );
+  }
+
+  return <VisitDetailContent visitId={visitId} model={model} />;
 }
 
 function Breadcrumb() {
