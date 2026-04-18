@@ -95,6 +95,26 @@ export default function KeycardsPage() {
     };
   }, []);
 
+  let tableBodyContent: ReactNode;
+
+  if (isLoading) {
+    tableBodyContent = <LoadingRow />;
+  } else if (filteredKeycards.length > 0) {
+    tableBodyContent = filteredKeycards.map((keycard) => (
+      <KeycardRow key={keycard.id} keycard={keycard} />
+    ));
+  } else {
+    tableBodyContent = (
+      <EmptyRow
+        title={error ? "Võtmekaartide laadimine ebaõnnestus" : "Tulemusi ei leitud"}
+        description={
+          error ??
+          "Muuda otsingut või kontrolli, kas võtmekaardid on süsteemis olemas."
+        }
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
@@ -146,7 +166,7 @@ export default function KeycardsPage() {
           size="icon"
           className="rounded-xl text-slate-500"
           aria-label="Värskenda võtmekaarte"
-          onClick={() => window.location.reload()}
+          onClick={() => globalThis.location.reload()}
         >
           <RefreshIcon />
         </Button>
@@ -165,27 +185,7 @@ export default function KeycardsPage() {
                 <th className="px-6 py-5 text-right">Tegevus</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {isLoading ? (
-                <LoadingRow />
-              ) : filteredKeycards.length > 0 ? (
-                filteredKeycards.map((keycard) => (
-                  <KeycardRow key={keycard.id} keycard={keycard} />
-                ))
-              ) : (
-                <EmptyRow
-                  title={
-                    error
-                      ? "Võtmekaartide laadimine ebaõnnestus"
-                      : "Tulemusi ei leitud"
-                  }
-                  description={
-                    error ??
-                    "Muuda otsingut või kontrolli, kas võtmekaardid on süsteemis olemas."
-                  }
-                />
-              )}
-            </tbody>
+            <tbody className="divide-y divide-slate-100">{tableBodyContent}</tbody>
           </table>
         </div>
 
