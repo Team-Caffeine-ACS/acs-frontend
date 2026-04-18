@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -23,13 +23,50 @@ import { Input } from "@/components/ui/input";
 export function AppHeader() {
   const router = useRouter();
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const isMenuOpen = Boolean(menuAnchorEl);
 
-  const currentDate = new Intl.DateTimeFormat("et-EE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date());
+  useEffect(() => {
+    let intervalId: ReturnType<typeof window.setInterval> | undefined;
+
+    const updateDateTime = () => {
+      setCurrentDateTime(new Date());
+    };
+
+    updateDateTime();
+
+    const now = new Date();
+    const millisecondsUntilNextMinute =
+      (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+
+    const timeoutId = window.setTimeout(() => {
+      updateDateTime();
+      intervalId = window.setInterval(updateDateTime, 60_000);
+    }, millisecondsUntilNextMinute);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, []);
+
+  const currentDate = currentDateTime
+    ? new Intl.DateTimeFormat("et-EE", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }).format(currentDateTime)
+    : "--.--.----";
+
+  const currentTime = currentDateTime
+    ? new Intl.DateTimeFormat("et-EE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(currentDateTime)
+    : "--:--";
 
   function handleOpenUserMenu(event: React.MouseEvent<HTMLButtonElement>) {
     setMenuAnchorEl(event.currentTarget);
@@ -92,7 +129,7 @@ export function AppHeader() {
         <div className="flex items-center gap-3 border-l border-slate-200 pl-6 dark:border-slate-700">
           <div className="flex items-center gap-2 rounded-lg bg-[#1152d4] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[#1152d4]/20">
             <ScheduleIcon className="text-sm" />
-            <span>14:30</span>
+            <span>{currentTime}</span>
             <span className="text-white/60">|</span>
             <span>{currentDate}</span>
           </div>
