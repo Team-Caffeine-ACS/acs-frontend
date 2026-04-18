@@ -52,18 +52,18 @@ export default function LoginPage() {
           Pääsla infosüsteem
         </div>
         <nav className="flex items-center gap-6">
-          <a
-            href="#"
+          <button
+            type="button"
             className="text-sm font-semibold text-slate-600 hover:text-slate-900"
           >
             Abi
-          </a>
-          <a
-            href="#"
+          </button>
+          <button
+            type="button"
             className="text-sm font-semibold text-slate-600 hover:text-slate-900"
           >
             Kontakt
-          </a>
+          </button>
           <button
             aria-label="Vaheta teema"
             className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
@@ -122,12 +122,12 @@ export default function LoginPage() {
                   <label className="text-sm font-semibold text-slate-700">
                     Parool
                   </label>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="text-xs font-semibold text-blue-600 hover:underline"
                   >
                     Unustasid parooli?
-                  </a>
+                  </button>
                 </div>
                 <div className="relative">
                   <LockOutlinedIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 !text-lg" />
