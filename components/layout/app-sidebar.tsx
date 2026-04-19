@@ -11,6 +11,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import SettingsIcon from "@mui/icons-material/Settings";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { getMe } from "@/lib/api/auth";
 
 export function AppSidebar() {
   const pathname = usePathname(); // 3. Haara praegune aadress (nt "/" või "/visitors")
