@@ -225,7 +225,7 @@ export default function KeycardDetailsPage() {
               description={
                 keycard.assignedUser
                   ? `Kaart on hetkel välja antud kasutajale ${keycard.assignedUser}.`
-                  : "Kui kaart ei ole aktiivselt välja antud, on see väli null."
+                  : undefined
               }
               accentClass="border-blue-200 bg-blue-50 text-blue-700"
             />
@@ -233,7 +233,6 @@ export default function KeycardDetailsPage() {
               icon={<AssignmentReturnIcon className="!text-base" />}
               title="Viimane tagastus"
               value={formatDateTime(keycard.lastReturnTime, "Puudub")}
-              description="Tagastatud kaardi korral näitab backend viimase tagastuse aega."
               accentClass="border-amber-200 bg-amber-50 text-amber-700"
             />
           </div>
@@ -316,7 +315,7 @@ function SummaryEvent({
   icon: ReactNode;
   title: string;
   value: string;
-  description: string;
+  description?: string;
   accentClass: string;
 }>) {
   return (
@@ -332,7 +331,9 @@ function SummaryEvent({
           <div>
             <p className="text-sm font-bold text-slate-900">{title}</p>
             <p className="mt-1 text-sm font-semibold text-slate-700">{value}</p>
-            <p className="mt-2 text-sm text-slate-500">{description}</p>
+            {description ? (
+              <p className="mt-2 text-sm text-slate-500">{description}</p>
+            ) : null}
           </div>
         </div>
       </div>
