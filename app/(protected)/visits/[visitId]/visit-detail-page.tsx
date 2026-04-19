@@ -696,7 +696,7 @@ function VisitVisitorCardSection({
       <div className="p-8 space-y-8">
         <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
           <BadgeOutlinedIcon className="text-primary !text-2xl" />
-          Külastaja kaart
+          Külastaja andmed
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)] gap-8 items-start">
@@ -781,7 +781,8 @@ function VisitAuditLogSection({
 }) {
   const isLoadingInitialTimeline =
     timelineState.isLoading && !timelineState.data;
-  const hasTimelineError = timelineState.error != null;
+  const timelineError = timelineState.error;
+  const hasTimelineError = timelineError != null;
   const shouldShowEmptyAuditLog =
     !timelineState.isLoading &&
     !hasTimelineError &&
@@ -792,7 +793,7 @@ function VisitAuditLogSection({
       <div className="px-8 py-6 border-b border-slate-100">
         <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
           <HistoryOutlinedIcon className="text-primary !text-2xl" />
-          Külastuse ajajoon
+          Ajajoon
         </div>
       </div>
 
@@ -803,7 +804,7 @@ function VisitAuditLogSection({
           <div className="px-8 py-6">
             <SectionError
               title="Ajajoont ei saanud laadida"
-              description={timelineState.error}
+              description={timelineError}
               actionLabel="Proovi uuesti"
               onAction={onRetry}
               compact
@@ -871,8 +872,10 @@ function VisitKeycardSection({
   readonly onRetry: () => void;
 }) {
   const hasLinkedCard = linkedCardId != null;
-  const hasKeycardData = keycardState.data != null;
-  const hasKeycardError = keycardState.error != null;
+  const keycardData = keycardState.data;
+  const hasKeycardData = keycardData != null;
+  const keycardError = keycardState.error;
+  const hasKeycardError = keycardError != null;
   const shouldShowMissingCardState = !hasLinkedCard;
 
   return (
@@ -896,7 +899,7 @@ function VisitKeycardSection({
       {hasLinkedCard && hasKeycardError ? (
         <SectionError
           title="Kiipkaardi andmeid ei saanud laadida"
-          description={keycardState.error}
+          description={keycardError}
           actionLabel="Laadi kaart uuesti"
           onAction={onRetry}
           compact
@@ -907,19 +910,19 @@ function VisitKeycardSection({
         <div className="space-y-5">
           <MetaRow
             label="Kaardi number"
-            value={formatFieldValue(keycardState.data.keycardNumber)}
+            value={formatFieldValue(keycardData.keycardNumber)}
           />
           <MetaRow
             label="Staatus"
-            value={formatFieldValue(keycardState.data.status)}
+            value={formatFieldValue(keycardData.status)}
           />
           <MetaRow
             label="Määratud kasutaja"
-            value={formatFieldValue(keycardState.data.assignedUser)}
+            value={formatFieldValue(keycardData.assignedUser)}
           />
           <MetaRow
             label="Viimati tagastatud"
-            value={formatDateTime(keycardState.data.lastReturnTime)}
+            value={formatDateTime(keycardData.lastReturnTime)}
           />
         </div>
       ) : null}
@@ -929,15 +932,16 @@ function VisitKeycardSection({
 
 export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
   const model = useVisitDetailPageModel(visitId);
+  const detailError = model.detailState.error;
 
   if (model.detailState.isLoading && !model.detail) {
     return <VisitDetailSkeleton />;
   }
 
-  if (model.detailState.error && !model.detail) {
+  if (detailError && !model.detail) {
     return (
       <VisitDetailErrorState
-        error={model.detailState.error}
+        error={detailError}
         onRetry={() => void model.refreshDetail()}
       />
     );
