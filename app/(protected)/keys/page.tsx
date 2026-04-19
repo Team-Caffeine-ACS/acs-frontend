@@ -451,8 +451,9 @@ export default function KeycardsPage() {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Leht <span className="text-slate-900">{visiblePageIndex + 1}</span>{" "}
-              / <span className="text-slate-900">{totalPages}</span>
+              Leht{" "}
+              <span className="text-slate-900">{visiblePageIndex + 1}</span> /{" "}
+              <span className="text-slate-900">{totalPages}</span>
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -460,7 +461,9 @@ export default function KeycardsPage() {
                 variant="outline"
                 size="icon"
                 className="rounded-xl text-slate-500"
-                onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+                onClick={() =>
+                  setPageIndex((current) => Math.max(0, current - 1))
+                }
                 disabled={visiblePageIndex === 0}
                 aria-label="Eelmine leht"
               >
@@ -472,7 +475,9 @@ export default function KeycardsPage() {
                 size="icon"
                 className="rounded-xl text-slate-500"
                 onClick={() =>
-                  setPageIndex((current) => Math.min(totalPages - 1, current + 1))
+                  setPageIndex((current) =>
+                    Math.min(totalPages - 1, current + 1),
+                  )
                 }
                 disabled={visiblePageIndex >= totalPages - 1}
                 aria-label="Järgmine leht"
