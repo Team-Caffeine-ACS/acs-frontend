@@ -244,7 +244,6 @@ export default function ReturnKeycardPage() {
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
-            
             <div className="space-y-2">
               <label
                 htmlFor="returnAccessPointId"
