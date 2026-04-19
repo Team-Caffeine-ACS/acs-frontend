@@ -133,7 +133,7 @@ export default function KeycardDetailsPage() {
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-display text-3xl font-black tracking-tight text-slate-900">
-                Kiipkaardi üksikasjad
+                Võtmekaardi üksikasjad
               </h1>
               <StatusBadge status={keycard.status} />
             </div>

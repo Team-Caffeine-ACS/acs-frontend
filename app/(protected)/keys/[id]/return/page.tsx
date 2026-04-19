@@ -190,7 +190,7 @@ export default function ReturnKeycardPage() {
             <div className="flex items-center gap-3">
               <AssignmentReturnIcon className="!text-2xl text-primary" />
               <h1 className="font-display text-3xl font-black tracking-tight text-slate-900">
-                Tagasta kiipkaart
+                Tagasta võtmekaart
               </h1>
             </div>
             <p className="max-w-2xl text-slate-500">
