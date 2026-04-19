@@ -101,6 +101,7 @@ export default function KeycardsPage() {
     totalFilteredKeycards === 0
       ? 0
       : Math.min(visiblePageIndex * pageSize + pageSize, totalFilteredKeycards);
+  const isFilteredResult = totalFilteredKeycards < keycards.length;
 
   const summary = keycards.reduce(
     (accumulator, keycard) => {
@@ -440,7 +441,7 @@ export default function KeycardsPage() {
               {" - "}
               <span className="text-slate-900">{visibleRangeEnd}</span> /{" "}
               <span className="text-slate-900">{totalFilteredKeycards}</span>
-              {keycards.length !== totalFilteredKeycards ? (
+              {isFilteredResult ? (
                 <>
                   {" "}
                   filtreeritud, kokku{" "}
@@ -702,6 +703,8 @@ function SortableHeader({
   direction: SortDirection;
   onClick: () => void;
 }>) {
+  const sortIcon = getSortIcon(direction);
+
   return (
     <button
       type="button"
@@ -709,13 +712,20 @@ function SortableHeader({
       className="flex h-full w-full cursor-pointer items-center justify-between gap-2 text-left select-none transition-colors hover:text-slate-700"
     >
       <span>{label}</span>
-      {direction === "asc" ? (
-        <ChevronDownIcon size={16} className="shrink-0 opacity-60" />
-      ) : direction === "desc" ? (
-        <ChevronUpIcon size={16} className="shrink-0 opacity-60" />
-      ) : null}
+      {sortIcon}
     </button>
   );
+}
+
+function getSortIcon(direction: SortDirection) {
+  switch (direction) {
+    case "asc":
+      return <ChevronDownIcon size={16} className="shrink-0 opacity-60" />;
+    case "desc":
+      return <ChevronUpIcon size={16} className="shrink-0 opacity-60" />;
+    case "default":
+      return null;
+  }
 }
 
 function sortKeycards(
@@ -739,32 +749,16 @@ function sortKeycards(
 
   return [...keycards].sort((left, right) => {
     for (const key of headerSortPriority) {
-      const comparison =
-        key === "number"
-          ? compareNullableText(
-              left.keycardNumber,
-              right.keycardNumber,
-              numberSort,
-            )
-          : key === "status"
-            ? compareStatus(left.status, right.status, statusSort)
-            : key === "user"
-              ? compareNullableText(
-                  left.assignedUser,
-                  right.assignedUser,
-                  userSort,
-                )
-              : key === "issued"
-                ? compareNullableDate(
-                    left.assignedTime,
-                    right.assignedTime,
-                    issuedSort,
-                  )
-                : compareNullableDate(
-                    left.lastReturnTime,
-                    right.lastReturnTime,
-                    lastReturnSort,
-                  );
+      const comparison = getKeycardComparison({
+        key,
+        left,
+        right,
+        numberSort,
+        statusSort,
+        userSort,
+        issuedSort,
+        lastReturnSort,
+      });
 
       if (comparison !== 0) {
         return comparison;
@@ -773,6 +767,55 @@ function sortKeycards(
 
     return 0;
   });
+}
+
+function getKeycardComparison({
+  key,
+  left,
+  right,
+  numberSort,
+  statusSort,
+  userSort,
+  issuedSort,
+  lastReturnSort,
+}: Readonly<{
+  key: HeaderSortKey;
+  left: KeycardResponse;
+  right: KeycardResponse;
+  numberSort: SortDirection;
+  statusSort: SortDirection;
+  userSort: SortDirection;
+  issuedSort: SortDirection;
+  lastReturnSort: SortDirection;
+}>) {
+  switch (key) {
+    case "number":
+      return compareNullableText(
+        left.keycardNumber,
+        right.keycardNumber,
+        numberSort,
+      );
+    case "status":
+      return compareStatus(left.status, right.status, statusSort);
+    case "user":
+      return compareNullableText(
+        left.assignedUser,
+        right.assignedUser,
+        userSort,
+      );
+    case "issued":
+      return compareNullableDate(
+        left.assignedTime,
+        right.assignedTime,
+        issuedSort,
+      );
+    case "returned":
+      return compareNullableDate(
+        left.lastReturnTime,
+        right.lastReturnTime,
+        lastReturnSort,
+      );
+  }
 }
 
 function compareStatus(
@@ -883,7 +926,5 @@ function matchesLastReturnFilter(
       return entryTime > endOfSelectedDay;
     case "on":
       return entryTime >= startOfSelectedDay && entryTime <= endOfSelectedDay;
-    case "all":
-      return true;
   }
 }

@@ -300,37 +300,13 @@ function DetailField({
   value: string;
   accent?: boolean;
   isMissing?: boolean;
-  tone?: "default" | "success" | "info" | "warning" | "danger" | "muted";
+  tone?: DetailFieldTone;
 }>) {
-  const containerClass = isMissing
-    ? "bg-slate-100 text-slate-500"
-    : tone === "success"
-      ? "bg-emerald-50"
-      : tone === "info"
-        ? "bg-blue-50"
-        : tone === "warning"
-          ? "bg-amber-50"
-          : tone === "danger"
-            ? "bg-rose-50"
-            : tone === "muted"
-              ? "bg-slate-100"
-              : "bg-slate-50";
-
-  const valueClass = isMissing
-    ? "text-slate-500"
-    : tone === "success"
-      ? "text-emerald-700"
-      : tone === "info"
-        ? "text-blue-700"
-        : tone === "warning"
-          ? "text-amber-700"
-          : tone === "danger"
-            ? "text-rose-700"
-            : tone === "muted"
-              ? "text-slate-600"
-              : accent
-                ? "text-primary"
-                : "text-slate-900";
+  const { containerClass, valueClass } = getDetailFieldClasses({
+    accent,
+    isMissing,
+    tone,
+  });
 
   return (
     <div className={`space-y-1 rounded-2xl px-4 py-4 ${containerClass}`}>
@@ -340,6 +316,57 @@ function DetailField({
       <p className={`break-all text-sm font-semibold ${valueClass}`}>{value}</p>
     </div>
   );
+}
+
+type DetailFieldTone =
+  | "default"
+  | "success"
+  | "info"
+  | "warning"
+  | "danger"
+  | "muted";
+
+const detailFieldContainerToneClass: Record<DetailFieldTone, string> = {
+  default: "bg-slate-50",
+  success: "bg-emerald-50",
+  info: "bg-blue-50",
+  warning: "bg-amber-50",
+  danger: "bg-rose-50",
+  muted: "bg-slate-100",
+};
+
+const detailFieldValueToneClass: Record<DetailFieldTone, string> = {
+  default: "text-slate-900",
+  success: "text-emerald-700",
+  info: "text-blue-700",
+  warning: "text-amber-700",
+  danger: "text-rose-700",
+  muted: "text-slate-600",
+};
+
+function getDetailFieldClasses({
+  accent,
+  isMissing,
+  tone,
+}: Readonly<{
+  accent: boolean;
+  isMissing: boolean;
+  tone: DetailFieldTone;
+}>) {
+  if (isMissing) {
+    return {
+      containerClass: "bg-slate-100 text-slate-500",
+      valueClass: "text-slate-500",
+    };
+  }
+
+  return {
+    containerClass: detailFieldContainerToneClass[tone],
+    valueClass:
+      tone === "default" && accent
+        ? "text-primary"
+        : detailFieldValueToneClass[tone],
+  };
 }
 
 function SummaryEvent({
