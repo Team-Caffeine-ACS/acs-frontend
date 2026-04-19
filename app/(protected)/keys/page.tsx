@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type ReactNode, useDeferredValue, useEffect, useState } from "react";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -30,6 +31,8 @@ type HeaderSortKey = "number" | "status" | "user" | "issued" | "returned";
 export default function KeycardsPage() {
   const [keycards, setKeycards] = useState<KeycardResponse[]>([]);
   const [search, setSearch] = useState("");
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [numberSort, setNumberSort] = useState<SortDirection>("default");
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
   const [statusSort, setStatusSort] = useState<SortDirection>("default");
@@ -83,6 +86,21 @@ export default function KeycardsPage() {
     headerSortPriority,
     lastReturnSort,
   );
+
+  const totalFilteredKeycards = filteredKeycards.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredKeycards / pageSize));
+  const visiblePageIndex = Math.min(pageIndex, totalPages - 1);
+  const pageStart = visiblePageIndex * pageSize;
+  const paginatedKeycards = filteredKeycards.slice(
+    pageStart,
+    pageStart + pageSize,
+  );
+  const visibleRangeStart =
+    totalFilteredKeycards === 0 ? 0 : visiblePageIndex * pageSize + 1;
+  const visibleRangeEnd =
+    totalFilteredKeycards === 0
+      ? 0
+      : Math.min(visiblePageIndex * pageSize + pageSize, totalFilteredKeycards);
 
   const summary = keycards.reduce(
     (accumulator, keycard) => {
@@ -166,12 +184,33 @@ export default function KeycardsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    setPageIndex(0);
+  }, [
+    deferredSearch,
+    statusFilter,
+    numberSort,
+    statusSort,
+    userSort,
+    issuedSort,
+    lastReturnSort,
+    lastReturnFilterMode,
+    lastReturnDate,
+    headerSortPriority,
+  ]);
+
+  useEffect(() => {
+    if (pageIndex > totalPages - 1) {
+      setPageIndex(Math.max(0, totalPages - 1));
+    }
+  }, [pageIndex, totalPages]);
+
   let tableBodyContent: ReactNode;
 
   if (isLoading) {
     tableBodyContent = <LoadingRow />;
-  } else if (filteredKeycards.length > 0) {
-    tableBodyContent = filteredKeycards.map((keycard) => (
+  } else if (paginatedKeycards.length > 0) {
+    tableBodyContent = paginatedKeycards.map((keycard) => (
       <KeycardRow key={keycard.id} keycard={keycard} />
     ));
   } else {
@@ -233,6 +272,9 @@ export default function KeycardsPage() {
             className="w-full rounded-xl bg-slate-50 py-2.5 pr-4 pl-10 text-sm font-semibold text-slate-700 placeholder:text-slate-300"
             placeholder="Otsi kaardi numbri või kasutaja järgi..."
           />
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
+          <FilterListIcon className="!text-lg" />
         </div>
         <FilterField label="Staatus">
           <select
@@ -301,7 +343,7 @@ export default function KeycardsPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
-            <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+            <thead className="border-b border-slate-100 bg-slate-50/80 text-sm font-medium text-slate-500">
               <tr>
                 <th className="px-6 py-5">
                   <SortableHeader
@@ -378,15 +420,67 @@ export default function KeycardsPage() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-6 py-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            Näitan{" "}
-            <span className="text-slate-900">{filteredKeycards.length}</span> /{" "}
-            <span className="text-slate-900">{keycards.length}</span> kaardist
-          </p>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            Ava detailvaade, et näha määramist ja kaardi olekut
-          </p>
+        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <span>Ridu lehel</span>
+              <select
+                value={pageSize}
+                onChange={(event) => setPageSize(Number(event.target.value))}
+                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </label>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Näitan <span className="text-slate-900">{visibleRangeStart}</span>
+              {" - "}
+              <span className="text-slate-900">{visibleRangeEnd}</span> /{" "}
+              <span className="text-slate-900">{totalFilteredKeycards}</span>
+              {keycards.length !== totalFilteredKeycards ? (
+                <>
+                  {" "}
+                  filtreeritud, kokku{" "}
+                  <span className="text-slate-900">{keycards.length}</span>
+                </>
+              ) : null}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Leht <span className="text-slate-900">{visiblePageIndex + 1}</span>{" "}
+              / <span className="text-slate-900">{totalPages}</span>
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-xl text-slate-500"
+                onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+                disabled={visiblePageIndex === 0}
+                aria-label="Eelmine leht"
+              >
+                <ChevronLeftIcon className="!text-lg" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-xl text-slate-500"
+                onClick={() =>
+                  setPageIndex((current) => Math.min(totalPages - 1, current + 1))
+                }
+                disabled={visiblePageIndex >= totalPages - 1}
+                aria-label="Järgmine leht"
+              >
+                <ChevronRightIcon className="!text-lg" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -607,7 +701,7 @@ function SortableHeader({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-full w-full items-center justify-between gap-2 text-left font-black uppercase select-none transition-colors hover:text-slate-600"
+      className="flex h-full w-full cursor-pointer items-center justify-between gap-2 text-left select-none transition-colors hover:text-slate-700"
     >
       <span>{label}</span>
       {direction === "asc" ? (
