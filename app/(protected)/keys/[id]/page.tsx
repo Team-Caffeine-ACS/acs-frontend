@@ -175,14 +175,17 @@ export default function KeycardDetailsPage() {
               <DetailField
                 label="Staatus"
                 value={getKeycardStatusLabel(keycard.status)}
+                tone={keycard.status === "available" ? "success" : "default"}
               />
               <DetailField
                 label="Aktiivne"
                 value={keycard.active ? "Jah" : "Ei"}
+                tone={keycard.active ? "success" : "default"}
               />
               <DetailField
                 label="Kehtib kuni"
                 value={formatDateTime(keycard.validUntil, "Määramata")}
+                isMissing={!keycard.validUntil}
               />
             </div>
           </SectionCard>
@@ -196,18 +199,22 @@ export default function KeycardDetailsPage() {
                 label="Kaardi kasutaja"
                 value={keycard.assignedUser ?? "Aktiivne kasutaja puudub"}
                 accent={Boolean(keycard.assignedUser)}
+                isMissing={!keycard.assignedUser}
               />
               <DetailField
                 label="Kaardi kasutaja roll"
                 value={getAssignedRoleLabel(keycard.assignedPersonInRoleId)}
+                isMissing={!keycard.assignedPersonInRoleId}
               />
               <DetailField
                 label="Väljastamise aeg"
                 value={formatDateTime(keycard.assignedTime, "Puudub")}
+                isMissing={!keycard.assignedTime}
               />
               <DetailField
                 label="Viimati tagastatud"
                 value={formatDateTime(keycard.lastReturnTime, "Puudub")}
+                isMissing={!keycard.lastReturnTime}
               />
             </div>
           </SectionCard>
@@ -286,21 +293,35 @@ function DetailField({
   label,
   value,
   accent = false,
+  isMissing = false,
+  tone = "default",
 }: Readonly<{
   label: string;
   value: string;
   accent?: boolean;
+  isMissing?: boolean;
+  tone?: "default" | "success";
 }>) {
+  const containerClass = isMissing
+    ? "bg-slate-100 text-slate-500"
+    : tone === "success"
+      ? "bg-emerald-50"
+      : "bg-slate-50";
+
+  const valueClass = isMissing
+    ? "text-slate-500"
+    : tone === "success"
+      ? "text-emerald-700"
+      : accent
+        ? "text-primary"
+        : "text-slate-900";
+
   return (
-    <div className="space-y-1 rounded-2xl bg-slate-50 px-4 py-4">
+    <div className={`space-y-1 rounded-2xl px-4 py-4 ${containerClass}`}>
       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
         {label}
       </p>
-      <p
-        className={`break-all text-sm font-semibold ${accent ? "text-primary" : "text-slate-900"}`}
-      >
-        {value}
-      </p>
+      <p className={`break-all text-sm font-semibold ${valueClass}`}>{value}</p>
     </div>
   );
 }
