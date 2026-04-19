@@ -137,7 +137,7 @@ export default function KeycardDetailsPage() {
               <StatusBadge status={keycard.status} />
             </div>
             <p className="text-sm font-semibold uppercase tracking-widest text-slate-400">
-              ID: {keycard.keycardNumber}
+              ID: {keycard.id}
             </p>
             <p className="max-w-2xl text-slate-500">{currentStateText}</p>
           </div>
