@@ -175,12 +175,12 @@ export default function KeycardDetailsPage() {
               <DetailField
                 label="Staatus"
                 value={getKeycardStatusLabel(keycard.status)}
-                tone={keycard.status === "available" ? "success" : "default"}
+                tone={getStatusFieldTone(keycard.status)}
               />
               <DetailField
                 label="Aktiivne"
                 value={keycard.active ? "Jah" : "Ei"}
-                tone={keycard.active ? "success" : "default"}
+                tone={keycard.active ? "success" : "danger"}
               />
               <DetailField
                 label="Kehtib kuni"
@@ -300,18 +300,34 @@ function DetailField({
   value: string;
   accent?: boolean;
   isMissing?: boolean;
-  tone?: "default" | "success";
+  tone?: "default" | "success" | "info" | "warning" | "danger" | "muted";
 }>) {
   const containerClass = isMissing
     ? "bg-slate-100 text-slate-500"
     : tone === "success"
       ? "bg-emerald-50"
+      : tone === "info"
+        ? "bg-blue-50"
+        : tone === "warning"
+          ? "bg-amber-50"
+          : tone === "danger"
+            ? "bg-rose-50"
+            : tone === "muted"
+              ? "bg-slate-100"
       : "bg-slate-50";
 
   const valueClass = isMissing
     ? "text-slate-500"
     : tone === "success"
       ? "text-emerald-700"
+      : tone === "info"
+        ? "text-blue-700"
+        : tone === "warning"
+          ? "text-amber-700"
+          : tone === "danger"
+            ? "text-rose-700"
+            : tone === "muted"
+              ? "text-slate-600"
       : accent
         ? "text-primary"
         : "text-slate-900";
@@ -369,6 +385,7 @@ function StatusBadge({
     available: "border-emerald-100 bg-emerald-50 text-emerald-700",
     in_use: "border-blue-100 bg-blue-50 text-blue-700",
     disabled: "border-rose-100 bg-rose-50 text-rose-700",
+    expired: "border-amber-100 bg-amber-50 text-amber-700",
   };
 
   return (
@@ -378,6 +395,21 @@ function StatusBadge({
       {getKeycardStatusLabel(status)}
     </span>
   );
+}
+
+function getStatusFieldTone(
+  status: KeycardDetailResponse["status"],
+): "info" | "warning" | "danger" | "muted" {
+  switch (status) {
+    case "available":
+      return "info";
+    case "in_use":
+      return "warning";
+    case "disabled":
+      return "danger";
+    case "expired":
+      return "warning";
+  }
 }
 
 function formatDateTime(value: string | null, emptyLabel: string): string {

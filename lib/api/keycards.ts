@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/apiClient";
 
-export type KeycardStatus = "available" | "in_use" | "disabled";
+export type KeycardStatus = "available" | "in_use" | "disabled" | "expired";
 
 export interface PageMetadata {
   size: number;
@@ -119,6 +119,8 @@ export function getKeycardStatusLabel(status: KeycardStatus): string {
       return "Kasutuses";
     case "disabled":
       return "Deaktiveeritud";
+    case "expired":
+      return "Aegunud";
   }
 }
 
@@ -145,17 +147,22 @@ function mapKeycardSummary(raw: unknown): KeycardResponse | null {
     return null;
   }
 
-  const active = pickBoolean(record, ["active"]) ?? true;
+  const rawActive = pickBoolean(record, ["active"]);
   const assignedUser = pickString(record, ["assignedUser"]);
   const assignedTime = pickString(record, ["assignedTime"]);
   const lastReturnTime = pickString(record, ["lastReturnTime"]);
   const validUntil = pickString(record, ["validUntil"]);
+  const rawStatus = pickString(record, ["status"]);
+  const status =
+    mapRawStatus(rawStatus) ??
+    normalizeStatus(rawActive ?? true, assignedUser, assignedTime);
+  const active = rawActive ?? status !== "disabled";
 
   return {
     id,
     keycardNumber,
     active,
-    status: normalizeStatus(active, assignedUser, assignedTime),
+    status,
     assignedUser,
     assignedTime,
     lastReturnTime,
@@ -177,6 +184,21 @@ function normalizeStatus(
   }
 
   return "available";
+}
+
+function mapRawStatus(status: string | null): KeycardStatus | null {
+  switch (status?.toUpperCase()) {
+    case "AVAILABLE":
+      return "available";
+    case "IN_USE":
+      return "in_use";
+    case "DISABLED":
+      return "disabled";
+    case "EXPIRED":
+      return "expired";
+    default:
+      return null;
+  }
 }
 
 function pickString(record: UnknownRecord, keys: string[]): string | null {

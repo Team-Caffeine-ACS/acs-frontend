@@ -275,10 +275,7 @@ function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
       </td>
       <td className="relative px-6 py-4">
         <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
-        <DateTimeStack
-          value={keycard.assignedTime}
-          emptyLabel="Pole väljastatud"
-        />
+        <DateTimeStack value={keycard.assignedTime} emptyLabel="Puudub" />
       </td>
       <td className="relative px-6 py-4">
         <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
@@ -298,6 +295,7 @@ function StatusBadge({
     available: "border-emerald-100 bg-emerald-50 text-emerald-700",
     in_use: "border-blue-100 bg-blue-50 text-blue-700",
     disabled: "border-rose-100 bg-rose-50 text-rose-700",
+    expired: "border-amber-100 bg-amber-50 text-amber-700",
   };
 
   return (
