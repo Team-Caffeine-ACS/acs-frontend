@@ -155,7 +155,7 @@ export default function KeycardDetailsPage() {
             <Button asChild variant="outline" className="gap-2 rounded-xl">
               <Link href="/keys">
                 <ArrowBackIcon className="!text-base" />
-                Tagasi nimekirja
+                Tagasi
               </Link>
             </Button>
           </div>

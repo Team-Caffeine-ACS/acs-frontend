@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type ReactNode, useDeferredValue, useEffect, useState } from "react";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -11,7 +12,6 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import InfoIcon from "@mui/icons-material/Info";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import {
@@ -184,7 +184,6 @@ export default function KeycardsPage() {
                 <th className="px-6 py-5">Kasutaja</th>
                 <th className="px-6 py-5">Väljastatud</th>
                 <th className="px-6 py-5">Viimati tagastatud</th>
-                <th className="px-6 py-5 text-right">Tegevus</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -238,20 +237,34 @@ export default function KeycardsPage() {
 }
 
 function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
+  const router = useRouter();
+  const href = `/keys/${keycard.id}`;
+
   return (
-    <tr className="transition-colors hover:bg-slate-50/70">
+    <tr
+      tabIndex={0}
+      role="link"
+      aria-label={`Ava võtmekaart ${keycard.keycardNumber}`}
+      className="cursor-pointer transition-colors hover:bg-slate-50/70 focus-visible:bg-slate-50/70 focus-visible:outline-2 focus-visible:outline-primary/40"
+      onClick={() => router.push(href)}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+        router.push(href);
+      }}
+    >
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center gap-3">
           <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
             <CreditCardIcon className="!text-lg" />
           </div>
           <div>
-            <Link
-              href={`/keys/${keycard.id}`}
-              className="font-mono text-sm font-bold tracking-tight text-slate-900 transition-colors hover:text-primary"
-            >
+            <p className="font-mono text-sm font-bold tracking-tight text-slate-900">
               {keycard.keycardNumber}
-            </Link>
+            </p>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
               ID {keycard.id.slice(0, 8)}
             </p>
@@ -281,13 +294,6 @@ function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
           value={keycard.lastReturnTime}
           emptyLabel="Tagastus puudub"
         />
-      </td>
-      <td className="px-6 py-4 text-right">
-        <Button asChild variant="ghost" className="rounded-xl text-primary">
-          <Link href={`/keys/${keycard.id}`}>
-            Ava <VisibilityIcon className="!text-base" />
-          </Link>
-        </Button>
       </td>
     </tr>
   );
@@ -339,7 +345,7 @@ function DateTimeStack({
 function LoadingRow() {
   return (
     <tr>
-      <td colSpan={6} className="px-6 py-14 text-center">
+      <td colSpan={5} className="px-6 py-14 text-center">
         <p className="text-sm font-semibold text-slate-600">
           Laen võtmekaarte...
         </p>
@@ -357,7 +363,7 @@ function EmptyRow({
 }>) {
   return (
     <tr>
-      <td colSpan={6} className="px-6 py-14 text-center">
+      <td colSpan={5} className="px-6 py-14 text-center">
         <p className="text-sm font-semibold text-slate-900">{title}</p>
         <p className="mt-2 text-sm text-slate-500">{description}</p>
       </td>
