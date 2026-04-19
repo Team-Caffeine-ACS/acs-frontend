@@ -86,6 +86,8 @@ export function getKeycardById(
   return apiClient.get<KeycardResponse>(`/api/keycards/${keycardId}`, {
     signal,
   });
+}
+
 export async function getKeycard(
   cardId: string,
 ): Promise<KeycardDetailResponse> {
