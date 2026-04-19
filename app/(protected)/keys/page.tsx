@@ -14,20 +14,33 @@ import InfoIcon from "@mui/icons-material/Info";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import {
+  getKeycard,
   getKeycards,
   getKeycardStatusLabel,
+  type KeycardStatus,
   type KeycardResponse,
 } from "@/lib/api/keycards";
+
+type StatusFilterValue = "all" | KeycardStatus;
+type DateSortOrder = "default" | "newest" | "oldest";
+type LastReturnFilterMode = "all" | "before" | "after" | "on";
 
 export default function KeycardsPage() {
   const [keycards, setKeycards] = useState<KeycardResponse[]>([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
+  const [issuedSort, setIssuedSort] = useState<DateSortOrder>("default");
+  const [lastReturnSort, setLastReturnSort] =
+    useState<DateSortOrder>("default");
+  const [lastReturnFilterMode, setLastReturnFilterMode] =
+    useState<LastReturnFilterMode>("all");
+  const [lastReturnDate, setLastReturnDate] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
 
-  const filteredKeycards = keycards.filter((keycard) => {
+  const searchFilteredKeycards = keycards.filter((keycard) => {
     if (!deferredSearch) return true;
 
     const haystack = [
@@ -40,6 +53,24 @@ export default function KeycardsPage() {
 
     return haystack.includes(deferredSearch);
   });
+
+  const statusFilteredKeycards = searchFilteredKeycards.filter((keycard) =>
+    statusFilter === "all" ? true : keycard.status === statusFilter,
+  );
+
+  const lastReturnFilteredKeycards = statusFilteredKeycards.filter((keycard) =>
+    matchesLastReturnFilter(
+      keycard.lastReturnTime,
+      lastReturnFilterMode,
+      lastReturnDate,
+    ),
+  );
+
+  const filteredKeycards = sortKeycards(
+    lastReturnFilteredKeycards,
+    issuedSort,
+    lastReturnSort,
+  );
 
   const summary = keycards.reduce(
     (accumulator, keycard) => {
@@ -72,7 +103,36 @@ export default function KeycardsPage() {
       try {
         const page = await getKeycards({ size: 200 });
         if (!isMounted) return;
-        setKeycards(page.content);
+
+        const inUseWithoutAssignedTime = page.content.filter(
+          (keycard) => keycard.status === "in_use" && !keycard.assignedTime,
+        );
+
+        if (inUseWithoutAssignedTime.length === 0) {
+          setKeycards(page.content);
+          return;
+        }
+
+        const detailedResults = await Promise.allSettled(
+          inUseWithoutAssignedTime.map((keycard) => getKeycard(keycard.id)),
+        );
+
+        if (!isMounted) return;
+
+        const detailsById = new Map(
+          detailedResults.flatMap((result) =>
+            result.status === "fulfilled"
+              ? [[result.value.id, result.value] as const]
+              : [],
+          ),
+        );
+
+        setKeycards(
+          page.content.map((keycard) => {
+            const detail = detailsById.get(keycard.id);
+            return detail ? { ...keycard, ...detail } : keycard;
+          }),
+        );
       } catch (err) {
         if (!isMounted) return;
         setError(
@@ -162,6 +222,72 @@ export default function KeycardsPage() {
             placeholder="Otsi kaardi numbri või kasutaja järgi..."
           />
         </div>
+        <FilterField label="Staatus">
+          <select
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as StatusFilterValue)
+            }
+            className={filterInputCls}
+          >
+            <option value="all">Kõik staatused</option>
+            <option value="available">Saadaval</option>
+            <option value="in_use">Kasutuses</option>
+            <option value="disabled">Deaktiveeritud</option>
+            <option value="expired">Aegunud</option>
+          </select>
+        </FilterField>
+        <FilterField label="Väljastatud">
+          <select
+            value={issuedSort}
+            onChange={(event) =>
+              setIssuedSort(event.target.value as DateSortOrder)
+            }
+            className={filterInputCls}
+          >
+            <option value="default">Vaikimisi</option>
+            <option value="newest">Uuem enne</option>
+            <option value="oldest">Vanem enne</option>
+          </select>
+        </FilterField>
+        <FilterField label="Viimati tagastatud">
+          <select
+            value={lastReturnSort}
+            onChange={(event) =>
+              setLastReturnSort(event.target.value as DateSortOrder)
+            }
+            className={filterInputCls}
+          >
+            <option value="default">Vaikimisi</option>
+            <option value="newest">Uuem enne</option>
+            <option value="oldest">Vanem enne</option>
+          </select>
+        </FilterField>
+        <FilterField label="Tagastuse kuupäev">
+          <div className="flex min-w-[260px] gap-2">
+            <select
+              value={lastReturnFilterMode}
+              onChange={(event) =>
+                setLastReturnFilterMode(
+                  event.target.value as LastReturnFilterMode,
+                )
+              }
+              className={filterInputCls + " min-w-[120px]"}
+            >
+              <option value="all">Kõik</option>
+              <option value="before">Enne</option>
+              <option value="after">Pärast</option>
+              <option value="on">Täpselt</option>
+            </select>
+            <input
+              type="date"
+              value={lastReturnDate}
+              onChange={(event) => setLastReturnDate(event.target.value)}
+              disabled={lastReturnFilterMode === "all"}
+              className={filterInputCls + " min-w-[140px]"}
+            />
+          </div>
+        </FilterField>
         <Button
           variant="outline"
           size="icon"
@@ -385,4 +511,108 @@ function StatSmall({
       </div>
     </div>
   );
+}
+
+function FilterField({
+  label,
+  children,
+}: Readonly<{
+  label: string;
+  children: ReactNode;
+}>) {
+  return (
+    <label className="space-y-1">
+      <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+const filterInputCls =
+  "h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-primary/40 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60";
+
+function sortKeycards(
+  keycards: KeycardResponse[],
+  issuedSort: DateSortOrder,
+  lastReturnSort: DateSortOrder,
+) {
+  if (issuedSort === "default" && lastReturnSort === "default") {
+    return keycards;
+  }
+
+  return [...keycards].sort((left, right) => {
+    const issuedComparison = compareNullableDate(
+      left.assignedTime,
+      right.assignedTime,
+      issuedSort,
+    );
+
+    if (issuedComparison !== 0) {
+      return issuedComparison;
+    }
+
+    return compareNullableDate(
+      left.lastReturnTime,
+      right.lastReturnTime,
+      lastReturnSort,
+    );
+  });
+}
+
+function compareNullableDate(
+  left: string | null,
+  right: string | null,
+  order: DateSortOrder,
+) {
+  if (order === "default") {
+    return 0;
+  }
+
+  if (!left && !right) {
+    return 0;
+  }
+
+  if (!left) {
+    return 1;
+  }
+
+  if (!right) {
+    return -1;
+  }
+
+  const leftTime = new Date(left).getTime();
+  const rightTime = new Date(right).getTime();
+
+  return order === "newest" ? rightTime - leftTime : leftTime - rightTime;
+}
+
+function matchesLastReturnFilter(
+  value: string | null,
+  mode: LastReturnFilterMode,
+  date: string,
+) {
+  if (mode === "all" || !date) {
+    return true;
+  }
+
+  if (!value) {
+    return false;
+  }
+
+  const entryTime = new Date(value).getTime();
+  const startOfSelectedDay = new Date(`${date}T00:00:00`).getTime();
+  const endOfSelectedDay = new Date(`${date}T23:59:59.999`).getTime();
+
+  switch (mode) {
+    case "before":
+      return entryTime < startOfSelectedDay;
+    case "after":
+      return entryTime > endOfSelectedDay;
+    case "on":
+      return entryTime >= startOfSelectedDay && entryTime <= endOfSelectedDay;
+    case "all":
+      return true;
+  }
 }

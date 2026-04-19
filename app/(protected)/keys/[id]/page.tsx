@@ -314,7 +314,7 @@ function DetailField({
             ? "bg-rose-50"
             : tone === "muted"
               ? "bg-slate-100"
-      : "bg-slate-50";
+              : "bg-slate-50";
 
   const valueClass = isMissing
     ? "text-slate-500"
@@ -328,9 +328,9 @@ function DetailField({
             ? "text-rose-700"
             : tone === "muted"
               ? "text-slate-600"
-      : accent
-        ? "text-primary"
-        : "text-slate-900";
+              : accent
+                ? "text-primary"
+                : "text-slate-900";
 
   return (
     <div className={`space-y-1 rounded-2xl px-4 py-4 ${containerClass}`}>
