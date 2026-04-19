@@ -162,19 +162,6 @@ export default function KeycardDetailsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-slate-700">
-        <div className="flex items-start gap-2">
-          <InfoOutlinedIcon className="mt-0.5 !text-base text-blue-600" />
-          <p>
-            Praegune `GET /api/keycards/{"{cardId}"}` endpoint tagastab aktiivse
-            kaardi kasutaja, kaardi kasutaja `person_in_role` ID ning viimased
-            teadaolevad väljastus- või tagastusajad. Kaardi kasutaja rolli
-            nimetust, väljastajat, vastuvõtulauda ja täielikku ajalugu sellest
-            response’ist veel ei tule.
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
           <SectionCard
@@ -229,7 +216,7 @@ export default function KeycardDetailsPage() {
 
         <SectionCard
           icon={<HistoryIcon className="!text-lg text-primary" />}
-          title="Ajaloo kokkuvõte"
+          title="Ajajoon"
         >
           <div className="space-y-4">
             <SummaryEvent
@@ -250,11 +237,6 @@ export default function KeycardDetailsPage() {
               description="Tagastatud kaardi korral näitab backend viimase tagastuse aega."
               accentClass="border-amber-200 bg-amber-50 text-amber-700"
             />
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-              Täieliku issue/return ajaloo, väljastaja ja vastuvõtulaua
-              kuvamiseks on vaja eraldi history-andmeid või detailsemat
-              response’i backendist.
-            </div>
           </div>
         </SectionCard>
       </div>

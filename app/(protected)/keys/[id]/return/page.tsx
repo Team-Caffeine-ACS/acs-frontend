@@ -244,17 +244,7 @@ export default function ReturnKeycardPage() {
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-slate-700">
-              <div className="flex items-start gap-2">
-                <InfoOutlinedIcon className="mt-0.5 !text-base text-blue-600" />
-                <p>
-                  Swaggeri järgi vajab tagastus ainult välja{" "}
-                  <code>returnAccessPointId</code>. Tagastuse kellaaeg lisatakse
-                  backendis automaatselt.
-                </p>
-              </div>
-            </div>
-
+            
             <div className="space-y-2">
               <label
                 htmlFor="returnAccessPointId"
