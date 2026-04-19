@@ -79,6 +79,15 @@ export async function getAvailableKeycards(): Promise<KeycardResponse[]> {
   return page.content;
 }
 
+export function getKeycardById(
+  keycardId: string,
+  signal?: AbortSignal,
+): Promise<KeycardResponse> {
+  return apiClient.get<KeycardResponse>(`/api/keycards/${keycardId}`, {
+    signal,
+  });
+}
+
 export async function getKeycard(
   cardId: string,
 ): Promise<KeycardDetailResponse> {

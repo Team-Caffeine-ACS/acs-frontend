@@ -9,6 +9,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import KeyIcon from "@mui/icons-material/Key";
 import HistoryIcon from "@mui/icons-material/History";
 import SettingsIcon from "@mui/icons-material/Settings";
+import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { getMe } from "@/lib/api/auth";
 
@@ -33,6 +34,11 @@ export function AppSidebar() {
       name: "Külalised",
       href: "/visitors",
       icon: <GroupIcon className="text-[20px]" />,
+    },
+    {
+      name: "Külastused",
+      href: "/visits",
+      icon: <AssignmentOutlinedIcon className="text-[20px]" />,
     },
     {
       name: "Võtmekaardid",
@@ -65,7 +71,8 @@ export function AppSidebar() {
       <nav className="flex flex-col gap-1">
         {menuItems.map((item) => {
           // 5. Kontrollime, kas see rida on parajasti aktiivne
-          const isActive = pathname === item.href;
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link
