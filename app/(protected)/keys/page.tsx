@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { type ReactNode, useDeferredValue, useEffect, useState } from "react";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -237,26 +236,15 @@ export default function KeycardsPage() {
 }
 
 function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
-  const router = useRouter();
   const href = `/keys/${keycard.id}`;
+  const label = `Ava võtmekaart ${keycard.keycardNumber}`;
 
   return (
-    <tr
-      tabIndex={0}
-      role="link"
-      aria-label={`Ava võtmekaart ${keycard.keycardNumber}`}
-      className="cursor-pointer transition-colors hover:bg-slate-50/70 focus-visible:bg-slate-50/70 focus-visible:outline-2 focus-visible:outline-primary/40"
-      onClick={() => router.push(href)}
-      onKeyDown={(event) => {
-        if (event.key !== "Enter" && event.key !== " ") {
-          return;
-        }
-
-        event.preventDefault();
-        router.push(href);
-      }}
-    >
-      <td className="px-6 py-4 whitespace-nowrap">
+    <tr className="cursor-pointer transition-colors hover:bg-slate-50/70 focus-within:bg-slate-50/70 focus-within:outline-2 focus-within:outline-primary/40">
+      <td className="relative px-6 py-4 whitespace-nowrap">
+        <Link href={href} className="absolute inset-0 z-10" aria-label={label}>
+          <span className="sr-only">{label}</span>
+        </Link>
         <div className="flex items-center gap-3">
           <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
             <CreditCardIcon className="!text-lg" />
@@ -271,10 +259,12 @@ function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
           </div>
         </div>
       </td>
-      <td className="px-6 py-4">
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
         <StatusBadge status={keycard.status} />
       </td>
-      <td className="px-6 py-4">
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
         {keycard.assignedUser ? (
           <p className="text-sm font-semibold text-slate-900">
             {keycard.assignedUser}
@@ -283,13 +273,15 @@ function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
           <p className="text-sm text-slate-400">Määramata</p>
         )}
       </td>
-      <td className="px-6 py-4">
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
         <DateTimeStack
           value={keycard.assignedTime}
           emptyLabel="Pole väljastatud"
         />
       </td>
-      <td className="px-6 py-4">
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
         <DateTimeStack
           value={keycard.lastReturnTime}
           emptyLabel="Tagastus puudub"
