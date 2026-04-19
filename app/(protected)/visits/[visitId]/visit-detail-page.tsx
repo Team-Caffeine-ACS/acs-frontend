@@ -18,13 +18,11 @@ import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
-import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import { getKeycardById, type KeycardResponse } from "@/lib/api/keycards";
@@ -230,7 +228,6 @@ interface VisitDetailViewModel {
   readonly linkedCardId: string | null;
   readonly keycardNumber: string | null;
   readonly displayName: string;
-  readonly sortedTimeline: VisitTimelineEvent[];
   readonly reversedTimeline: VisitTimelineEvent[];
   readonly isRegisteringDeparture: boolean;
   readonly actionError: string | null;
@@ -506,7 +503,6 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
     linkedCardId,
     keycardNumber,
     displayName,
-    sortedTimeline,
     reversedTimeline,
     isRegisteringDeparture,
     actionError,
@@ -560,41 +556,32 @@ function VisitDetailContent({ visitId, model }: VisitDetailContentProps) {
         <InlineMessage variant="success">{model.actionMessage}</InlineMessage>
       ) : null}
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,1.05fr)] gap-8">
-        <div className="space-y-8">
-          <VisitVisitorCardSection
-            detail={model.detail}
-            displayName={model.displayName}
-            departureTime={model.departureTime}
-            keycardNumber={model.keycardNumber}
-            linkedCardId={model.linkedCardId}
-            canRegisterDeparture={model.canRegisterDeparture}
-            isRegisteringDeparture={model.isRegisteringDeparture}
-            statusKey={model.statusKey}
-            onRegisterDeparture={() => void model.handleRegisterDeparture()}
-          />
-          <VisitAuditLogSection
-            timelineState={model.timelineState}
-            reversedTimeline={model.reversedTimeline}
-          />
-        </div>
-
-        <div className="space-y-8">
-          <VisitTimelineSection
-            timelineState={model.timelineState}
-            sortedTimeline={model.sortedTimeline}
-            onRetry={() => void model.refreshTimeline()}
-          />
-          <VisitKeycardSection
-            linkedCardId={model.linkedCardId}
-            keycardState={model.keycardState}
-            onRetry={() =>
-              model.linkedCardId
-                ? void model.refreshKeycard(model.linkedCardId)
-                : undefined
-            }
-          />
-        </div>
+      <div className="space-y-8">
+        <VisitVisitorCardSection
+          detail={model.detail}
+          displayName={model.displayName}
+          departureTime={model.departureTime}
+          keycardNumber={model.keycardNumber}
+          linkedCardId={model.linkedCardId}
+          canRegisterDeparture={model.canRegisterDeparture}
+          isRegisteringDeparture={model.isRegisteringDeparture}
+          statusKey={model.statusKey}
+          onRegisterDeparture={() => void model.handleRegisterDeparture()}
+        />
+        <VisitAuditLogSection
+          timelineState={model.timelineState}
+          reversedTimeline={model.reversedTimeline}
+          onRetry={() => void model.refreshTimeline()}
+        />
+        <VisitKeycardSection
+          linkedCardId={model.linkedCardId}
+          keycardState={model.keycardState}
+          onRetry={() =>
+            model.linkedCardId
+              ? void model.refreshKeycard(model.linkedCardId)
+              : undefined
+          }
+        />
       </div>
     </div>
   );
@@ -786,34 +773,48 @@ function VisitVisitorCardSection({
 function VisitAuditLogSection({
   timelineState,
   reversedTimeline,
+  onRetry,
 }: {
   readonly timelineState: RequestState<VisitTimelineEvent[]>;
   readonly reversedTimeline: VisitTimelineEvent[];
+  readonly onRetry: () => void;
 }) {
   const isLoadingInitialTimeline =
     timelineState.isLoading && !timelineState.data;
+  const hasTimelineError = timelineState.error != null;
   const shouldShowEmptyAuditLog =
     !timelineState.isLoading &&
-    !timelineState.error &&
+    !hasTimelineError &&
     reversedTimeline.length === 0;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+      <div className="px-8 py-6 border-b border-slate-100">
         <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
           <HistoryOutlinedIcon className="text-primary !text-2xl" />
-          Auditi logi
+          Külastuse ajajoon
         </div>
-        <span className="text-sm font-bold text-primary">Vaata kõiki</span>
       </div>
 
       <div className="divide-y divide-slate-100">
         {isLoadingInitialTimeline ? <SectionSkeleton lines={3} /> : null}
 
+        {hasTimelineError ? (
+          <div className="px-8 py-6">
+            <SectionError
+              title="Ajajoont ei saanud laadida"
+              description={timelineState.error}
+              actionLabel="Proovi uuesti"
+              onAction={onRetry}
+              compact
+            />
+          </div>
+        ) : null}
+
         {shouldShowEmptyAuditLog ? (
           <EmptyState
-            title="Auditi logi puudub"
-            description="Backend ei tagastanud selle külastuse kohta ühtegi logisündmust."
+            title="Ajajoone sündmusi pole"
+            description="Backend ei tagastanud selle külastuse kohta ühtegi sündmust."
           />
         ) : null}
 
@@ -855,105 +856,6 @@ function VisitAuditLogSection({
             </div>
           );
         })}
-      </div>
-    </section>
-  );
-}
-
-function VisitTimelineSection({
-  timelineState,
-  sortedTimeline,
-  onRetry,
-}: {
-  readonly timelineState: RequestState<VisitTimelineEvent[]>;
-  readonly sortedTimeline: VisitTimelineEvent[];
-  readonly onRetry: () => void;
-}) {
-  const isLoadingInitialTimeline =
-    timelineState.isLoading && !timelineState.data;
-  const hasTimelineError = timelineState.error != null;
-  const hasTimelineEvents = !hasTimelineError && sortedTimeline.length > 0;
-  const shouldShowEmptyTimeline =
-    !timelineState.isLoading &&
-    !hasTimelineError &&
-    sortedTimeline.length === 0;
-
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
-      <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-8">
-        <TimelineOutlinedIcon className="text-primary !text-2xl" />
-        Külastuse ajajoon
-      </div>
-
-      {isLoadingInitialTimeline ? <SectionSkeleton lines={4} /> : null}
-
-      {hasTimelineError ? (
-        <SectionError
-          title="Ajajoont ei saanud laadida"
-          description={timelineState.error}
-          actionLabel="Proovi uuesti"
-          onAction={onRetry}
-          compact
-        />
-      ) : null}
-
-      {hasTimelineEvents ? (
-        <ol className="space-y-10">
-          {sortedTimeline.map((event, index) => {
-            const copy = getTimelineEventCopy(event.eventType);
-            const isLast = index === sortedTimeline.length - 1;
-            const hasTrailingConnector = !isLast;
-
-            return (
-              <li key={event.id} className="relative flex gap-5">
-                <div className="relative flex shrink-0 flex-col items-center">
-                  <div
-                    className={cn(
-                      "relative z-10 flex size-12 items-center justify-center rounded-full ring-4",
-                      copy.iconClassName,
-                    )}
-                  >
-                    <TimelineEventIcon eventType={event.eventType} />
-                  </div>
-                  {hasTrailingConnector ? (
-                    <div className="absolute top-12 h-[calc(100%+1.5rem)] w-px bg-primary/25" />
-                  ) : null}
-                </div>
-
-                <div className="pb-2">
-                  <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">
-                    {copy.eyebrow} • {formatTime(event.occurredAt)}
-                  </p>
-                  <p className="mt-2 text-2xl font-bold leading-tight text-slate-900">
-                    {copy.title}
-                  </p>
-                  <p className="mt-2 text-lg leading-8 text-slate-500">
-                    {event.description ?? copy.description}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      ) : null}
-
-      {shouldShowEmptyTimeline ? (
-        <EmptyState
-          title="Ajajoone sündmusi pole"
-          description="MVP-s kuvatakse ainult sündmused, mida `/timeline` endpoint päriselt tagastab."
-        />
-      ) : null}
-
-      <div className="mt-10 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 flex items-start gap-3">
-        <InfoOutlinedIcon className="text-primary mt-0.5" />
-        <div>
-          <p className="text-lg font-bold text-primary">Turvameeldetuletus</p>
-          <p className="text-sm text-primary/80 leading-6">
-            Detailvaates kuvatakse ainult backendist saadaolevad väljad.
-            Auditlogi ja ajajoon põhinevad praegu samadel reaalselt tagastatud
-            sündmustel.
-          </p>
-        </div>
       </div>
     </section>
   );
