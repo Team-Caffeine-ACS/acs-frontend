@@ -4,6 +4,7 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import Link from "next/link";
 
 export function AppHeader() {
   return (
@@ -65,15 +66,19 @@ export function AppHeader() {
             <NotificationsIcon className="text-[20px]" />
           </button>
 
-          <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200 border border-slate-200 dark:border-slate-700">
+          <Link
+            href="/profile"
+            className="h-10 w-10 overflow-hidden rounded-full bg-slate-200 border border-slate-200 dark:border-slate-700 hover:ring-2 hover:ring-primary hover:ring-offset-1 transition-all"
+            title="Minu profiil"
+          >
             <Image
               alt="User Profile"
               src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-              width={40} // 10 * 4px
-              height={40} // 10 * 4px
+              width={40}
+              height={40}
               className="h-full w-full object-cover"
             />
-          </div>
+          </Link>
         </div>
       </div>
     </header>

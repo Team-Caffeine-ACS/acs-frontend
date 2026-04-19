@@ -58,3 +58,16 @@ export function logout(): Promise<void> {
     method: "POST",
   });
 }
+
+export interface UpdateMeRequest {
+  email?: string;
+  password?: string;
+}
+
+export function getMe(): Promise<MeResponse> {
+  return apiClient.get<MeResponse>("/api/users/me");
+}
+
+export function updateMe(body: UpdateMeRequest): Promise<void> {
+  return apiClient.patch<void, UpdateMeRequest>("/api/users/me", body);
+}
