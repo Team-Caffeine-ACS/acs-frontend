@@ -301,7 +301,7 @@ export default function KeycardsPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
-            <thead className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+            <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
               <tr>
                 <th className="px-6 py-5">
                   <SortableHeader
@@ -607,7 +607,7 @@ function SortableHeader({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-full w-full items-center justify-between gap-2 text-left select-none transition-colors hover:text-slate-600"
+      className="flex h-full w-full items-center justify-between gap-2 text-left font-black uppercase select-none transition-colors hover:text-slate-600"
     >
       <span>{label}</span>
       {direction === "asc" ? (
