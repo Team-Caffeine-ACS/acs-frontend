@@ -11,7 +11,6 @@ import LinkIcon from "@mui/icons-material/Link";
 import HistoryIcon from "@mui/icons-material/History";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import {

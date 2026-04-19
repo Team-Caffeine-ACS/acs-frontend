@@ -9,7 +9,6 @@ import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PersonIcon from "@mui/icons-material/Person";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Button } from "@/components/ui/button";
 import {
   getAccessPoints,
