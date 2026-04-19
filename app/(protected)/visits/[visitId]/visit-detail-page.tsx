@@ -8,7 +8,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
@@ -545,8 +544,6 @@ interface VisitDetailContentProps {
 }
 
 function VisitDetailContent({ visitId, model }: VisitDetailContentProps) {
-  const router = useRouter();
-
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
       <VisitPageHeader
@@ -574,7 +571,6 @@ function VisitDetailContent({ visitId, model }: VisitDetailContentProps) {
             canRegisterDeparture={model.canRegisterDeparture}
             isRegisteringDeparture={model.isRegisteringDeparture}
             statusKey={model.statusKey}
-            onBack={() => router.push("/visits")}
             onRegisterDeparture={() => void model.handleRegisterDeparture()}
           />
           <VisitAuditLogSection
@@ -621,6 +617,17 @@ function VisitPageHeader({
   return (
     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
       <div className="space-y-4">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="w-fit px-0 text-sm font-semibold text-slate-500 hover:bg-transparent hover:text-slate-900"
+        >
+          <Link href="/visits" aria-label="Tagasi külastuste nimekirja">
+            <ArrowBackIcon className="!text-base" />
+            Tagasi
+          </Link>
+        </Button>
         <Breadcrumb />
         <div className="space-y-1">
           <div className="flex items-center gap-3 flex-wrap">
@@ -684,7 +691,6 @@ function VisitVisitorCardSection({
   canRegisterDeparture,
   isRegisteringDeparture,
   statusKey,
-  onBack,
   onRegisterDeparture,
 }: {
   readonly detail: VisitDetailResponse | null;
@@ -695,7 +701,6 @@ function VisitVisitorCardSection({
   readonly canRegisterDeparture: boolean;
   readonly isRegisteringDeparture: boolean;
   readonly statusKey: VisitStatusKey | "loading";
-  readonly onBack: () => void;
   readonly onRegisterDeparture: () => void;
 }) {
   return (
@@ -761,28 +766,19 @@ function VisitVisitorCardSection({
         </div>
       </div>
 
-      <div className="border-t border-slate-100 bg-slate-50/60 p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          className="py-6 text-base font-bold"
-          onClick={onBack}
-        >
-          <ArrowBackIcon className="!text-base" />
-          Tagasta nimekirja
-        </Button>
-        {canRegisterDeparture ? (
+      {canRegisterDeparture ? (
+        <div className="border-t border-slate-100 bg-slate-50/60 p-6 flex justify-stretch md:justify-end">
           <Button
             type="button"
-            className="bg-primary hover:bg-primary/90 py-6 text-base font-black text-white shadow-lg shadow-primary/20"
+            className="w-full md:w-auto bg-primary hover:bg-primary/90 py-6 text-base font-black text-white shadow-lg shadow-primary/20"
             disabled={isRegisteringDeparture || statusKey === "departed"}
             onClick={onRegisterDeparture}
           >
             <LogoutIcon className="!text-base" />
             {getDepartureButtonLabel(statusKey, isRegisteringDeparture)}
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </section>
   );
 }
