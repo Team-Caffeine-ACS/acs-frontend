@@ -11,6 +11,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import InfoIcon from "@mui/icons-material/Info";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import {
@@ -22,16 +23,23 @@ import {
 } from "@/lib/api/keycards";
 
 type StatusFilterValue = "all" | KeycardStatus;
-type DateSortOrder = "default" | "newest" | "oldest";
+type SortDirection = "default" | "asc" | "desc";
 type LastReturnFilterMode = "all" | "before" | "after" | "on";
+type HeaderSortKey = "number" | "status" | "user" | "issued" | "returned";
 
 export default function KeycardsPage() {
   const [keycards, setKeycards] = useState<KeycardResponse[]>([]);
   const [search, setSearch] = useState("");
+  const [numberSort, setNumberSort] = useState<SortDirection>("default");
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
-  const [issuedSort, setIssuedSort] = useState<DateSortOrder>("default");
+  const [statusSort, setStatusSort] = useState<SortDirection>("default");
+  const [userSort, setUserSort] = useState<SortDirection>("default");
+  const [issuedSort, setIssuedSort] = useState<SortDirection>("default");
+  const [headerSortPriority, setHeaderSortPriority] = useState<HeaderSortKey[]>(
+    ["number", "status", "user", "issued", "returned"],
+  );
   const [lastReturnSort, setLastReturnSort] =
-    useState<DateSortOrder>("default");
+    useState<SortDirection>("default");
   const [lastReturnFilterMode, setLastReturnFilterMode] =
     useState<LastReturnFilterMode>("all");
   const [lastReturnDate, setLastReturnDate] = useState("");
@@ -68,7 +76,11 @@ export default function KeycardsPage() {
 
   const filteredKeycards = sortKeycards(
     lastReturnFilteredKeycards,
+    numberSort,
+    statusSort,
+    userSort,
     issuedSort,
+    headerSortPriority,
     lastReturnSort,
   );
 
@@ -237,30 +249,17 @@ export default function KeycardsPage() {
             <option value="expired">Aegunud</option>
           </select>
         </FilterField>
-        <FilterField label="Väljastatud">
-          <select
-            value={issuedSort}
-            onChange={(event) =>
-              setIssuedSort(event.target.value as DateSortOrder)
-            }
-            className={filterInputCls}
-          >
-            <option value="default">Vaikimisi</option>
-            <option value="newest">Uuem enne</option>
-            <option value="oldest">Vanem enne</option>
-          </select>
-        </FilterField>
         <FilterField label="Viimati tagastatud">
           <select
             value={lastReturnSort}
             onChange={(event) =>
-              setLastReturnSort(event.target.value as DateSortOrder)
+              setLastReturnSort(event.target.value as SortDirection)
             }
             className={filterInputCls}
           >
             <option value="default">Vaikimisi</option>
-            <option value="newest">Uuem enne</option>
-            <option value="oldest">Vanem enne</option>
+            <option value="desc">Uuem enne</option>
+            <option value="asc">Vanem enne</option>
           </select>
         </FilterField>
         <FilterField label="Tagastuse kuupäev">
@@ -304,11 +303,73 @@ export default function KeycardsPage() {
           <table className="w-full border-collapse text-left">
             <thead className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
               <tr>
-                <th className="px-6 py-5">Kaardi number</th>
-                <th className="px-6 py-5">Staatus</th>
-                <th className="px-6 py-5">Kasutaja</th>
-                <th className="px-6 py-5">Väljastatud</th>
-                <th className="px-6 py-5">Viimati tagastatud</th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Kaardi number"
+                    direction={numberSort}
+                    onClick={() => {
+                      setNumberSort((current) => getNextSortDirection(current));
+                      setHeaderSortPriority((current) => [
+                        "number",
+                        ...current.filter((key) => key !== "number"),
+                      ]);
+                    }}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Staatus"
+                    direction={statusSort}
+                    onClick={() => {
+                      setStatusSort((current) => getNextSortDirection(current));
+                      setHeaderSortPriority((current) => [
+                        "status",
+                        ...current.filter((key) => key !== "status"),
+                      ]);
+                    }}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Kasutaja"
+                    direction={userSort}
+                    onClick={() => {
+                      setUserSort((current) => getNextSortDirection(current));
+                      setHeaderSortPriority((current) => [
+                        "user",
+                        ...current.filter((key) => key !== "user"),
+                      ]);
+                    }}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Väljastatud"
+                    direction={issuedSort}
+                    onClick={() => {
+                      setIssuedSort((current) => getNextSortDirection(current));
+                      setHeaderSortPriority((current) => [
+                        "issued",
+                        ...current.filter((key) => key !== "issued"),
+                      ]);
+                    }}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Viimati tagastatud"
+                    direction={lastReturnSort}
+                    onClick={() => {
+                      setLastReturnSort((current) =>
+                        getNextSortDirection(current),
+                      );
+                      setHeaderSortPriority((current) => [
+                        "returned",
+                        ...current.filter((key) => key !== "returned"),
+                      ]);
+                    }}
+                  />
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -533,38 +594,110 @@ function FilterField({
 const filterInputCls =
   "h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-primary/40 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60";
 
+function SortableHeader({
+  label,
+  direction,
+  onClick,
+}: Readonly<{
+  label: string;
+  direction: SortDirection;
+  onClick: () => void;
+}>) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-full w-full items-center justify-between gap-2 text-left select-none transition-colors hover:text-slate-600"
+    >
+      <span>{label}</span>
+      {direction === "asc" ? (
+        <ChevronDownIcon size={16} className="shrink-0 opacity-60" />
+      ) : direction === "desc" ? (
+        <ChevronUpIcon size={16} className="shrink-0 opacity-60" />
+      ) : null}
+    </button>
+  );
+}
+
 function sortKeycards(
   keycards: KeycardResponse[],
-  issuedSort: DateSortOrder,
-  lastReturnSort: DateSortOrder,
+  numberSort: SortDirection,
+  statusSort: SortDirection,
+  userSort: SortDirection,
+  issuedSort: SortDirection,
+  headerSortPriority: HeaderSortKey[],
+  lastReturnSort: SortDirection,
 ) {
-  if (issuedSort === "default" && lastReturnSort === "default") {
+  if (
+    numberSort === "default" &&
+    statusSort === "default" &&
+    userSort === "default" &&
+    issuedSort === "default" &&
+    lastReturnSort === "default"
+  ) {
     return keycards;
   }
 
   return [...keycards].sort((left, right) => {
-    const issuedComparison = compareNullableDate(
-      left.assignedTime,
-      right.assignedTime,
-      issuedSort,
-    );
+    for (const key of headerSortPriority) {
+      const comparison =
+        key === "number"
+          ? compareNullableText(
+              left.keycardNumber,
+              right.keycardNumber,
+              numberSort,
+            )
+          : key === "status"
+            ? compareStatus(left.status, right.status, statusSort)
+            : key === "user"
+              ? compareNullableText(
+                  left.assignedUser,
+                  right.assignedUser,
+                  userSort,
+                )
+              : key === "issued"
+                ? compareNullableDate(
+                    left.assignedTime,
+                    right.assignedTime,
+                    issuedSort,
+                  )
+                : compareNullableDate(
+                    left.lastReturnTime,
+                    right.lastReturnTime,
+                    lastReturnSort,
+                  );
 
-    if (issuedComparison !== 0) {
-      return issuedComparison;
+      if (comparison !== 0) {
+        return comparison;
+      }
     }
 
-    return compareNullableDate(
-      left.lastReturnTime,
-      right.lastReturnTime,
-      lastReturnSort,
-    );
+    return 0;
   });
+}
+
+function compareStatus(
+  left: KeycardStatus,
+  right: KeycardStatus,
+  order: SortDirection,
+) {
+  if (order === "default") {
+    return 0;
+  }
+
+  const comparison = getKeycardStatusLabel(left).localeCompare(
+    getKeycardStatusLabel(right),
+    "et",
+    { sensitivity: "base" },
+  );
+
+  return order === "desc" ? -comparison : comparison;
 }
 
 function compareNullableDate(
   left: string | null,
   right: string | null,
-  order: DateSortOrder,
+  order: SortDirection,
 ) {
   if (order === "default") {
     return 0;
@@ -585,7 +718,46 @@ function compareNullableDate(
   const leftTime = new Date(left).getTime();
   const rightTime = new Date(right).getTime();
 
-  return order === "newest" ? rightTime - leftTime : leftTime - rightTime;
+  return order === "desc" ? rightTime - leftTime : leftTime - rightTime;
+}
+
+function compareNullableText(
+  left: string | null,
+  right: string | null,
+  order: SortDirection,
+) {
+  if (order === "default") {
+    return 0;
+  }
+
+  if (!left && !right) {
+    return 0;
+  }
+
+  if (!left) {
+    return 1;
+  }
+
+  if (!right) {
+    return -1;
+  }
+
+  const comparison = left.localeCompare(right, "et", {
+    sensitivity: "base",
+  });
+
+  return order === "desc" ? -comparison : comparison;
+}
+
+function getNextSortDirection(direction: SortDirection): SortDirection {
+  switch (direction) {
+    case "default":
+      return "asc";
+    case "asc":
+      return "desc";
+    case "desc":
+      return "default";
+  }
 }
 
 function matchesLastReturnFilter(
