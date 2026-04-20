@@ -10,8 +10,9 @@ import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import ShieldIcon from "@mui/icons-material/Shield";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { getMe, updateMe, type MeResponse } from "@/lib/api/auth";
-import { ApiError } from "@/lib/apiClient";
+import { getMe, logout, updateMe, type MeResponse } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/error";
+import { clearStoredAccessToken } from "@/lib/auth/accessToken";
 
 const ROLE_LABELS: Record<MeResponse["role"], string> = {
   VISITOR: "Külastaja",
@@ -83,9 +84,9 @@ export default function ProfilePage() {
     try {
       await updateMe(body);
       if (newEmail) {
-        // JWT subject is the old email — token is now stale, must re-login.
-        globalThis.localStorage.removeItem("token");
-        globalThis.document.cookie = "token=; path=/; max-age=0";
+        // Token is now stale after email change — clear session and re-login.
+        clearStoredAccessToken();
+        await logout().catch(() => {});
         globalThis.window.location.href = "/login";
         return;
       }

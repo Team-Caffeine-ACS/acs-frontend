@@ -1,4 +1,5 @@
 import { ApiError, extractErrorMessage, parseErrorData } from "@/lib/api/error";
+import { apiClient } from "@/lib/apiClient";
 
 export interface LoginRequest {
   email: string;
@@ -57,6 +58,21 @@ export function logout(): Promise<void> {
   return requestSession<void>("/api/session/logout", {
     method: "POST",
   });
+}
+
+export interface MeResponse {
+  id: string;
+  email: string;
+  role: "VISITOR" | "RECEPTIONIST" | "SECURITY_CHIEF" | "ADMIN";
+  personId: string | null;
+  person: {
+    givenName: string;
+    surname: string;
+    jobTitle: string | null;
+    socialSecurityNumber: string | null;
+    department: string | null;
+    organization: string | null;
+  } | null;
 }
 
 export interface UpdateMeRequest {
