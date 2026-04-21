@@ -101,7 +101,9 @@ function getFormattedDateTime(currentDateTime: Date | null) {
     currentDate: currentDateTime
       ? DATE_FORMATTER.format(currentDateTime)
       : "--.--.----",
-    currentTime: currentDateTime ? TIME_FORMATTER.format(currentDateTime) : "--:--",
+    currentTime: currentDateTime
+      ? TIME_FORMATTER.format(currentDateTime)
+      : "--:--",
   };
 }
 
@@ -194,7 +196,11 @@ export function AppHeader() {
   const { isDarkMode, setIsDarkMode } = useDarkModeState();
   const isMenuOpen = Boolean(menuAnchorEl);
   const { currentDate, currentTime } = getFormattedDateTime(currentDateTime);
-  const { userNameText, userRoleText } = getUserText(status, user, errorMessage);
+  const { userNameText, userRoleText } = getUserText(
+    status,
+    user,
+    errorMessage,
+  );
   const userMenuPaperSx = getUserMenuPaperSx(isDarkMode);
   const userMenuItemSx = getUserMenuItemSx(isDarkMode);
   const userMenuIconSx = getUserMenuIconSx(isDarkMode);
