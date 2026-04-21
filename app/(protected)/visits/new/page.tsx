@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PersonIcon from "@mui/icons-material/Person";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
@@ -26,7 +26,7 @@ import {
   type PersonInRoleResponse,
 } from "@/lib/api/persons";
 import { createVisit } from "@/lib/api/visits";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 
 interface SelectedVisitor {
   personId: string;
@@ -612,13 +612,12 @@ function Field({
   readonly label: string;
   readonly children: React.ReactNode;
 }) {
-  const id = useId();
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+    <fieldset className="space-y-1.5">
+      <legend className="block text-sm font-medium text-slate-700">
         {label}
-      </label>
-      <div id={id}>{children}</div>
-    </div>
+      </legend>
+      {children}
+    </fieldset>
   );
 }

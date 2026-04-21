@@ -7,7 +7,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { type LookupRecord } from "@/lib/api/admin";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 
 interface Api {
   list(): Promise<LookupRecord[]>;
