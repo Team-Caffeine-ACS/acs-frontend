@@ -116,6 +116,23 @@ export function AppHeader() {
   }
 
   const userDisplay = user ? getCurrentUserDisplay(user) : null;
+  let userNameText: string;
+  let userRoleText: string;
+
+  switch (status) {
+    case "loading":
+      userNameText = "Laen kasutajat...";
+      userRoleText = "Andmeid laaditakse";
+      break;
+    case "error":
+      userNameText = "Kasutaja laadimata";
+      userRoleText = errorMessage ?? "Andmeid ei saanud laadida";
+      break;
+    default:
+      userNameText = userDisplay?.displayName ?? "";
+      userRoleText = userDisplay?.displayRole ?? "";
+      break;
+  }
 
   return (
     <header className="z-10 flex h-16 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white px-8 dark:border-slate-800 dark:bg-slate-900">
@@ -181,18 +198,10 @@ export function AppHeader() {
           >
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                {status === "loading"
-                  ? "Laen kasutajat..."
-                  : status === "error"
-                    ? "Kasutaja laadimata"
-                    : userDisplay?.displayName}
+                {userNameText}
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {status === "loading"
-                  ? "Andmeid laaditakse"
-                  : status === "error"
-                    ? (errorMessage ?? "Andmeid ei saanud laadida")
-                    : userDisplay?.displayRole}
+                {userRoleText}
               </span>
             </div>
 
