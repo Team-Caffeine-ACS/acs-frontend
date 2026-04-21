@@ -76,7 +76,6 @@ export function AppSidebar() {
             </Link>
           );
         })}
-
       </nav>
 
       <div className="mt-auto space-y-3">
