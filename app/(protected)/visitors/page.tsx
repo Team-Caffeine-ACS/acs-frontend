@@ -11,7 +11,7 @@ import {
   Visibility,
   ChevronRight,
 } from "@mui/icons-material";
-import React, { useId, useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function VisitorsSearchPage() {
@@ -25,7 +25,6 @@ export default function VisitorsSearchPage() {
   const updateParam = (key: string, value: string) => {
     setSearchParams((prev) => ({ ...prev, [key]: value }));
   };
-  const statusSelectId = useId();
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500">
       {/* 1. Breadcrumbs / Header sisu */}
@@ -84,12 +83,13 @@ export default function VisitorsSearchPage() {
 
             <div className="space-y-1.5 font-display">
               <label
-                htmlFor={statusSelectId}
+                htmlFor="visitors-status-filter"
                 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1"
               >
                 Staatus
               </label>
               <select
+                id="visitors-status-filter"
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold text-slate-700"
                 value={searchParams.status}
                 onChange={(e) => updateParam("status", e.target.value)}
@@ -196,18 +196,22 @@ function FilterInput({
   value,
   onChange,
 }: Readonly<FilterInputProps>) {
-  const id = useId(); // See loob unikaalse ID automaatselt
+  const inputId = `visitors-filter-${label
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/(^-|-$)/g, "")}`;
+
   return (
     <div className="space-y-1.5 font-display">
       <label
-        htmlFor={id} // <--- 1. SEO SEOS ALGAB SIIT
+        htmlFor={inputId}
         className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 block"
       >
         {label}
       </label>
       <div className="relative">
         <input
-          id={id} // <--- 2. JA LÕPPEB SIIN
+          id={inputId}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-primary/20"

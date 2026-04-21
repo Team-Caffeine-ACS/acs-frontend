@@ -12,6 +12,7 @@
     "lint": "eslint --max-warnings 0"
   },
   "dependencies": {
+    "hono": ">=4.12.14",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.9",
