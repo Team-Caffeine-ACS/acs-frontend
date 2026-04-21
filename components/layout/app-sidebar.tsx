@@ -1,6 +1,4 @@
 "use client"; // 1. Lisa see rida faili algusesse, et kasutada konksusid
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // 2. Impordi asukoha kontrollija
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
@@ -8,19 +6,10 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import GroupIcon from "@mui/icons-material/Group";
 import KeyIcon from "@mui/icons-material/Key";
 import HistoryIcon from "@mui/icons-material/History";
-import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { getMe } from "@/lib/api/auth";
 
 export function AppSidebar() {
   const pathname = usePathname(); // 3. Haara praegune aadress (nt "/" või "/visitors")
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    getMe()
-      .then((me) => setIsAdmin(me.role === "ADMIN"))
-      .catch(() => setIsAdmin(false));
-  }, []);
 
   // 4. Mugavam on hoida linke massiivis
   const menuItems = [
@@ -83,22 +72,6 @@ export function AppSidebar() {
           );
         })}
 
-        {isAdmin && (
-          <>
-            <div className="my-4 h-px bg-slate-100 dark:bg-slate-800" />
-            <Link
-              href="/settings"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all ${
-                pathname === "/settings"
-                  ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                  : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800"
-              }`}
-            >
-              <SettingsIcon className="text-[20px]" />
-              <span className="text-sm">Seadistused</span>
-            </Link>
-          </>
-        )}
       </nav>
 
       <div className="mt-auto space-y-3">

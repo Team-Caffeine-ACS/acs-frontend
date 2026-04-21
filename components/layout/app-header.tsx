@@ -12,12 +12,9 @@ import MenuItem from "@mui/material/MenuItem";
 import Brightness2OutlinedIcon from "@mui/icons-material/Brightness2Outlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
-import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
-import ShieldIcon from "@mui/icons-material/Shield";
-import SwitchAccountIcon from "@mui/icons-material/SwitchAccount";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { Input } from "@/components/ui/input";
@@ -137,27 +134,6 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-6">
-        <nav className="hidden items-center gap-6 lg:flex">
-          <Link
-            href="/"
-            className="border-b-2 border-primary py-5 text-sm font-semibold text-primary"
-          >
-            Töölaud
-          </Link>
-          <Link
-            href="/reports"
-            className="text-sm font-medium text-slate-600 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-white"
-          >
-            Aruanded
-          </Link>
-          <Link
-            href="/settings"
-            className="text-sm font-medium text-slate-600 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-white"
-          >
-            Settings
-          </Link>
-        </nav>
-
         <div className="flex items-center gap-3 border-l border-slate-200 pl-6 dark:border-slate-700">
           <div className="flex items-center gap-2 rounded-lg bg-[#1152d4] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[#1152d4]/20">
             <ScheduleIcon className="text-sm" />
@@ -240,43 +216,13 @@ export function AppHeader() {
       >
         <MenuItem
           component={Link}
-          href="/settings?tab=profile"
-          onClick={handleCloseUserMenu}
-        >
-          <ListItemIcon>
-            <ManageAccountsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Minu seaded</ListItemText>
-        </MenuItem>
-        <MenuItem
-          component={Link}
-          href="/settings?tab=roles"
-          onClick={handleCloseUserMenu}
-        >
-          <ListItemIcon>
-            <SwitchAccountIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Vaheta roll</ListItemText>
-        </MenuItem>
-        <MenuItem
-          component={Link}
-          href="/settings?tab=permissions"
-          onClick={handleCloseUserMenu}
-        >
-          <ListItemIcon>
-            <ShieldIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Ligipääsuõigused</ListItemText>
-        </MenuItem>
-        <MenuItem
-          component={Link}
-          href="/settings?tab=preferences"
+          href="/settings"
           onClick={handleCloseUserMenu}
         >
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Eelistused</ListItemText>
+          <ListItemText>Settings</ListItemText>
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>
