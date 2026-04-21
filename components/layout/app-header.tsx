@@ -307,7 +307,7 @@ export function AppHeader() {
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         slotProps={{
           paper: {
-            className: "min-w-[230px] rounded-2xl backdrop-blur-sm",
+            className: "w-[190px] rounded-2xl backdrop-blur-sm",
             sx: userMenuPaperSx,
           },
           transition: {
