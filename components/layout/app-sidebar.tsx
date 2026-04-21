@@ -6,7 +6,6 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import GroupIcon from "@mui/icons-material/Group";
 import KeyIcon from "@mui/icons-material/Key";
 import HistoryIcon from "@mui/icons-material/History";
-import LogoutIcon from "@mui/icons-material/Logout";
 
 export function AppSidebar() {
   const pathname = usePathname(); // 3. Haara praegune aadress (nt "/" või "/visitors")
@@ -86,19 +85,6 @@ export function AppSidebar() {
             </p>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            globalThis.localStorage.removeItem("token");
-            globalThis.document.cookie = "token=; path=/; max-age=0";
-            globalThis.window.location.href = "/login";
-          }}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400 transition-all"
-        >
-          <LogoutIcon className="text-[20px]" />
-          <span className="text-sm">Logi välja</span>
-        </button>
       </div>
     </aside>
   );
