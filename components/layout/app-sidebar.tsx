@@ -23,6 +23,11 @@ export function AppSidebar() {
       icon: <GroupIcon className="text-[20px]" />,
     },
     {
+      name: "Külastused",
+      href: "/visits",
+      icon: <AssignmentOutlinedIcon className="text-[20px]" />,
+    },
+    {
       name: "Võtmekaardid",
       href: "/keys",
       icon: <KeyIcon className="text-[20px]" />,
@@ -53,7 +58,8 @@ export function AppSidebar() {
       <nav className="flex flex-col gap-1">
         {menuItems.map((item) => {
           // 5. Kontrollime, kas see rida on parajasti aktiivne
-          const isActive = pathname === item.href;
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link
