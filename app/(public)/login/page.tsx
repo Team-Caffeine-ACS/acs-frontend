@@ -11,8 +11,9 @@ import LoginIcon from "@mui/icons-material/Login";
 import SecurityIcon from "@mui/icons-material/Security";
 import LanguageIcon from "@mui/icons-material/Language";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
+import { setStoredAccessToken } from "@/lib/auth/accessToken";
 import { login } from "@/lib/api/auth";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,9 +30,8 @@ export default function LoginPage() {
 
     try {
       const { accessToken } = await login({ email, password });
-      document.cookie = `token=${accessToken}; path=/; SameSite=Strict`;
-      localStorage.setItem("token", accessToken);
-      router.push("/");
+      setStoredAccessToken(accessToken);
+      router.replace("/");
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 401
@@ -52,18 +52,18 @@ export default function LoginPage() {
           Pääsla infosüsteem
         </div>
         <nav className="flex items-center gap-6">
-          <a
-            href="#"
+          <button
+            type="button"
             className="text-sm font-semibold text-slate-600 hover:text-slate-900"
           >
             Abi
-          </a>
-          <a
-            href="#"
+          </button>
+          <button
+            type="button"
             className="text-sm font-semibold text-slate-600 hover:text-slate-900"
           >
             Kontakt
-          </a>
+          </button>
           <button
             aria-label="Vaheta teema"
             className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
@@ -100,12 +100,16 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email */}
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700 block">
+                <label
+                  htmlFor="login-email"
+                  className="text-sm font-semibold text-slate-700 block"
+                >
                   Kasutajatunnus
                 </label>
                 <div className="relative">
                   <PersonOutlineIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 !text-lg" />
                   <input
+                    id="login-email"
                     type="email"
                     required
                     value={email}
@@ -119,19 +123,23 @@ export default function LoginPage() {
               {/* Password */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-slate-700">
+                  <label
+                    htmlFor="login-password"
+                    className="text-sm font-semibold text-slate-700"
+                  >
                     Parool
                   </label>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="text-xs font-semibold text-blue-600 hover:underline"
                   >
                     Unustasid parooli?
-                  </a>
+                  </button>
                 </div>
                 <div className="relative">
                   <LockOutlinedIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 !text-lg" />
                   <input
+                    id="login-password"
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
