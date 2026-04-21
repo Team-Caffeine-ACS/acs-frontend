@@ -14,7 +14,7 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import InfoIcon from "@mui/icons-material/Info";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/apiClient";
+
 import {
   getKeycard,
   getKeycards,
@@ -22,6 +22,7 @@ import {
   type KeycardStatus,
   type KeycardResponse,
 } from "@/lib/api/keycards";
+import { ApiError } from "@/lib/api/error";
 
 type StatusFilterValue = "all" | KeycardStatus;
 type SortDirection = "default" | "asc" | "desc";
