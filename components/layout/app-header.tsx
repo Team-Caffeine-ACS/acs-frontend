@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Divider from "@mui/material/Divider";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Brightness2OutlinedIcon from "@mui/icons-material/Brightness2Outlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -20,28 +20,34 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/components/layout/current-user-provider";
 import { getCurrentUserDisplay } from "@/lib/current-user";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 const THEME_STORAGE_KEY = "theme";
+const DATE_FORMATTER = new Intl.DateTimeFormat("et-EE", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+const TIME_FORMATTER = new Intl.DateTimeFormat("et-EE", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
-export function AppHeader() {
-  const router = useRouter();
-  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+function getInitialDarkMode() {
+  if (globalThis.window === undefined) {
+    return false;
+  }
+
+  const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme !== null) {
+    return storedTheme === "dark";
+  }
+
+  return globalThis.document.documentElement.classList.contains("dark");
+}
+
+function useCurrentMinute() {
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
-  const { errorMessage, status, user } = useCurrentUser();
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (globalThis.window === undefined) {
-      return false;
-    }
-
-    const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
-
-    if (storedTheme !== null) {
-      return storedTheme === "dark";
-    }
-
-    return globalThis.document.documentElement.classList.contains("dark");
-  });
-  const isMenuOpen = Boolean(menuAnchorEl);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof globalThis.setInterval> | undefined;
@@ -70,6 +76,12 @@ export function AppHeader() {
     };
   }, []);
 
+  return currentDateTime;
+}
+
+function useDarkModeState() {
+  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
+
   useEffect(() => {
     const root = globalThis.document.documentElement;
 
@@ -81,20 +93,112 @@ export function AppHeader() {
     );
   }, [isDarkMode]);
 
-  const currentDate = currentDateTime
-    ? new Intl.DateTimeFormat("et-EE", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }).format(currentDateTime)
-    : "--.--.----";
+  return { isDarkMode, setIsDarkMode };
+}
 
-  const currentTime = currentDateTime
-    ? new Intl.DateTimeFormat("et-EE", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(currentDateTime)
-    : "--:--";
+function getFormattedDateTime(currentDateTime: Date | null) {
+  return {
+    currentDate: currentDateTime
+      ? DATE_FORMATTER.format(currentDateTime)
+      : "--.--.----",
+    currentTime: currentDateTime ? TIME_FORMATTER.format(currentDateTime) : "--:--",
+  };
+}
+
+function getUserText(
+  status: ReturnType<typeof useCurrentUser>["status"],
+  user: ReturnType<typeof useCurrentUser>["user"],
+  errorMessage: string | null,
+) {
+  if (status === "loading") {
+    return {
+      userNameText: "Laen kasutajat...",
+      userRoleText: "Andmeid laaditakse",
+    };
+  }
+
+  if (status === "error") {
+    return {
+      userNameText: "Kasutaja laadimata",
+      userRoleText: errorMessage ?? "Andmeid ei saanud laadida",
+    };
+  }
+
+  const userDisplay = user ? getCurrentUserDisplay(user) : null;
+
+  return {
+    userNameText: userDisplay?.displayName ?? "",
+    userRoleText: userDisplay?.displayRole ?? "",
+  };
+}
+
+function getUserMenuPaperSx(isDarkMode: boolean): SxProps<Theme> {
+  return {
+    mt: 2,
+    translate: "6px 0",
+    overflow: "visible",
+    color: isDarkMode ? "rgb(226 232 240)" : "rgb(51 65 85)",
+    backgroundColor: isDarkMode
+      ? "rgba(15, 23, 42, 0.96)"
+      : "rgba(255, 255, 255, 0.95)",
+    border: "1px solid",
+    borderColor: isDarkMode ? "rgb(51 65 85)" : "rgb(226 232 240)",
+    boxShadow: isDarkMode
+      ? "0 10px 28px rgba(2, 6, 23, 0.45)"
+      : "0 8px 24px rgba(15, 23, 42, 0.12)",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      right: 20,
+      width: 14,
+      height: 14,
+      backgroundColor: "inherit",
+      borderTop: "1px solid",
+      borderLeft: "1px solid",
+      borderColor: isDarkMode ? "rgb(51 65 85)" : "rgb(226 232 240)",
+      transform: "translateY(-55%) rotate(45deg)",
+      zIndex: 0,
+    },
+  };
+}
+
+function getUserMenuItemSx(isDarkMode: boolean): SxProps<Theme> {
+  return {
+    color: isDarkMode ? "rgb(226 232 240)" : "rgb(51 65 85)",
+    "&:hover": {
+      backgroundColor: isDarkMode ? "rgb(30 41 59)" : "rgb(241 245 249)",
+    },
+  };
+}
+
+function getUserMenuIconSx(isDarkMode: boolean): SxProps<Theme> {
+  return {
+    color: isDarkMode ? "rgb(148 163 184)" : "rgb(100 116 139)",
+  };
+}
+
+function getUserMenuDividerSx(isDarkMode: boolean): SxProps<Theme> {
+  return {
+    borderColor: isDarkMode
+      ? "rgba(51, 65, 85, 0.8)"
+      : "rgba(226, 232, 240, 0.8)",
+  };
+}
+
+export function AppHeader() {
+  const router = useRouter();
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const { errorMessage, status, user } = useCurrentUser();
+  const currentDateTime = useCurrentMinute();
+  const { isDarkMode, setIsDarkMode } = useDarkModeState();
+  const isMenuOpen = Boolean(menuAnchorEl);
+  const { currentDate, currentTime } = getFormattedDateTime(currentDateTime);
+  const { userNameText, userRoleText } = getUserText(status, user, errorMessage);
+  const userMenuPaperSx = getUserMenuPaperSx(isDarkMode);
+  const userMenuItemSx = getUserMenuItemSx(isDarkMode);
+  const userMenuIconSx = getUserMenuIconSx(isDarkMode);
+  const userMenuDividerSx = getUserMenuDividerSx(isDarkMode);
 
   function handleOpenUserMenu(event: React.MouseEvent<HTMLButtonElement>) {
     setMenuAnchorEl(event.currentTarget);
@@ -113,25 +217,6 @@ export function AppHeader() {
     globalThis.localStorage.removeItem("token");
     globalThis.document.cookie = "token=; path=/; max-age=0";
     router.push("/login");
-  }
-
-  const userDisplay = user ? getCurrentUserDisplay(user) : null;
-  let userNameText: string;
-  let userRoleText: string;
-
-  switch (status) {
-    case "loading":
-      userNameText = "Laen kasutajat...";
-      userRoleText = "Andmeid laaditakse";
-      break;
-    case "error":
-      userNameText = "Kasutaja laadimata";
-      userRoleText = errorMessage ?? "Andmeid ei saanud laadida";
-      break;
-    default:
-      userNameText = userDisplay?.displayName ?? "";
-      userRoleText = userDisplay?.displayRole ?? "";
-      break;
   }
 
   return (
@@ -205,14 +290,8 @@ export function AppHeader() {
               </span>
             </div>
 
-            <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-200 dark:border-slate-700">
-              <Image
-                alt="User Profile"
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                width={40}
-                height={40}
-                className="h-full w-full object-cover"
-              />
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500">
+              <AccountCircleIcon className="text-[32px]" />
             </div>
           </button>
         </div>
@@ -228,8 +307,8 @@ export function AppHeader() {
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         slotProps={{
           paper: {
-            className:
-              "mt-2 min-w-[230px] rounded-xl border border-slate-200 shadow-lg",
+            className: "min-w-[230px] rounded-2xl backdrop-blur-sm",
+            sx: userMenuPaperSx,
           },
           transition: {
             timeout: 0,
@@ -240,15 +319,21 @@ export function AppHeader() {
           component={Link}
           href="/settings"
           onClick={handleCloseUserMenu}
+          className="mx-1 my-1 rounded-xl"
+          sx={userMenuItemSx}
         >
-          <ListItemIcon>
+          <ListItemIcon sx={userMenuIconSx}>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Settings</ListItemText>
         </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
+        <Divider sx={userMenuDividerSx} />
+        <MenuItem
+          onClick={handleLogout}
+          className="mx-1 my-1 rounded-xl"
+          sx={userMenuItemSx}
+        >
+          <ListItemIcon sx={userMenuIconSx}>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Logi välja</ListItemText>
