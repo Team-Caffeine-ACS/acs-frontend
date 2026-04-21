@@ -1,19 +1,79 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  getDashboardSummary,
+  getRecentVisits,
+  DashboardSummaryResponse,
+  DashboardRecentVisitResponse,
+} from "@/lib/api/dashboard";
+
+import { 
+  AccessPointResponse,
+  getAccessPoints
+} from "@/lib/api/accessPoints";
+
 import Link from "next/link";
 import GroupsIcon from "@mui/icons-material/Groups";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import LocalParkingIcon from "@mui/icons-material/LocalParking";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
-import MapIcon from "@mui/icons-material/Map";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import { Button } from "@/components/ui/button";
+import dynamic from 'next/dynamic';
+
+
+const DynamicAccessPointMap = dynamic(() => import("@/components/AccessPointMap"),
+ {
+    ssr: false,
+    loading: () => <div className="h-[400px] w-full bg-slate-100 animate-pulse rounded-2xl" /> 
+  });
+
 
 export default function DashboardPage() {
+  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
+  const [visits, setVisits] = useState<DashboardRecentVisitResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState("");
+  const [accessPoints, setAccessPoints] = useState<AccessPointResponse[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setCurrentDate(
+          new Date().toLocaleDateString('et-EE', {
+            day: 'numeric',
+            month: 'long',
+          })
+        );
+        setLoading(true);
+        // Teeme mõlemad päringud korraga
+        const [summaryData, visitsData, apData] = await Promise.all([
+          getDashboardSummary(),
+          getRecentVisits(undefined, 5), // Küsime näiteks 5 viimast
+          getAccessPoints()
+        ]);
+
+        setSummary(summaryData);
+        setAccessPoints(apData);
+        setVisits(visitsData);
+      } catch (error) {
+        console.error("Dashboardi andmete laadimine ebaõnnestus:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) return <div className="p-8">Laadin andmeid...</div>;
+
   return (
     <div className="mx-auto space-y-8 animate-in fade-in duration-500">
       {/* 1. BREADCRUMBS & PEALKIRI */}
@@ -42,7 +102,7 @@ export default function DashboardPage() {
             </h2>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tight">
               Ülevaade külastustest ja ligipääsudest täna,{" "}
-              <span className="text-primary font-bold">24. mai</span>
+              <span className="text-primary font-bold">{ currentDate }</span>
             </p>
           </div>
           <Link href="/visits/new">
@@ -57,32 +117,21 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Aktiivsed külastajad"
-          value="124"
-          change="5%"
+          value={summary?.activeVisitors ?? "--"}
+          change={summary?.trendIndicators?.visitors ?? "0%"}
           icon={<GroupsIcon />}
-          trend="up"
         />
         <KpiCard
           title="Broneeringud täna"
-          value="45"
-          change="2%"
+          value={summary?.bookingsToday ?? "--"}  
           icon={<CalendarTodayIcon />}
-          trend="down"
         />
         <KpiCard
           title="Ootel taotlused"
-          value="8"
-          change="10%"
+          value={summary?.pendingRequests ?? "--"}
           icon={<PendingActionsIcon />}
-          trend="down"
         />
-        <KpiCard
-          title="Vabad kohad"
-          value="12"
-          change="0%"
-          icon={<LocalParkingIcon />}
-          trend="neutral"
-        />
+        
       </div>
 
       {/* 3. VIIMASED KÜLASTUSED & KAART (Kõrvuti vaade suurel ekraanil) */}
@@ -107,34 +156,34 @@ export default function DashboardPage() {
                   <th className="px-6 py-4">Külastaja</th>
                   <th className="px-6 py-4">Kellaaeg</th>
                   <th className="px-6 py-4 text-center">Staatus</th>
-                  <th className="px-6 py-4"></th>
+                  <th className="px-6 py-4 t">Pääsupunkt</th>
+                  <th className="px-6 py-4 text-right"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <VisitorRow
-                  name="Karl Tamm"
-                  org="Riigikantselei"
-                  initials="KT"
-                  time="09:15 - 11:30"
-                  status="Sees"
-                  color="emerald"
-                />
-                <VisitorRow
-                  name="Mari Lepik"
-                  org="MKM"
-                  initials="ML"
-                  time="08:45 - 09:45"
-                  status="Väljas"
-                  color="slate"
-                />
-                <VisitorRow
-                  name="Jüri Sepp"
-                  org="Cybernetica AS"
-                  initials="JS"
-                  time="10:00 - ..."
-                  status="Ootel"
-                  color="amber"
-                />
+                {visits.map((visit, index) => {
+
+                  return (
+                    <VisitorRow
+                      key={visit.id || `visit-${index}`}
+                      name={visit.fullName || "Tundmatu"}
+                      initials={getInitials(visit.fullName)}
+                      org="Külastaja"
+                      time={
+                        visit.entryTime
+                          ? new Date(visit.entryTime).toLocaleTimeString(
+                              "et-EE",
+                              { hour: "2-digit", minute: "2-digit" },
+                            )
+                          : "--:--"
+                      }
+                      status={visit.status || "Sees"}
+                      accessPointName={visit.accessPointName || " "}
+                      accessPointAddress={visit.accessPointAddress || " "}
+                      color="emerald"
+                    />
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -142,20 +191,8 @@ export default function DashboardPage() {
 
         {/* KAART - võtab 1/3 laiust */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wide">
-            Hoone täituvus
-          </h3>
-          <div className="relative h-[320px] w-full overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-800 border-2 border-white shadow-inner flex items-center justify-center">
-            <div className="text-center opacity-30">
-              <MapIcon className="text-6xl mb-2 text-primary" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
-                A-Korpus: 1. korrus
-              </p>
-            </div>
-            {/* Täpid kaardil */}
-            <div className="absolute top-10 left-1/4 h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_12px_#10b981] animate-pulse"></div>
-            <div className="absolute bottom-24 right-1/4 h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_12px_#f43f5e]"></div>
-          </div>
+          <h3 className="font-bold text-slate-900 uppercase text-sm tracking-wider mb-6">Pääsupunktide asukohad</h3>
+            <DynamicAccessPointMap accessPoints={accessPoints} />
         </div>
       </div>
 
@@ -170,9 +207,8 @@ export default function DashboardPage() {
 interface KpiCardProps {
   readonly title: string;
   readonly value: string | number;
-  readonly change: string;
-  readonly icon: React.ReactNode; // Ikooni jaoks
-  readonly trend: "up" | "down" | "neutral"; // Lubame ainult need kolm varianti
+  readonly change?: string;
+  readonly icon: React.ReactNode;
 }
 
 interface VisitorRowProps {
@@ -180,12 +216,33 @@ interface VisitorRowProps {
   readonly org: string;
   readonly initials: string;
   readonly status: string;
-  readonly color: "emerald" | "slate" | "amber"; // Lubame ainult need kolm
+  readonly color: "emerald" | "slate" | "amber";
   readonly time: string;
+  readonly accessPointName: string;
+  readonly accessPointAddress: string;
 }
 
-// ABIKOMPONENDID
-function KpiCard({ title, value, change, icon, trend }: KpiCardProps) {
+function KpiCard({ title, value, change, icon}: KpiCardProps) {
+  type Trend = "up" | "down" | "neutral";
+  const trendColors: Record<Trend, string> = {
+    up: "text-emerald-600",
+    down: "text-rose-600",
+    neutral: "text-slate-400",
+  };
+
+    let trend: "up" | "down" | "neutral" = "neutral";
+
+  if (change) {
+  if (change.startsWith('+')) trend = "up";
+  else if (change.startsWith('-')) trend = "down";
+  // Kui on "0%" või muu ilma märgita tekst, jääb "neutral"
+  }
+
+  const trendIcons: Record<Trend, React.ReactNode> = {
+    up: <ArrowUpwardIcon className="!text-xs" />,
+    down: <ArrowDownwardIcon className="!text-xs" />,
+    neutral: <HorizontalRuleIcon className="!text-xs" />,
+  };
   return (
     <div className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
@@ -198,14 +255,14 @@ function KpiCard({ title, value, change, icon, trend }: KpiCardProps) {
         <span className="text-3xl font-black text-slate-900 tracking-tighter">
           {value}
         </span>
-        <span
-          className={`mb-1 flex items-center text-[10px] font-bold ${trend === "up" ? "text-emerald-600" : trend === "down" ? "text-rose-600" : "text-slate-400"}`}
-        >
-          {trend === "up" && <ArrowUpwardIcon className="!text-xs" />}
-          {trend === "down" && <ArrowDownwardIcon className="!text-xs" />}
-          {trend === "neutral" && <HorizontalRuleIcon className="!text-xs" />}
-          {change}
-        </span>
+        {change && change !== "0%" && change !== "--" && (
+          <span
+            className={`mb-1 flex items-center text-[10px] font-bold ${trendColors[trend]}`}
+          >
+            {trendIcons[trend]}
+            {change}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -218,6 +275,8 @@ function VisitorRow({
   status,
   color,
   time,
+  accessPointName,
+  accessPointAddress,
 }: VisitorRowProps) {
   const statusStyles: Record<string, string> = {
     emerald: "bg-emerald-100 text-emerald-700",
@@ -251,6 +310,10 @@ function VisitorRow({
           {status}
         </span>
       </td>
+      <td className="px-6 py-4 text-xs text-slate-500">
+        {accessPointName && <div>{accessPointName}</div>}
+        {accessPointAddress && <div>{accessPointAddress}</div>}
+      </td>
       <td className="px-6 py-4 text-right">
         <button className="text-slate-300 hover:text-primary">
           <MoreVertIcon />
@@ -259,3 +322,18 @@ function VisitorRow({
     </tr>
   );
 }
+
+function getInitials(name: string | undefined | null) {
+  if (!name) return "??";
+
+  return name
+    .trim() // Eemaldab tühikud nime algusest ja lõpust
+    .split(" ")
+    .filter((n) => n.length > 0) // Välistab tühjad osad topelt-tühikute puhul
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+}
+
+
