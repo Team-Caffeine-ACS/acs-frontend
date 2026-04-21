@@ -2,8 +2,10 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -30,7 +32,7 @@ export function CurrentUserProvider({
   const [status, setStatus] = useState<CurrentUserStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function loadCurrentUser() {
+  const loadCurrentUser = useCallback(async () => {
     setStatus("loading");
     setErrorMessage(null);
 
@@ -47,7 +49,7 @@ export function CurrentUserProvider({
           : "Kasutaja andmete laadimine ebaõnnestus.",
       );
     }
-  }
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -86,15 +88,18 @@ export function CurrentUserProvider({
     };
   }, []);
 
+  const contextValue = useMemo(
+    () => ({
+      errorMessage,
+      refresh: loadCurrentUser,
+      status,
+      user,
+    }),
+    [errorMessage, loadCurrentUser, status, user],
+  );
+
   return (
-    <CurrentUserContext.Provider
-      value={{
-        errorMessage,
-        refresh: loadCurrentUser,
-        status,
-        user,
-      }}
-    >
+    <CurrentUserContext.Provider value={contextValue}>
       {children}
     </CurrentUserContext.Provider>
   );
