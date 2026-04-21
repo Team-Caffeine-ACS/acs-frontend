@@ -21,7 +21,11 @@ interface CurrentUserContextValue {
 
 const CurrentUserContext = createContext<CurrentUserContextValue | null>(null);
 
-export function CurrentUserProvider({ children }: { children: ReactNode }) {
+export function CurrentUserProvider({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
   const [user, setUser] = useState<MeResponse | null>(null);
   const [status, setStatus] = useState<CurrentUserStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
