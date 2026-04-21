@@ -13,6 +13,7 @@ import {
   type UserRole,
 } from "@/lib/api/adminUsers";
 import { ApiError } from "@/lib/apiClient";
+import { ROLE_LABELS } from "@/lib/current-user";
 
 const ROLES: UserRole[] = [
   "VISITOR",
@@ -20,13 +21,6 @@ const ROLES: UserRole[] = [
   "SECURITY_CHIEF",
   "ADMIN",
 ];
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  VISITOR: "Külastaja",
-  RECEPTIONIST: "Administraator",
-  SECURITY_CHIEF: "Turvaülem",
-  ADMIN: "Süsteemiadmin",
-};
 
 const inputCls =
   "w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition";

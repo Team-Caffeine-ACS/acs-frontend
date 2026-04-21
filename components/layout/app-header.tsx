@@ -18,7 +18,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { Input } from "@/components/ui/input";
-import { getMe, type MeResponse } from "@/lib/api/auth";
+import { useCurrentUser } from "@/components/layout/current-user-provider";
+import { getCurrentUserDisplay } from "@/lib/current-user";
 
 const THEME_STORAGE_KEY = "theme";
 
@@ -26,7 +27,7 @@ export function AppHeader() {
   const router = useRouter();
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
-  const [currentUser, setCurrentUser] = useState<MeResponse | null>(null);
+  const { errorMessage, status, user } = useCurrentUser();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (globalThis.window === undefined) {
       return false;
@@ -41,30 +42,6 @@ export function AppHeader() {
     return globalThis.document.documentElement.classList.contains("dark");
   });
   const isMenuOpen = Boolean(menuAnchorEl);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadCurrentUser() {
-      try {
-        const user = await getMe();
-        if (isMounted) {
-          setCurrentUser(user);
-        }
-      } catch (error) {
-        console.error(
-          "Sisselogitud kasutaja andmete laadimine ebaõnnestus:",
-          error,
-        );
-      }
-    }
-
-    loadCurrentUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof globalThis.setInterval> | undefined;
@@ -138,29 +115,7 @@ export function AppHeader() {
     router.push("/login");
   }
 
-  function mapRoleToLabel(role: MeResponse["role"]): string {
-    switch (role) {
-      case "VISITOR":
-        return "Külaline";
-      case "RECEPTIONIST":
-        return "Administraator";
-      case "SECURITY_CHIEF":
-        return "Turvajuht";
-      case "ADMIN":
-        return "Süsteemiadministraator";
-      default:
-        return role;
-    }
-  }
-
-  const displayName =
-    currentUser?.person?.givenName && currentUser?.person?.surname
-      ? `${currentUser.person.givenName} ${currentUser.person.surname}`
-      : (currentUser?.email ?? "Tundmatu kasutaja");
-
-  const displayRole =
-    currentUser?.person?.jobTitle?.trim() ||
-    (currentUser ? mapRoleToLabel(currentUser.role) : "Roll määramata");
+  const userDisplay = user ? getCurrentUserDisplay(user) : null;
 
   return (
     <header className="z-10 flex h-16 w-full shrink-0 items-center justify-between border-b border-slate-200 bg-white px-8 dark:border-slate-800 dark:bg-slate-900">
@@ -226,10 +181,18 @@ export function AppHeader() {
           >
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                {displayName}
+                {status === "loading"
+                  ? "Laen kasutajat..."
+                  : status === "error"
+                    ? "Kasutaja laadimata"
+                    : userDisplay?.displayName}
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {displayRole}
+                {status === "loading"
+                  ? "Andmeid laaditakse"
+                  : status === "error"
+                    ? (errorMessage ?? "Andmeid ei saanud laadida")
+                    : userDisplay?.displayRole}
               </span>
             </div>
 
