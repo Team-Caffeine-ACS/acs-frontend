@@ -12,7 +12,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 import {
   getKeycard,
   getKeycardStatusLabel,

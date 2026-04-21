@@ -14,7 +14,7 @@ import {
   getAccessPoints,
   type AccessPointResponse,
 } from "@/lib/api/accessPoints";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 import {
   getKeycard,
   getKeycardStatusLabel,
