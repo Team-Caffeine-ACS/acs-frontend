@@ -24,7 +24,7 @@ import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 import { getKeycardById, type KeycardResponse } from "@/lib/api/keycards";
 import {
   deriveVisitStatus,
