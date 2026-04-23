@@ -14,7 +14,7 @@ COPY components ./components
 COPY lib ./lib
 COPY mui ./mui
 COPY public ./public
-COPY components.json eslint.config.mjs next.config.ts next-env.d.ts postcss.config.mjs proxy.ts tsconfig.json package.json package-lock.json ./
+COPY components.json eslint.config.mjs next.config.ts postcss.config.mjs proxy.ts tsconfig.json package.json package-lock.json ./
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_DEBUG=false
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
