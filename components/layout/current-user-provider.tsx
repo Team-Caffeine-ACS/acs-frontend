@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { getMe, type MeResponse } from "@/lib/api/auth";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 
 type CurrentUserStatus = "loading" | "ready" | "error";
 
