@@ -12,8 +12,13 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import { Button } from "@/components/ui/button";
+import { fetchRecentVisitors } from "@/lib/apiPreRegestration";
+import { formatTime, getInitials, getStatusMeta} from "@/lib/utils";
 
-export default function DashboardPage() {
+
+
+export default async function DashboardPage() {
+  const visitors = await fetchRecentVisitors();
   return (
     <div className="mx-auto space-y-8 animate-in fade-in duration-500">
       {/* 1. BREADCRUMBS & PEALKIRI */}
@@ -110,32 +115,30 @@ export default function DashboardPage() {
                   <th className="px-6 py-4"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                <VisitorRow
-                  name="Karl Tamm"
-                  org="Riigikantselei"
-                  initials="KT"
-                  time="09:15 - 11:30"
-                  status="Sees"
-                  color="emerald"
-                />
-                <VisitorRow
-                  name="Mari Lepik"
-                  org="MKM"
-                  initials="ML"
-                  time="08:45 - 09:45"
-                  status="Väljas"
-                  color="slate"
-                />
-                <VisitorRow
-                  name="Jüri Sepp"
-                  org="Cybernetica AS"
-                  initials="JS"
-                  time="10:00 - ..."
-                  status="Ootel"
-                  color="amber"
-                />
-              </tbody>
+                <tbody className="divide-y divide-slate-100">
+                  {visitors.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-400 text-sm">
+                        Külastusi ei leitud
+                      </td>
+                    </tr>
+                  ) : (
+                    visitors.map((visitor) => {
+                      const { color, label } = getStatusMeta(visitor.status);
+                      return (
+                        <VisitorRow
+                          key={visitor.id}
+                          name={visitor.fullName}
+                          org={visitor.hostName}
+                          initials={getInitials(visitor.fullName)}
+                          time={formatTime(visitor.expectedArrival)}
+                          status={label}
+                          color={color}
+                        />
+                      );
+                    })
+                  )}
+                </tbody>
             </table>
           </div>
         </div>
