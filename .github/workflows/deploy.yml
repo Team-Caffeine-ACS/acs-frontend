@@ -3,7 +3,7 @@ name: Build & Deploy
 on:
   push:
     branches:
-      - feature/68-cicd
+      - main
 
 env:
   REGISTRY: ghcr.io
