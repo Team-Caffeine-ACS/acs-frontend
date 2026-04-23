@@ -66,24 +66,23 @@ function useCurrentMinute() {
   return currentDateTime;
 }
 
+function getInitialDarkMode() {
+  if (globalThis.window === undefined) {
+    return false;
+  }
+
+  const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme !== null) {
+    return storedTheme === "dark";
+  }
+
+  return globalThis.document.documentElement.classList.contains("dark");
+}
+
 function useDarkModeState() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
 
-  // Read stored preference after hydration — always start as false to match server
   useEffect(() => {
-    const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
-    const initialDark =
-      storedTheme !== null
-        ? storedTheme === "dark"
-        : globalThis.document.documentElement.classList.contains("dark");
-    setIsDarkMode(initialDark);
-    setMounted(true);
-  }, []);
-
-  // Apply theme — skip until mounted so initial false state doesn't clobber stored preference
-  useEffect(() => {
-    if (!mounted) return;
     const root = globalThis.document.documentElement;
     root.classList.toggle("dark", isDarkMode);
     root.style.colorScheme = isDarkMode ? "dark" : "light";
@@ -91,7 +90,7 @@ function useDarkModeState() {
       THEME_STORAGE_KEY,
       isDarkMode ? "dark" : "light",
     );
-  }, [isDarkMode, mounted]);
+  }, [isDarkMode]);
 
   return { isDarkMode, setIsDarkMode };
 }
@@ -265,6 +264,7 @@ export function AppHeader() {
           </button>
 
           <button
+            suppressHydrationWarning
             className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
             aria-label={isDarkMode ? "Lülita hele teema" : "Lülita tume teema"}
             title={isDarkMode ? "Lülita hele teema" : "Lülita tume teema"}
