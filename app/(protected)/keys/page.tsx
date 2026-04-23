@@ -1,292 +1,648 @@
+"use client";
+
 import Link from "next/link";
+import { type ReactNode, useDeferredValue, useEffect, useState } from "react";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
-import SecurityIcon from "@mui/icons-material/Security";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AddIcon from "@mui/icons-material/Add";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import InfoIcon from "@mui/icons-material/Info";
-import WarningIcon from "@mui/icons-material/Warning";
-import GppMaybeIcon from "@mui/icons-material/GppMaybe";
-import FirstPageIcon from "@mui/icons-material/FirstPage";
-import LastPageIcon from "@mui/icons-material/LastPage";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ApiError } from "@/lib/api/error";
+import {
+  getKeycard,
+  getKeycards,
+  getKeycardStatusLabel,
+  type KeycardStatus,
+  type KeycardResponse,
+} from "@/lib/api/keycards";
+
+type StatusFilterValue = "all" | KeycardStatus;
+type SortDirection = "default" | "asc" | "desc";
+type LastReturnFilterMode = "all" | "before" | "after" | "on";
+type HeaderSortKey = "number" | "status" | "user" | "issued" | "returned";
 
 export default function KeycardsPage() {
+  const [keycards, setKeycards] = useState<KeycardResponse[]>([]);
+  const [search, setSearch] = useState("");
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [numberSort, setNumberSort] = useState<SortDirection>("default");
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
+  const [statusSort, setStatusSort] = useState<SortDirection>("default");
+  const [userSort, setUserSort] = useState<SortDirection>("default");
+  const [issuedSort, setIssuedSort] = useState<SortDirection>("default");
+  const [headerSortPriority, setHeaderSortPriority] = useState<HeaderSortKey[]>(
+    ["number", "status", "user", "issued", "returned"],
+  );
+  const [lastReturnSort, setLastReturnSort] =
+    useState<SortDirection>("default");
+  const [lastReturnFilterMode, setLastReturnFilterMode] =
+    useState<LastReturnFilterMode>("all");
+  const [lastReturnDate, setLastReturnDate] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const deferredSearch = useDeferredValue(search.trim().toLowerCase());
+
+  const searchFilteredKeycards = keycards.filter((keycard) => {
+    if (!deferredSearch) return true;
+
+    const haystack = [
+      keycard.keycardNumber,
+      keycard.assignedUser ?? "",
+      getKeycardStatusLabel(keycard.status),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(deferredSearch);
+  });
+
+  const statusFilteredKeycards = searchFilteredKeycards.filter((keycard) =>
+    statusFilter === "all" ? true : keycard.status === statusFilter,
+  );
+
+  const lastReturnFilteredKeycards = statusFilteredKeycards.filter((keycard) =>
+    matchesLastReturnFilter(
+      keycard.lastReturnTime,
+      lastReturnFilterMode,
+      lastReturnDate,
+    ),
+  );
+
+  const filteredKeycards = sortKeycards(
+    lastReturnFilteredKeycards,
+    numberSort,
+    statusSort,
+    userSort,
+    issuedSort,
+    headerSortPriority,
+    lastReturnSort,
+  );
+
+  const totalFilteredKeycards = filteredKeycards.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredKeycards / pageSize));
+  const visiblePageIndex = Math.min(pageIndex, totalPages - 1);
+  const pageStart = visiblePageIndex * pageSize;
+  const paginatedKeycards = filteredKeycards.slice(
+    pageStart,
+    pageStart + pageSize,
+  );
+  const visibleRangeStart =
+    totalFilteredKeycards === 0 ? 0 : visiblePageIndex * pageSize + 1;
+  const visibleRangeEnd =
+    totalFilteredKeycards === 0
+      ? 0
+      : Math.min(visiblePageIndex * pageSize + pageSize, totalFilteredKeycards);
+  const isFilteredResult = totalFilteredKeycards < keycards.length;
+
+  const summary = keycards.reduce(
+    (accumulator, keycard) => {
+      accumulator.total += 1;
+
+      if (keycard.status !== "disabled") {
+        accumulator.active += 1;
+      }
+
+      if (keycard.status === "in_use") {
+        accumulator.inUse += 1;
+      }
+
+      if (keycard.status === "available") {
+        accumulator.available += 1;
+      }
+
+      return accumulator;
+    },
+    { total: 0, active: 0, inUse: 0, available: 0 },
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadKeycards = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const page = await getKeycards({ size: 200 });
+        if (!isMounted) return;
+
+        const inUseWithoutAssignedTime = page.content.filter(
+          (keycard) => keycard.status === "in_use" && !keycard.assignedTime,
+        );
+
+        if (inUseWithoutAssignedTime.length === 0) {
+          setKeycards(page.content);
+          return;
+        }
+
+        const detailedResults = await Promise.allSettled(
+          inUseWithoutAssignedTime.map((keycard) => getKeycard(keycard.id)),
+        );
+
+        if (!isMounted) return;
+
+        const detailsById = new Map(
+          detailedResults.flatMap((result) =>
+            result.status === "fulfilled"
+              ? [[result.value.id, result.value] as const]
+              : [],
+          ),
+        );
+
+        setKeycards(
+          page.content.map((keycard) => {
+            const detail = detailsById.get(keycard.id);
+            return detail ? { ...keycard, ...detail } : keycard;
+          }),
+        );
+      } catch (err) {
+        if (!isMounted) return;
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : "Võtmekaartide laadimine ebaõnnestus.",
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadKeycards();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [
+    deferredSearch,
+    statusFilter,
+    numberSort,
+    statusSort,
+    userSort,
+    issuedSort,
+    lastReturnSort,
+    lastReturnFilterMode,
+    lastReturnDate,
+    headerSortPriority,
+  ]);
+
+  useEffect(() => {
+    if (pageIndex > totalPages - 1) {
+      setPageIndex(Math.max(0, totalPages - 1));
+    }
+  }, [pageIndex, totalPages]);
+
+  let tableBodyContent: ReactNode;
+
+  if (isLoading) {
+    tableBodyContent = <LoadingRow />;
+  } else if (paginatedKeycards.length > 0) {
+    tableBodyContent = paginatedKeycards.map((keycard) => (
+      <KeycardRow key={keycard.id} keycard={keycard} />
+    ));
+  } else {
+    tableBodyContent = (
+      <EmptyRow
+        title={
+          error ? "Võtmekaartide laadimine ebaõnnestus" : "Tulemusi ei leitud"
+        }
+        description={
+          error ??
+          "Muuda otsingut või kontrolli, kas võtmekaardid on süsteemis olemas."
+        }
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
-      {/* 1. BREADCRUMBS & HEADER */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div className="space-y-4">
           <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-            <Link href="/" className="hover:text-primary transition-colors">
+            <Link href="/" className="transition-colors hover:text-primary">
               Pääsla
             </Link>
             <ChevronRightIcon className="!text-sm" />
             <span className="text-primary">Võtmekaardid</span>
           </nav>
           <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white font-display">
+            <h1 className="font-display text-3xl font-black tracking-tight text-slate-900">
               Võtmekaartide haldus
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 max-w-2xl font-medium">
-              Monitor ja hallake kõrge turvalisusega RFID pääsukaarte.
-              Sünkroniseeritud keskse läbipääsusüsteemiga.
+            <p className="max-w-2xl text-slate-500">
+              Ava üksik kaart, vaata selle hetke seisu, määramist ja viimaseid
+              teadaolevaid aegu detaillehel.
             </p>
           </div>
         </div>
         <div className="flex gap-3">
           <Button
             variant="outline"
-            className="gap-2 font-bold text-xs uppercase tracking-widest py-6"
+            className="gap-2 py-6 text-xs font-bold uppercase tracking-widest"
           >
-            <FileDownloadIcon className="!text-lg" /> Ekspordi aruanne
+            <FileDownloadIcon className="!text-lg" /> Ekspordi
           </Button>
-          <Button className="gap-2 font-bold text-xs uppercase tracking-widest py-6 px-8 shadow-xl shadow-primary/20 bg-primary">
+          <Button className="gap-2 bg-primary px-8 py-6 text-xs font-bold uppercase tracking-widest shadow-xl shadow-primary/20">
             <AddIcon className="!text-lg" /> Registreeri kaart
           </Button>
         </div>
       </div>
 
-      {/* 2. FILTRITE TOOLBAR */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[300px] relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="relative min-w-[280px] flex-1">
+          <div className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400">
             <FilterListIcon className="!text-lg" />
           </div>
           <input
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold placeholder:text-slate-300"
-            placeholder="Otsi kaardi numbri, kasutaja või osakonna järgi..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="w-full rounded-xl bg-slate-50 py-2.5 pr-4 pl-10 text-sm font-semibold text-slate-700 placeholder:text-slate-300"
+            placeholder="Otsi kaardi numbri või kasutaja järgi..."
           />
         </div>
-        <div className="flex items-center gap-2">
-          <FilterButton label="Staatus: Kõik" />
-          <FilterButton label="Tase: Kõik" />
-          <FilterButton label="Asukoht: Tallinn" />
-          <div className="w-px h-6 bg-slate-100 mx-2" />
-          <button
-            className="p-2 text-slate-400 hover:text-primary transition-colors"
-            aria-label="Värskenda filtreid"
-            title="Värskenda filtreid"
-          >
-            <RefreshIcon />
-          </button>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
+          <FilterListIcon className="!text-lg" />
         </div>
+        <FilterField label="Staatus">
+          <select
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as StatusFilterValue)
+            }
+            className={filterInputCls}
+          >
+            <option value="all">Kõik staatused</option>
+            <option value="available">Saadaval</option>
+            <option value="in_use">Kasutuses</option>
+            <option value="disabled">Deaktiveeritud</option>
+            <option value="expired">Aegunud</option>
+          </select>
+        </FilterField>
+        <FilterField label="Viimati tagastatud">
+          <select
+            value={lastReturnSort}
+            onChange={(event) =>
+              setLastReturnSort(event.target.value as SortDirection)
+            }
+            className={filterInputCls}
+          >
+            <option value="default">Vaikimisi</option>
+            <option value="desc">Uuem enne</option>
+            <option value="asc">Vanem enne</option>
+          </select>
+        </FilterField>
+        <FilterField label="Tagastuse kuupäev">
+          <div className="flex min-w-[260px] gap-2">
+            <select
+              value={lastReturnFilterMode}
+              onChange={(event) =>
+                setLastReturnFilterMode(
+                  event.target.value as LastReturnFilterMode,
+                )
+              }
+              className={filterInputCls + " min-w-[120px]"}
+            >
+              <option value="all">Kõik</option>
+              <option value="before">Enne</option>
+              <option value="after">Pärast</option>
+              <option value="on">Täpselt</option>
+            </select>
+            <input
+              type="date"
+              value={lastReturnDate}
+              onChange={(event) => setLastReturnDate(event.target.value)}
+              disabled={lastReturnFilterMode === "all"}
+              className={filterInputCls + " min-w-[140px]"}
+            />
+          </div>
+        </FilterField>
+        <Button
+          variant="outline"
+          size="icon"
+          className="rounded-xl text-slate-500"
+          aria-label="Värskenda võtmekaarte"
+          onClick={() => globalThis.location.reload()}
+        >
+          <RefreshIcon />
+        </Button>
       </div>
 
-      {/* 3. ANDMETE TABEL */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden font-display">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-100 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+          <table className="w-full border-collapse text-left">
+            <thead className="border-b border-slate-100 bg-slate-50/80 text-sm font-medium text-slate-500">
               <tr>
-                <th className="px-6 py-5">Kaardi number</th>
-                <th className="px-6 py-5">Turvatase</th>
-                <th className="px-6 py-5 text-center">Staatus</th>
-                <th className="px-6 py-5">Määratud kasutaja</th>
-                <th className="px-6 py-5">Viimati tagastatud</th>
-                <th className="px-6 py-5"></th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Kaardi number"
+                    direction={numberSort}
+                    onClick={() => {
+                      setNumberSort((current) => getNextSortDirection(current));
+                      setHeaderSortPriority((current) => [
+                        "number",
+                        ...current.filter((key) => key !== "number"),
+                      ]);
+                    }}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Staatus"
+                    direction={statusSort}
+                    onClick={() => {
+                      setStatusSort((current) => getNextSortDirection(current));
+                      setHeaderSortPriority((current) => [
+                        "status",
+                        ...current.filter((key) => key !== "status"),
+                      ]);
+                    }}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Kasutaja"
+                    direction={userSort}
+                    onClick={() => {
+                      setUserSort((current) => getNextSortDirection(current));
+                      setHeaderSortPriority((current) => [
+                        "user",
+                        ...current.filter((key) => key !== "user"),
+                      ]);
+                    }}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Väljastatud"
+                    direction={issuedSort}
+                    onClick={() => {
+                      setIssuedSort((current) => getNextSortDirection(current));
+                      setHeaderSortPriority((current) => [
+                        "issued",
+                        ...current.filter((key) => key !== "issued"),
+                      ]);
+                    }}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Viimati tagastatud"
+                    direction={lastReturnSort}
+                    onClick={() => {
+                      setLastReturnSort((current) =>
+                        getNextSortDirection(current),
+                      );
+                      setHeaderSortPriority((current) => [
+                        "returned",
+                        ...current.filter((key) => key !== "returned"),
+                      ]);
+                    }}
+                  />
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-              <KeycardRow
-                id="EE-4920-A1"
-                level="Tase 5 (Piiratud)"
-                status="Saadaval"
-                user="—"
-                date="24. okt, 2023"
-                time="17:45"
-                statusColor="green"
-              />
-              <KeycardRow
-                id="EE-8821-B2"
-                level="Tase 3 (Standard)"
-                status="Kasutuses"
-                user="Mihkel Lepik"
-                date="Praegu väljas"
-                time=""
-                statusColor="blue"
-                initials="ML"
-              />
-              <KeycardRow
-                id="EE-1004-X9"
-                level="Tase 1 (Sissepääs)"
-                status="Deaktiveeritud"
-                user="Arhiveeritud"
-                date="12. sept, 2023"
-                time="09:12"
-                statusColor="red"
-              />
+            <tbody className="divide-y divide-slate-100">
+              {tableBodyContent}
             </tbody>
           </table>
         </div>
 
-        {/* PAGINATION */}
-        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            Näitan <span className="text-slate-900">1</span> kuni{" "}
-            <span className="text-slate-900">10</span> /{" "}
-            <span className="text-slate-900">128</span> kaardist
-          </p>
-          <div className="flex items-center gap-1">
-            <PaginationBtn
-              icon={<FirstPageIcon className="!text-sm" />}
-              disabled
-            />
-            <PaginationBtn
-              icon={<ChevronLeftIcon className="!text-sm" />}
-              disabled
-            />
-            <div className="flex items-center gap-1 mx-4">
-              <button className="size-8 bg-primary text-white rounded-lg font-black text-xs">
-                1
-              </button>
-              <button className="size-8 text-slate-400 font-bold text-xs hover:bg-white rounded-lg transition-colors">
-                2
-              </button>
-              <button className="size-8 text-slate-400 font-bold text-xs hover:bg-white rounded-lg transition-colors">
-                3
-              </button>
+        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <span>Ridu lehel</span>
+              <select
+                value={pageSize}
+                onChange={(event) => setPageSize(Number(event.target.value))}
+                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </label>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Näitan <span className="text-slate-900">{visibleRangeStart}</span>
+              {" - "}
+              <span className="text-slate-900">{visibleRangeEnd}</span> /{" "}
+              <span className="text-slate-900">{totalFilteredKeycards}</span>
+              {isFilteredResult ? (
+                <>
+                  {" "}
+                  filtreeritud, kokku{" "}
+                  <span className="text-slate-900">{keycards.length}</span>
+                </>
+              ) : null}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Leht{" "}
+              <span className="text-slate-900">{visiblePageIndex + 1}</span> /{" "}
+              <span className="text-slate-900">{totalPages}</span>
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-xl text-slate-500"
+                onClick={() =>
+                  setPageIndex((current) => Math.max(0, current - 1))
+                }
+                disabled={visiblePageIndex === 0}
+                aria-label="Eelmine leht"
+              >
+                <ChevronLeftIcon className="!text-lg" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-xl text-slate-500"
+                onClick={() =>
+                  setPageIndex((current) =>
+                    Math.min(totalPages - 1, current + 1),
+                  )
+                }
+                disabled={visiblePageIndex >= totalPages - 1}
+                aria-label="Järgmine leht"
+              >
+                <ChevronRightIcon className="!text-lg" />
+              </Button>
             </div>
-            <PaginationBtn icon={<ChevronRightIcon className="!text-sm" />} />
-            <PaginationBtn icon={<LastPageIcon className="!text-sm" />} />
           </div>
         </div>
       </div>
 
-      {/* 4. ALUMINE STATISTIKA GRUPP */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <StatSmall
           title="Kaarte kokku"
-          value="4,250"
-          trend="+12 sel nädalal"
-          icon={<TrendingUpIcon className="!text-sm text-green-500" />}
+          value={summary.total}
+          trend="Kõik süsteemis nähtavad kaardid"
+          icon={<TrendingUpIcon className="!text-sm text-emerald-500" />}
         />
         <StatSmall
-          title="Hetkel aktiivsed"
-          value="842"
-          trend="19% täituvus"
+          title="Aktiivsed"
+          value={summary.active}
+          trend="Saadaval või kasutuses"
           icon={<InfoIcon className="!text-sm text-slate-400" />}
         />
         <StatSmall
-          title="Tagastamata"
-          value="14"
-          trend="Vajab tähelepanu"
-          icon={<WarningIcon className="!text-sm text-orange-500" />}
-          color="text-orange-500"
+          title="Kasutuses"
+          value={summary.inUse}
+          trend="Praegu külastajate käes"
+          icon={<CreditCardIcon className="!text-sm text-blue-600" />}
+          color="text-blue-600"
         />
         <StatSmall
-          title="Kaotatud/Varastatud"
-          value="3"
-          trend="Mustas nimekirjas"
-          icon={<GppMaybeIcon className="!text-sm text-red-500" />}
-          color="text-red-500"
+          title="Saadaval"
+          value={summary.available}
+          trend="Valmis uuesti väljastamiseks"
+          icon={<MeetingRoomIcon className="!text-sm text-emerald-500" />}
+          color="text-emerald-600"
         />
       </div>
     </div>
   );
 }
 
-interface BadgeProps {
-  initials?: string;
-  id: string;
-  level: string;
-  status: string;
-  user: string;
-  date: string;
-  time: string;
-  statusColor: "green" | "blue" | "red";
-}
+function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
+  const href = `/keys/${keycard.id}`;
+  const label = `Ava võtmekaart ${keycard.keycardNumber}`;
 
-interface PaginationBtnProps {
-  readonly icon: React.ReactNode;
-  readonly disabled?: boolean; // Valikuline tõeväärtus
-}
-
-interface StatSmallProps {
-  readonly title: string;
-  readonly value: string | number; // väärtus võib olla nii tekst kui number
-  readonly trend: string;
-  readonly icon: React.ReactNode; // See on tüüp ikoonide ja HTML-i jaoks
-  readonly color?: string; // Küsimärk, sest sellel on vaikimisi väärtus
-}
-
-// ABIKOMPONENDID
-
-function FilterButton({ label }: Readonly<{ label: string }>) {
   return (
-    <button className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white hover:shadow-sm transition-all">
-      {label}
-    </button>
+    <tr className="cursor-pointer transition-colors hover:bg-slate-50/70 focus-within:bg-slate-50/70 focus-within:outline-2 focus-within:outline-primary/40">
+      <td className="relative px-6 py-4 whitespace-nowrap">
+        <Link href={href} className="absolute inset-0 z-10" aria-label={label}>
+          <span className="sr-only">{label}</span>
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+            <CreditCardIcon className="!text-lg" />
+          </div>
+          <div>
+            <p className="font-mono text-sm font-bold tracking-tight text-slate-900">
+              {keycard.keycardNumber}
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              ID {keycard.id.slice(0, 8)}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        <StatusBadge status={keycard.status} />
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        {keycard.assignedUser ? (
+          <p className="text-sm font-semibold text-slate-900">
+            {keycard.assignedUser}
+          </p>
+        ) : (
+          <p className="text-sm text-slate-400">Määramata</p>
+        )}
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        <DateTimeStack value={keycard.assignedTime} emptyLabel="Puudub" />
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        <DateTimeStack
+          value={keycard.lastReturnTime}
+          emptyLabel="Tagastus puudub"
+        />
+      </td>
+    </tr>
   );
 }
 
-function KeycardRow({
-  id,
-  level,
+function StatusBadge({
   status,
-  user,
-  date,
-  time,
-  statusColor,
-  initials,
-}: Readonly<BadgeProps>) {
-  const badgeStyles: Record<string, string> = {
-    green: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    blue: "bg-blue-50 text-blue-600 border-blue-100",
-    red: "bg-rose-50 text-rose-600 border-rose-100",
+}: Readonly<{ status: KeycardResponse["status"] }>) {
+  const styles: Record<KeycardResponse["status"], string> = {
+    available: "border-emerald-100 bg-emerald-50 text-emerald-700",
+    in_use: "border-blue-100 bg-blue-50 text-blue-700",
+    disabled: "border-rose-100 bg-rose-50 text-rose-700",
+    expired: "border-amber-100 bg-amber-50 text-amber-700",
   };
+
   return (
-    <tr className="hover:bg-slate-50/50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center gap-3">
-          <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-            <CreditCardIcon className="!text-lg" />
-          </div>
-          <span className="font-mono text-sm font-bold tracking-tight text-slate-900">
-            {id}
-          </span>
-        </div>
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${styles[status]}`}
+    >
+      {getKeycardStatusLabel(status)}
+    </span>
+  );
+}
+
+function DateTimeStack({
+  value,
+  emptyLabel,
+}: Readonly<{
+  value: string | null;
+  emptyLabel: string;
+}>) {
+  if (!value) {
+    return <p className="text-sm text-slate-400">{emptyLabel}</p>;
+  }
+
+  const date = new Date(value);
+
+  return (
+    <div>
+      <div className="text-sm font-semibold text-slate-900">
+        {new Intl.DateTimeFormat("et-EE", { dateStyle: "medium" }).format(date)}
+      </div>
+      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+        {new Intl.DateTimeFormat("et-EE", { timeStyle: "short" }).format(date)}
+      </div>
+    </div>
+  );
+}
+
+function LoadingRow() {
+  return (
+    <tr>
+      <td colSpan={5} className="px-6 py-14 text-center">
+        <p className="text-sm font-semibold text-slate-600">
+          Laen võtmekaarte...
+        </p>
       </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <SecurityIcon className="!text-sm text-slate-300" />
-          <span className="text-sm font-bold text-slate-700">{level}</span>
-        </div>
-      </td>
-      <td className="px-6 py-4 text-center">
-        <span
-          className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${badgeStyles[statusColor]}`}
-        >
-          {status}
-        </span>
-      </td>
-      <td className="px-6 py-4">
-        {user === "—" ? (
-          <span className="text-slate-300">—</span>
-        ) : (
-          <div className="flex items-center gap-2">
-            <div className="size-6 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center font-black">
-              {initials}
-            </div>
-            <span className="text-sm font-bold text-slate-900">{user}</span>
-          </div>
-        )}
-      </td>
-      <td className="px-6 py-4">
-        <div className="text-sm font-bold text-slate-900">{date}</div>
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-          {time}
-        </div>
-      </td>
-      <td className="px-6 py-4 text-right">
-        <button className="text-slate-300 hover:text-primary transition-colors">
-          <MoreVertIcon />
-        </button>
+    </tr>
+  );
+}
+
+function EmptyRow({
+  title,
+  description,
+}: Readonly<{
+  title: string;
+  description: string;
+}>) {
+  return (
+    <tr>
+      <td colSpan={5} className="px-6 py-14 text-center">
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <p className="mt-2 text-sm text-slate-500">{description}</p>
       </td>
     </tr>
   );
@@ -298,27 +654,277 @@ function StatSmall({
   trend,
   icon,
   color = "text-slate-900",
-}: StatSmallProps) {
+}: Readonly<{
+  title: string;
+  value: string | number;
+  trend: string;
+  icon: ReactNode;
+  color?: string;
+}>) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
         {title}
       </p>
       <p className={`text-2xl font-black tracking-tighter ${color}`}>{value}</p>
-      <div className="mt-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-tighter">
+      <div className="mt-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-tighter text-slate-500">
         {icon} {trend}
       </div>
     </div>
   );
 }
 
-function PaginationBtn({ icon, disabled }: PaginationBtnProps) {
+function FilterField({
+  label,
+  children,
+}: Readonly<{
+  label: string;
+  children: ReactNode;
+}>) {
+  return (
+    <label className="space-y-1">
+      <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+const filterInputCls =
+  "h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-primary/40 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60";
+
+function SortableHeader({
+  label,
+  direction,
+  onClick,
+}: Readonly<{
+  label: string;
+  direction: SortDirection;
+  onClick: () => void;
+}>) {
+  const sortIcon = getSortIcon(direction);
+
   return (
     <button
-      disabled={disabled}
-      className="p-2 text-slate-300 hover:bg-white hover:text-primary rounded-lg transition-all disabled:opacity-20"
+      type="button"
+      onClick={onClick}
+      className="flex h-full w-full cursor-pointer items-center justify-between gap-2 text-left select-none transition-colors hover:text-slate-700"
     >
-      {icon}
+      <span>{label}</span>
+      {sortIcon}
     </button>
   );
+}
+
+function getSortIcon(direction: SortDirection) {
+  switch (direction) {
+    case "asc":
+      return <ChevronDownIcon size={16} className="shrink-0 opacity-60" />;
+    case "desc":
+      return <ChevronUpIcon size={16} className="shrink-0 opacity-60" />;
+    case "default":
+      return null;
+  }
+}
+
+function sortKeycards(
+  keycards: KeycardResponse[],
+  numberSort: SortDirection,
+  statusSort: SortDirection,
+  userSort: SortDirection,
+  issuedSort: SortDirection,
+  headerSortPriority: HeaderSortKey[],
+  lastReturnSort: SortDirection,
+) {
+  if (
+    numberSort === "default" &&
+    statusSort === "default" &&
+    userSort === "default" &&
+    issuedSort === "default" &&
+    lastReturnSort === "default"
+  ) {
+    return keycards;
+  }
+
+  return [...keycards].sort((left, right) => {
+    for (const key of headerSortPriority) {
+      const comparison = getKeycardComparison({
+        key,
+        left,
+        right,
+        numberSort,
+        statusSort,
+        userSort,
+        issuedSort,
+        lastReturnSort,
+      });
+
+      if (comparison !== 0) {
+        return comparison;
+      }
+    }
+
+    return 0;
+  });
+}
+
+function getKeycardComparison({
+  key,
+  left,
+  right,
+  numberSort,
+  statusSort,
+  userSort,
+  issuedSort,
+  lastReturnSort,
+}: Readonly<{
+  key: HeaderSortKey;
+  left: KeycardResponse;
+  right: KeycardResponse;
+  numberSort: SortDirection;
+  statusSort: SortDirection;
+  userSort: SortDirection;
+  issuedSort: SortDirection;
+  lastReturnSort: SortDirection;
+}>) {
+  switch (key) {
+    case "number":
+      return compareNullableText(
+        left.keycardNumber,
+        right.keycardNumber,
+        numberSort,
+      );
+    case "status":
+      return compareStatus(left.status, right.status, statusSort);
+    case "user":
+      return compareNullableText(
+        left.assignedUser,
+        right.assignedUser,
+        userSort,
+      );
+    case "issued":
+      return compareNullableDate(
+        left.assignedTime,
+        right.assignedTime,
+        issuedSort,
+      );
+    case "returned":
+      return compareNullableDate(
+        left.lastReturnTime,
+        right.lastReturnTime,
+        lastReturnSort,
+      );
+  }
+}
+
+function compareStatus(
+  left: KeycardStatus,
+  right: KeycardStatus,
+  order: SortDirection,
+) {
+  if (order === "default") {
+    return 0;
+  }
+
+  const comparison = getKeycardStatusLabel(left).localeCompare(
+    getKeycardStatusLabel(right),
+    "et",
+    { sensitivity: "base" },
+  );
+
+  return order === "desc" ? -comparison : comparison;
+}
+
+function compareNullableDate(
+  left: string | null,
+  right: string | null,
+  order: SortDirection,
+) {
+  if (order === "default") {
+    return 0;
+  }
+
+  if (!left && !right) {
+    return 0;
+  }
+
+  if (!left) {
+    return 1;
+  }
+
+  if (!right) {
+    return -1;
+  }
+
+  const leftTime = new Date(left).getTime();
+  const rightTime = new Date(right).getTime();
+
+  return order === "desc" ? rightTime - leftTime : leftTime - rightTime;
+}
+
+function compareNullableText(
+  left: string | null,
+  right: string | null,
+  order: SortDirection,
+) {
+  if (order === "default") {
+    return 0;
+  }
+
+  if (!left && !right) {
+    return 0;
+  }
+
+  if (!left) {
+    return 1;
+  }
+
+  if (!right) {
+    return -1;
+  }
+
+  const comparison = left.localeCompare(right, "et", {
+    sensitivity: "base",
+  });
+
+  return order === "desc" ? -comparison : comparison;
+}
+
+function getNextSortDirection(direction: SortDirection): SortDirection {
+  switch (direction) {
+    case "default":
+      return "asc";
+    case "asc":
+      return "desc";
+    case "desc":
+      return "default";
+  }
+}
+
+function matchesLastReturnFilter(
+  value: string | null,
+  mode: LastReturnFilterMode,
+  date: string,
+) {
+  if (mode === "all" || !date) {
+    return true;
+  }
+
+  if (!value) {
+    return false;
+  }
+
+  const entryTime = new Date(value).getTime();
+  const startOfSelectedDay = new Date(`${date}T00:00:00`).getTime();
+  const endOfSelectedDay = new Date(`${date}T23:59:59.999`).getTime();
+
+  switch (mode) {
+    case "before":
+      return entryTime < startOfSelectedDay;
+    case "after":
+      return entryTime > endOfSelectedDay;
+    case "on":
+      return entryTime >= startOfSelectedDay && entryTime <= endOfSelectedDay;
+  }
 }

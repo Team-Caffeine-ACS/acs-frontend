@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PersonIcon from "@mui/icons-material/Person";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
@@ -26,7 +26,7 @@ import {
   type PersonInRoleResponse,
 } from "@/lib/api/persons";
 import { createVisit } from "@/lib/api/visits";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 
 interface SelectedVisitor {
   personId: string;
@@ -168,7 +168,7 @@ export default function NewVisitPage() {
         personId = selectedVisitor!.personId;
       }
 
-      await createVisit({
+      const createdVisit = await createVisit({
         personId,
         accessPointId,
         keycardId: keycardId || undefined,
@@ -176,7 +176,7 @@ export default function NewVisitPage() {
         comment: comment.trim() || undefined,
       });
 
-      router.push("/");
+      router.push(`/visits/${createdVisit.visitId}`);
     } catch (err) {
       setSubmitError(
         err instanceof ApiError
@@ -518,7 +518,7 @@ export default function NewVisitPage() {
         {/* ── Section 3: Keycard ── */}
         <Card
           icon={<CreditCardIcon className="text-blue-700 !text-xl" />}
-          title="Kiipkaardi määramine"
+          title="Võtmekaardi määramine"
         >
           <div className="flex items-center gap-3">
             <select
@@ -543,7 +543,7 @@ export default function NewVisitPage() {
           <div className="flex gap-2 px-3 py-3 bg-blue-50 rounded-lg text-xs text-slate-600">
             <InfoOutlinedIcon className="!text-base text-blue-500 shrink-0 mt-0.5" />
             <span>
-              Kiipkaardi väljastamisel aktiveerub see koheselt valitud
+              Võtmekaardi väljastamisel aktiveerub see koheselt valitud
               pääsupunktides. Külaline on kohustatud kaardi tagastama külastuse
               lõpus. Kadunud kaardist teavitada viivitamatult administraatorit.
             </span>
@@ -612,13 +612,12 @@ function Field({
   readonly label: string;
   readonly children: React.ReactNode;
 }) {
-  const id = useId();
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+    <fieldset className="space-y-1.5">
+      <legend className="block text-sm font-medium text-slate-700">
         {label}
-      </label>
-      <div id={id}>{children}</div>
-    </div>
+      </legend>
+      {children}
+    </fieldset>
   );
 }
