@@ -33,19 +33,6 @@ const TIME_FORMATTER = new Intl.DateTimeFormat("et-EE", {
   minute: "2-digit",
 });
 
-function getInitialDarkMode() {
-  if (globalThis.window === undefined) {
-    return false;
-  }
-
-  const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
-  if (storedTheme !== null) {
-    return storedTheme === "dark";
-  }
-
-  return globalThis.document.documentElement.classList.contains("dark");
-}
-
 function useCurrentMinute() {
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
 
@@ -80,18 +67,31 @@ function useCurrentMinute() {
 }
 
 function useDarkModeState() {
-  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  // Read stored preference after hydration — always start as false to match server
   useEffect(() => {
-    const root = globalThis.document.documentElement;
+    const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
+    const initialDark =
+      storedTheme !== null
+        ? storedTheme === "dark"
+        : globalThis.document.documentElement.classList.contains("dark");
+    setIsDarkMode(initialDark);
+    setMounted(true);
+  }, []);
 
+  // Apply theme — skip until mounted so initial false state doesn't clobber stored preference
+  useEffect(() => {
+    if (!mounted) return;
+    const root = globalThis.document.documentElement;
     root.classList.toggle("dark", isDarkMode);
     root.style.colorScheme = isDarkMode ? "dark" : "light";
     globalThis.localStorage.setItem(
       THEME_STORAGE_KEY,
       isDarkMode ? "dark" : "light",
     );
-  }, [isDarkMode]);
+  }, [isDarkMode, mounted]);
 
   return { isDarkMode, setIsDarkMode };
 }
