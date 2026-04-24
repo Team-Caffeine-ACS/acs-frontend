@@ -13,11 +13,9 @@ import Brightness2OutlinedIcon from "@mui/icons-material/Brightness2Outlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/components/layout/current-user-provider";
 import { getCurrentUserDisplay } from "@/lib/current-user";
 import type { SxProps, Theme } from "@mui/material/styles";
@@ -235,14 +233,6 @@ export function AppHeader() {
             Pääsla infosüsteem
           </h2>
         </Link>
-
-        <div className="relative flex w-64 items-center">
-          <SearchIcon className="absolute left-3 text-[18px] text-slate-400" />
-          <Input
-            className="w-full rounded-lg border-none bg-slate-100 py-2 pl-10 pr-4 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-primary dark:bg-slate-800"
-            placeholder="Otsi külalist või kaarti..."
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-6">
