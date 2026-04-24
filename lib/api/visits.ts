@@ -345,10 +345,11 @@ export async function getVisits(
 }
 
 export interface EditVisitRequest {
-  hostId?: string | null;
-  assignorId?: string;
+  hostId?: string;
+  assignorId?: string | null;
   accessPointId?: string;
   entryTime?: string;
+  exitTime?: string;
   comment?: string;
 }
 

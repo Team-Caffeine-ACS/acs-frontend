@@ -516,6 +516,7 @@ function EditVisitModal({
   const [entryTime, setEntryTime] = useState(
     toDatetimeLocal(detail?.arrivalTime),
   );
+  const [exitTime, setExitTime] = useState(toDatetimeLocal(detail?.exitTime));
   const [comment, setComment] = useState(detail?.visitReason ?? "");
 
   // Host (optional)
@@ -595,13 +596,26 @@ function EditVisitModal({
     e.preventDefault();
     setSubmitError(null);
 
+    if (!selectedAssignor) {
+      setSubmitError("Vali muudatuse tegija.");
+      return;
+    }
+
+    if (entryTime && exitTime) {
+      const entry = new Date(entryTime);
+      const exit = new Date(exitTime);
+
+      if (exit < entry) {
+        setSubmitError("Lahkumise aeg ei saa olla enne saabumist.");
+        return;
+      }
+    }
+
     const body: EditVisitRequest = {
       accessPointId: accessPointId || detail?.accessPointId || undefined,
-      entryTime: entryTime
-        ? fromDatetimeLocal(entryTime)
-        : detail?.arrivalTime
-          ? detail.arrivalTime
-          : undefined,
+      assignorId: selectedAssignor.id,
+      entryTime: entryTime ? fromDatetimeLocal(entryTime) : undefined,
+      exitTime: exitTime ? fromDatetimeLocal(exitTime) : undefined,
       comment:
         comment.trim() !== ""
           ? comment.trim()
@@ -657,7 +671,7 @@ function EditVisitModal({
           {/* Scrollable fields */}
           <div className="flex-1 overflow-y-auto space-y-6 p-7">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <ModalField label="Osakond *">
+              <ModalField label="Osakond">
                 <select
                   value={accessPointId}
                   onChange={(e) => setAccessPointId(e.target.value)}
@@ -672,11 +686,20 @@ function EditVisitModal({
                 </select>
               </ModalField>
 
-              <ModalField label="Saabumise aeg *">
+              <ModalField label="Saabumise aeg">
                 <input
                   type="datetime-local"
                   value={entryTime}
                   onChange={(e) => setEntryTime(e.target.value)}
+                  className={inputCls}
+                />
+              </ModalField>
+
+              <ModalField label="Lahkumise aeg">
+                <input
+                  type="datetime-local"
+                  value={exitTime}
+                  onChange={(e) => setExitTime(e.target.value)}
                   className={inputCls}
                 />
               </ModalField>
