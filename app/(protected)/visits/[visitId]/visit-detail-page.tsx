@@ -174,22 +174,42 @@ function getStatusPresentation(status: VisitStatusKey | "loading"): {
   return map[status];
 }
 
-function getTimelineEventCopy(eventType: string): {
-  eyebrow: string;
-  title: string;
-  description: string;
-  iconClassName: string;
-} {
+function isFuture(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const d = new Date(value);
+  return !Number.isNaN(d.getTime()) && d > new Date();
+}
+
+function getTimelineEventCopy(eventType: string, occurredAt?: string | null) {
+  const future = isFuture(occurredAt);
+
   switch (eventType) {
     case "ARRIVAL_REGISTERED":
+      if (future) {
+        return {
+          eyebrow: "Saabumine",
+          title: "Oodatav registreerimine",
+          description:
+            "Külastaja eeldatav saabumise aeg. Registreerimine toimub saabumisel.",
+          iconClassName: "bg-sky-100 text-sky-700 ring-sky-100",
+        };
+      }
       return {
         eyebrow: "Saabumine",
         title: "Registreeritud saabumine",
-        description:
-          "Külastaja saabumine registreeriti süsteemis. Ajajoones kuvatakse ainult backendist tagastatud sündmused.",
+        description: "Külastaja saabumine registreeriti süsteemis.",
         iconClassName: "bg-primary text-white ring-primary/10",
       };
+
     case "DEPARTURE_REGISTERED":
+      if (future) {
+        return {
+          eyebrow: "Lahkumine",
+          title: "Oodatav lahkumine",
+          description: "Külastaja eeldatav lahkumise aeg.",
+          iconClassName: "bg-amber-100 text-amber-700 ring-amber-100",
+        };
+      }
       return {
         eyebrow: "Lahkumine",
         title: "Registreeritud lahkumine",
@@ -197,6 +217,7 @@ function getTimelineEventCopy(eventType: string): {
           "Külastaja lahkumine registreeriti süsteemis ja visiit on lõpetatud.",
         iconClassName: "bg-slate-100 text-slate-600 ring-slate-100",
       };
+
     default:
       return {
         eyebrow: "Sündmus",
@@ -1270,7 +1291,7 @@ function VisitAuditLogSection({
         ) : null}
 
         {reversedTimeline.map((event) => {
-          const copy = getTimelineEventCopy(event.eventType);
+          const copy = getTimelineEventCopy(event.eventType, event.occurredAt);
           return (
             <div
               key={`${event.id}-audit`}
