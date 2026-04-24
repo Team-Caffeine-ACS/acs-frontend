@@ -48,6 +48,9 @@
   import { searchEmployees, type PersonInRoleResponse } from "@/lib/api/persons";
   import { getCurrentUserRoleInfo} from "@/lib/session";
   import { cn } from "@/lib/utils";
+  import { getMe, type MeResponse} from "@/lib/api/auth";
+
+  
 
   interface VisitDetailPageProps {
     readonly visitId: string;
@@ -64,35 +67,19 @@
   const EDIT_ALLOWED_ROLES = new Set(["ADMIN", "SECURITY_CHIEF"]);
 
   function createInitialState<T>(data: T | null = null): RequestState<T> {
-    return { 
-      data, 
-      isLoading: data === null, 
-      error: null,
-     };
+    return { data, isLoading: data === null, error: null };
   }
 
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
+  function getErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof ApiError) return error.message;
+    if (error instanceof Error) return error.message;
+    return fallback;
   }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
   function formatDateTime(value: string | null | undefined): string {
-    if (!value) {
-      return NOT_AVAILABLE;
-    }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
+    if (!value) return NOT_AVAILABLE;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
     return new Intl.DateTimeFormat("et-EE", {
       day: "2-digit",
       month: "short",
@@ -103,15 +90,9 @@ function getErrorMessage(error: unknown, fallback: string): string {
   }
 
   function formatTime(value: string | null | undefined): string {
-    if (!value) {
-      return NOT_AVAILABLE;
-    }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
+    if (!value) return NOT_AVAILABLE;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
     return new Intl.DateTimeFormat("et-EE", {
       hour: "2-digit",
       minute: "2-digit",
@@ -139,16 +120,16 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
   function getArrivalFromTimeline(events: VisitTimelineEvent[]): string | null {
     return (
-      events.find((event) => event.eventType === "ARRIVAL_REGISTERED")
-        ?.occurredAt ?? null
+      events.find((e) => e.eventType === "ARRIVAL_REGISTERED")?.occurredAt ?? null
     );
   }
 
   function getDepartureFromTimeline(events: VisitTimelineEvent[]): string | null {
     return (
-      events.find((event) => event.eventType === "DEPARTURE_REGISTERED")
-        ?.occurredAt ?? null
+      events.find((e) => e.eventType === "DEPARTURE_REGISTERED")?.occurredAt ??
+      null
     );
+  }
 
   /** True when the ISO timestamp is strictly in the future. */
   function isInFuture(value: string | null | undefined): boolean {
@@ -179,38 +160,16 @@ function getErrorMessage(error: unknown, fallback: string): string {
     label: string;
     className: string;
   } {
-    const presentations: Record<string, { label: string; className: string }> = {
-      loading: {
-        label: "Laadimisel",
-        className: "bg-slate-100 text-slate-600",
-      },
-      planned: {
-        label: "Planeeritud",
-        className: "bg-sky-100 text-sky-700",
-      },
-      in_building: {
-        label: "Aktiivne",
-        className: "bg-emerald-100 text-emerald-700",
-      },
-      departed: {
-        label: "Lahkunud",
-        className: "bg-slate-100 text-slate-600",
-      },
-      expired: {
-        label: "Aegunud",
-        className: "bg-amber-100 text-amber-700",
-      },
-      cancelled: {
-        label: "Tühistatud",
-        className: "bg-rose-100 text-rose-700",
-      },
-      unknown: {
-        label: "Staatus puudub",
-        className: "bg-slate-100 text-slate-600",
-      },
+    const map: Record<string, { label: string; className: string }> = {
+      loading: { label: "Laadimisel", className: "bg-slate-100 text-slate-600" },
+      planned: { label: "Planeeritud", className: "bg-sky-100 text-sky-700" },
+      in_building: { label: "Aktiivne", className: "bg-emerald-100 text-emerald-700" },
+      departed: { label: "Lahkunud", className: "bg-slate-100 text-slate-600" },
+      expired: { label: "Aegunud", className: "bg-amber-100 text-amber-700" },
+      cancelled: { label: "Tühistatud", className: "bg-rose-100 text-rose-700" },
+      unknown: { label: "Staatus puudub", className: "bg-slate-100 text-slate-600" },
     };
-
-    return presentations[status];
+    return map[status];
   }
 
   function getTimelineEventCopy(eventType: string): {
@@ -246,6 +205,8 @@ function getErrorMessage(error: unknown, fallback: string): string {
     }
   }
 
+  // View model
+
   interface VisitDetailViewModel {
     readonly detailState: RequestState<VisitDetailResponse>;
     readonly timelineState: RequestState<VisitTimelineEvent[]>;
@@ -254,10 +215,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
     readonly canEdit: boolean;
     readonly canRegisterDeparture: boolean;
     readonly statusKey: VisitStatusKey | "loading";
-    readonly statusPresentation: {
-      label: string;
-      className: string;
-    };   
+    readonly statusPresentation: { label: string; className: string };
     readonly arrivalTime: string | null;
     readonly departureTime: string | null;
     readonly linkedCardId: string | null;
@@ -268,17 +226,13 @@ function getErrorMessage(error: unknown, fallback: string): string {
     readonly actionError: string | null;
     readonly actionMessage: string | null;
     readonly isEditModalOpen: boolean;
-    readonly refreshDetail: (
-      signal?: AbortSignal,
-    ) => Promise<VisitDetailResponse | null>;
-    readonly refreshTimeline: (
-      signal?: AbortSignal,
-    ) => Promise<VisitTimelineEvent[] | null>;
-    readonly refreshKeycard: (
-      cardId: string,
-      signal?: AbortSignal,
-    ) => Promise<KeycardResponse | null>;
+    readonly refreshDetail: (signal?: AbortSignal) => Promise<VisitDetailResponse | null>;
+    readonly refreshTimeline: (signal?: AbortSignal) => Promise<VisitTimelineEvent[] | null>;
+    readonly refreshKeycard: (cardId: string, signal?: AbortSignal) => Promise<KeycardResponse | null>;
     readonly handleRegisterDeparture: () => Promise<void>;
+    readonly openEditModal: () => void;
+    readonly closeEditModal: () => void;
+    readonly handleEditSuccess: () => Promise<void>;
   }
 
   function isAbortError(error: unknown): boolean {
@@ -301,32 +255,19 @@ function getErrorMessage(error: unknown, fallback: string): string {
       isLoading: true,
       error: null,
     }));
-
-  try {
-    const data = await load();
-    setState({
-      data,
-      isLoading: false,
-      error: null,
-    });
-    return data;
-  } catch (error) {
-    if (isAbortError(error)) {
+    try {
+      const data = await load();
+      setState({ data, isLoading: false, error: null });
+      return data;
+    } catch (error) {
+      if (isAbortError(error)) return null;
+      setState({ data: null, isLoading: false, error: getErrorMessage(error, fallback) });
       return null;
     }
-
-    setState({
-      data: null,
-      isLoading: false,
-      error: getErrorMessage(error, fallback),
-    });
-    return null;
   }
-}
 
   function getVisitPermissions() {
     const roleInfo = getCurrentUserRoleInfo();
-
     return {
       canEdit:
         roleInfo.hasRoleInfo &&
@@ -337,15 +278,11 @@ function getErrorMessage(error: unknown, fallback: string): string {
     };
   }
 
-  function sortTimelineEvents(
-    events: VisitTimelineEvent[],
-  ): VisitTimelineEvent[] {
-    return [...events].sort((left, right) => {
-      const leftTime = left.occurredAt ? new Date(left.occurredAt).getTime() : 0;
-      const rightTime = right.occurredAt
-        ? new Date(right.occurredAt).getTime()
-        : 0;
-      return leftTime - rightTime;
+  function sortTimelineEvents(events: VisitTimelineEvent[]): VisitTimelineEvent[] {
+    return [...events].sort((a, b) => {
+      const at = a.occurredAt ? new Date(a.occurredAt).getTime() : 0;
+      const bt = b.occurredAt ? new Date(b.occurredAt).getTime() : 0;
+      return at - bt;
     });
   }
 
