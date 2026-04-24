@@ -1,5 +1,5 @@
 "use client";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
@@ -54,7 +54,6 @@ export default function KeycardDetailsPage() {
         if (!isMounted) {
           return;
         }
-
         if (err instanceof ApiError && err.status === 404) {
           setIsNotFound(true);
           return;

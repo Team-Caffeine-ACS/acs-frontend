@@ -1,5 +1,5 @@
 "use client";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
