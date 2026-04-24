@@ -9,7 +9,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 import {
   deriveVisitStatus,
   getVisits,
