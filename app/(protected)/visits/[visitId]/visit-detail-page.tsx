@@ -25,7 +25,6 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
-import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/error";
@@ -48,7 +47,6 @@ import {
 import { searchEmployees, type PersonInRoleResponse } from "@/lib/api/persons";
 import { getCurrentUserRoleInfo } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import { getMe, type MeResponse } from "@/lib/api/auth";
 
 interface VisitDetailPageProps {
   readonly visitId: string;
@@ -519,7 +517,6 @@ function EditVisitModal({
     toDatetimeLocal(detail?.arrivalTime),
   );
   const [comment, setComment] = useState(detail?.visitReason ?? "");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Host (optional)
   const [hostQuery, setHostQuery] = useState("");
@@ -546,18 +543,6 @@ function EditVisitModal({
   useEffect(() => {
     getAccessPoints()
       .then(setAccessPoints)
-      .catch(() => {});
-    getMe()
-      .then((me: MeResponse) => {
-        if (me.person) {
-          searchEmployees(me.person.givenName)
-            .then((results) => {
-              const match = results.find((r) => r.personId === me.personId);
-              if (match) setCurrentUserId(match.id);
-            })
-            .catch(() => {});
-        }
-      })
       .catch(() => {});
   }, []);
 
@@ -957,9 +942,7 @@ function VisitDetailContent({
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
       <VisitPageHeader
-        visitId={visitId}
         arrivalTime={model.arrivalTime}
-        canEdit={model.canEdit}
         statusPresentation={model.statusPresentation}
         onEdit={model.openEditModal}
       />
@@ -1017,15 +1000,11 @@ function VisitDetailContent({
 // Header
 
 function VisitPageHeader({
-  visitId,
   arrivalTime,
-  canEdit,
   statusPresentation,
   onEdit,
 }: {
-  readonly visitId: string;
   readonly arrivalTime: string | null;
-  readonly canEdit: boolean;
   readonly statusPresentation: { label: string; className: string };
   readonly onEdit: () => void;
 }) {
