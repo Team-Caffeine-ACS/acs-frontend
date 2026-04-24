@@ -356,9 +356,6 @@ export async function editVisit(
   visitId: string,
   body: EditVisitRequest,
 ): Promise<VisitDetailResponse> {
-  const raw = await apiClient.put<unknown>(
-    `/api/visits/${visitId}/edit`,
-    body,
-  );
+  const raw = await apiClient.put<unknown>(`/api/visits/${visitId}/edit`, body);
   return normalizeVisitDetailResponse(raw);
 }
