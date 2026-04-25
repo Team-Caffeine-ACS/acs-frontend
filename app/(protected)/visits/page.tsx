@@ -81,27 +81,32 @@ function getStatusBadge(status: string | null): {
   > = {
     planned: {
       label: "Planeeritud",
-      className: "bg-sky-100 text-sky-700",
+      className: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
     },
     in_building: {
       label: "Hoones",
-      className: "bg-emerald-100 text-emerald-700",
+      className:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
     },
     departed: {
       label: "Lahkunud",
-      className: "bg-slate-100 text-slate-600",
+      className:
+        "bg-slate-100 text-slate-600 dark:bg-slate-700/70 dark:text-slate-300",
     },
     expired: {
       label: "Aegunud",
-      className: "bg-amber-100 text-amber-700",
+      className:
+        "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
     },
     cancelled: {
       label: "Tühistatud",
-      className: "bg-rose-100 text-rose-700",
+      className:
+        "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
     },
     unknown: {
       label: "Staatus puudub",
-      className: "bg-slate-100 text-slate-600",
+      className:
+        "bg-slate-100 text-slate-600 dark:bg-slate-700/70 dark:text-slate-300",
     },
   };
 
@@ -209,10 +214,10 @@ export default function VisitsPage() {
             <span className="text-primary">Külastused</span>
           </nav>
           <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 font-display">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 font-display dark:text-white">
               Külastuste haldus
             </h1>
-            <p className="max-w-2xl text-slate-500 font-medium">
+            <p className="max-w-2xl text-slate-500 font-medium dark:text-slate-400">
               Vaata aktiivseid ja lõpetatud külastusi, otsi külastajat nime või
               dokumendi järgi ning ava detailvaade ühe klõpsuga.
             </p>
@@ -237,9 +242,9 @@ export default function VisitsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center gap-4">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center gap-4 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex-1 min-w-[320px] relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
             <FilterListIcon className="!text-lg" />
           </div>
           <input
@@ -249,7 +254,7 @@ export default function VisitsPage() {
               setSearch(event.target.value);
               setPageIndex(0);
             }}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-bold placeholder:text-slate-300"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-700 placeholder:text-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
             placeholder="Otsi külastaja nime, dokumendi või hosti järgi..."
           />
         </div>
@@ -262,7 +267,7 @@ export default function VisitsPage() {
               setStatus(event.target.value as StatusFilter);
               setPageIndex(0);
             }}
-            className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white transition-all"
+            className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           >
             <option value="all">Staatus: kõik</option>
             <option value="planned">Staatus: planeeritud</option>
@@ -273,7 +278,7 @@ export default function VisitsPage() {
 
           <button
             type="button"
-            className="p-2 text-slate-400 hover:text-primary transition-colors"
+            className="p-2 text-slate-400 hover:text-primary transition-colors dark:text-slate-500 dark:hover:text-slate-200"
             aria-label="Värskenda filtreid"
             title="Värskenda filtreid"
             onClick={() => {
@@ -286,15 +291,15 @@ export default function VisitsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-display">
-        <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            Leitud <span className="text-slate-900">{totalVisits}</span>{" "}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-display dark:border-slate-800 dark:bg-slate-900">
+        <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between dark:border-slate-800 dark:bg-slate-800/60">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest dark:text-slate-500">
+            Leitud <span className="text-slate-900 dark:text-slate-100">{totalVisits}</span>{" "}
             külastust
           </p>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest dark:text-slate-500">
             Andmeallikas:{" "}
-            <span className="text-slate-900">GET /api/visits</span>
+            <span className="text-slate-900 dark:text-slate-100">GET /api/visits</span>
           </p>
         </div>
 
@@ -303,7 +308,7 @@ export default function VisitsPage() {
             {Array.from({ length: 6 }, (_, index) => (
               <div
                 key={index}
-                className="h-18 rounded-2xl bg-slate-100 animate-pulse"
+                className="h-18 rounded-2xl bg-slate-100 animate-pulse dark:bg-slate-800"
               />
             ))}
           </div>
@@ -311,7 +316,7 @@ export default function VisitsPage() {
 
         {!isLoading && error ? (
           <div className="p-6">
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-semibold text-rose-700">
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
               {error}
             </div>
           </div>
@@ -319,11 +324,11 @@ export default function VisitsPage() {
 
         {!isLoading && !error && visits.length === 0 ? (
           <div className="p-6">
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5">
-              <p className="text-sm font-bold text-slate-900">
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-800/70">
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                 Külastusi ei leitud
               </p>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 Muuda otsingut või lisa uus külastus.
               </p>
             </div>
@@ -333,7 +338,7 @@ export default function VisitsPage() {
         {!isLoading && !error && visits.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+              <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-500">
                 <tr>
                   <th className="px-6 py-5">Külastaja</th>
                   <th className="px-6 py-5">Dokument</th>
@@ -343,39 +348,39 @@ export default function VisitsPage() {
                   <th className="px-6 py-5"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {visits.map((visit) => {
                   const badge = getStatusBadge(visit.status);
 
                   return (
                     <tr
                       key={visit.id}
-                      className="hover:bg-slate-50/50 transition-colors"
+                      className="hover:bg-slate-50/50 transition-colors dark:hover:bg-slate-800/50"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xs">
+                          <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xs dark:bg-primary/20 dark:text-slate-100">
                             {getInitials(visit.fullName)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900">
+                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                               {visit.fullName ?? "Pole saadaval"}
                             </p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter font-mono">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter font-mono dark:text-slate-500">
                               {visit.id}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-xs font-mono font-bold text-slate-500 tracking-wider">
+                      <td className="px-6 py-4 text-xs font-mono font-bold text-slate-500 tracking-wider dark:text-slate-400">
                         {visit.documentNumber ?? "—"}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm font-bold text-slate-700">
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                           {visit.hostName ?? "Pole saadaval"}
                         </p>
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-600">
+                      <td className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
                         {formatDateTime(visit.entryTime)}
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -390,7 +395,7 @@ export default function VisitsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-primary hover:bg-primary/5 rounded-xl"
+                            className="text-primary hover:bg-primary/5 rounded-xl dark:text-slate-200 dark:hover:bg-slate-800"
                             aria-label="Ava külastuse detail"
                           >
                             <VisibilityOutlinedIcon />
@@ -406,7 +411,7 @@ export default function VisitsPage() {
         ) : null}
 
         {!error ? (
-          <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between dark:border-slate-800 dark:bg-slate-800/60">
             <div className="flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 <span>Ridu lehel</span>
@@ -417,7 +422,7 @@ export default function VisitsPage() {
                     setPageSize(Number(event.target.value));
                     setPageIndex(0);
                   }}
-                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40"
+                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -427,18 +432,18 @@ export default function VisitsPage() {
               </label>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Näitan{" "}
-                <span className="text-slate-900">{visibleRangeStart}</span>
+                <span className="text-slate-900 dark:text-slate-100">{visibleRangeStart}</span>
                 {" - "}
-                <span className="text-slate-900">{visibleRangeEnd}</span> /{" "}
-                <span className="text-slate-900">{totalVisits}</span>
+                <span className="text-slate-900 dark:text-slate-100">{visibleRangeEnd}</span> /{" "}
+                <span className="text-slate-900 dark:text-slate-100">{totalVisits}</span>
                 {isFilteredResult ? " filtreeritud" : null}
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Leht{" "}
-                <span className="text-slate-900">{visiblePageIndex + 1}</span>{" "}
-                / <span className="text-slate-900">{totalPages}</span>
+                <span className="text-slate-900 dark:text-slate-100">{visiblePageIndex + 1}</span>{" "}
+                / <span className="text-slate-900 dark:text-slate-100">{totalPages}</span>
               </p>
               <div className="flex items-center gap-2">
                 <Button

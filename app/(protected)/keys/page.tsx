@@ -240,10 +240,10 @@ export default function KeycardsPage() {
             <span className="text-primary">Võtmekaardid</span>
           </nav>
           <div className="space-y-1">
-            <h1 className="font-display text-3xl font-black tracking-tight text-slate-900">
+            <h1 className="font-display text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               Võtmekaartide haldus
             </h1>
-            <p className="max-w-2xl text-slate-500">
+            <p className="max-w-2xl text-slate-500 dark:text-slate-400">
               Ava üksik kaart, vaata selle hetke seisu, määramist ja viimaseid
               teadaolevaid aegu detaillehel.
             </p>
@@ -262,19 +262,19 @@ export default function KeycardsPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="relative min-w-[280px] flex-1">
-          <div className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400">
+          <div className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 dark:text-slate-500">
             <FilterListIcon className="!text-lg" />
           </div>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="w-full rounded-xl bg-slate-50 py-2.5 pr-4 pl-10 text-sm font-semibold text-slate-700 placeholder:text-slate-300"
+            className="w-full rounded-xl bg-slate-50 py-2.5 pr-4 pl-10 text-sm font-semibold text-slate-700 placeholder:text-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
             placeholder="Otsi kaardi numbri või kasutaja järgi..."
           />
         </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
           <FilterListIcon className="!text-lg" />
         </div>
         <FilterField label="Staatus">
@@ -341,10 +341,10 @@ export default function KeycardsPage() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
-            <thead className="border-b border-slate-100 bg-slate-50/80 text-sm font-medium text-slate-500">
+            <thead className="border-b border-slate-100 bg-slate-50/80 text-sm font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
                 <th className="px-6 py-5">
                   <SortableHeader
@@ -415,20 +415,20 @@ export default function KeycardsPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {tableBodyContent}
             </tbody>
           </table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between dark:border-slate-800 dark:bg-slate-800/60">
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
               <span>Ridu lehel</span>
               <select
                 value={pageSize}
                 onChange={(event) => setPageSize(Number(event.target.value))}
-                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40"
+                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
@@ -437,15 +437,25 @@ export default function KeycardsPage() {
               </select>
             </label>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Näitan <span className="text-slate-900">{visibleRangeStart}</span>
+              Näitan{" "}
+              <span className="text-slate-900 dark:text-slate-100">
+                {visibleRangeStart}
+              </span>
               {" - "}
-              <span className="text-slate-900">{visibleRangeEnd}</span> /{" "}
-              <span className="text-slate-900">{totalFilteredKeycards}</span>
+              <span className="text-slate-900 dark:text-slate-100">
+                {visibleRangeEnd}
+              </span>{" "}
+              /{" "}
+              <span className="text-slate-900 dark:text-slate-100">
+                {totalFilteredKeycards}
+              </span>
               {isFilteredResult ? (
                 <>
                   {" "}
                   filtreeritud, kokku{" "}
-                  <span className="text-slate-900">{keycards.length}</span>
+                  <span className="text-slate-900 dark:text-slate-100">
+                    {keycards.length}
+                  </span>
                 </>
               ) : null}
             </p>
@@ -453,8 +463,13 @@ export default function KeycardsPage() {
           <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
               Leht{" "}
-              <span className="text-slate-900">{visiblePageIndex + 1}</span> /{" "}
-              <span className="text-slate-900">{totalPages}</span>
+              <span className="text-slate-900 dark:text-slate-100">
+                {visiblePageIndex + 1}
+              </span>{" "}
+              /{" "}
+              <span className="text-slate-900 dark:text-slate-100">
+                {totalPages}
+              </span>
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -508,14 +523,14 @@ export default function KeycardsPage() {
           value={summary.inUse}
           trend="Praegu külastajate käes"
           icon={<CreditCardIcon className="!text-sm text-blue-600" />}
-          color="text-blue-600"
+          color="text-blue-600 dark:text-blue-300"
         />
         <StatSmall
           title="Saadaval"
           value={summary.available}
           trend="Valmis uuesti väljastamiseks"
           icon={<MeetingRoomIcon className="!text-sm text-emerald-500" />}
-          color="text-emerald-600"
+          color="text-emerald-600 dark:text-emerald-300"
         />
       </div>
     </div>
@@ -527,20 +542,20 @@ function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
   const label = `Ava võtmekaart ${keycard.keycardNumber}`;
 
   return (
-    <tr className="cursor-pointer transition-colors hover:bg-slate-50/70 focus-within:bg-slate-50/70 focus-within:outline-2 focus-within:outline-primary/40">
+    <tr className="cursor-pointer transition-colors hover:bg-slate-50/70 focus-within:bg-slate-50/70 focus-within:outline-2 focus-within:outline-primary/40 dark:hover:bg-slate-800/50 dark:focus-within:bg-slate-800/50">
       <td className="relative px-6 py-4 whitespace-nowrap">
         <Link href={href} className="absolute inset-0 z-10" aria-label={label}>
           <span className="sr-only">{label}</span>
         </Link>
         <div className="flex items-center gap-3">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
             <CreditCardIcon className="!text-lg" />
           </div>
           <div>
-            <p className="font-mono text-sm font-bold tracking-tight text-slate-900">
+            <p className="font-mono text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
               {keycard.keycardNumber}
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
               ID {keycard.id.slice(0, 8)}
             </p>
           </div>
@@ -553,11 +568,13 @@ function KeycardRow({ keycard }: Readonly<{ keycard: KeycardResponse }>) {
       <td className="relative px-6 py-4">
         <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
         {keycard.assignedUser ? (
-          <p className="text-sm font-semibold text-slate-900">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             {keycard.assignedUser}
           </p>
         ) : (
-          <p className="text-sm text-slate-400">Määramata</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            Määramata
+          </p>
         )}
       </td>
       <td className="relative px-6 py-4">
@@ -579,10 +596,14 @@ function StatusBadge({
   status,
 }: Readonly<{ status: KeycardResponse["status"] }>) {
   const styles: Record<KeycardResponse["status"], string> = {
-    available: "border-emerald-100 bg-emerald-50 text-emerald-700",
-    in_use: "border-blue-100 bg-blue-50 text-blue-700",
-    disabled: "border-rose-100 bg-rose-50 text-rose-700",
-    expired: "border-amber-100 bg-amber-50 text-amber-700",
+    available:
+      "border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300",
+    in_use:
+      "border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/15 dark:text-blue-300",
+    disabled:
+      "border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300",
+    expired:
+      "border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300",
   };
 
   return (
@@ -602,17 +623,21 @@ function DateTimeStack({
   emptyLabel: string;
 }>) {
   if (!value) {
-    return <p className="text-sm text-slate-400">{emptyLabel}</p>;
+    return (
+      <p className="text-sm text-slate-400 dark:text-slate-500">
+        {emptyLabel}
+      </p>
+    );
   }
 
   const date = new Date(value);
 
   return (
     <div>
-      <div className="text-sm font-semibold text-slate-900">
+      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
         {new Intl.DateTimeFormat("et-EE", { dateStyle: "medium" }).format(date)}
       </div>
-      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
         {new Intl.DateTimeFormat("et-EE", { timeStyle: "short" }).format(date)}
       </div>
     </div>
@@ -623,7 +648,7 @@ function LoadingRow() {
   return (
     <tr>
       <td colSpan={5} className="px-6 py-14 text-center">
-        <p className="text-sm font-semibold text-slate-600">
+        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
           Laen võtmekaarte...
         </p>
       </td>
@@ -641,8 +666,12 @@ function EmptyRow({
   return (
     <tr>
       <td colSpan={5} className="px-6 py-14 text-center">
-        <p className="text-sm font-semibold text-slate-900">{title}</p>
-        <p className="mt-2 text-sm text-slate-500">{description}</p>
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {title}
+        </p>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          {description}
+        </p>
       </td>
     </tr>
   );
@@ -653,7 +682,7 @@ function StatSmall({
   value,
   trend,
   icon,
-  color = "text-slate-900",
+  color = "text-slate-900 dark:text-slate-100",
 }: Readonly<{
   title: string;
   value: string | number;
@@ -662,12 +691,12 @@ function StatSmall({
   color?: string;
 }>) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-      <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
         {title}
       </p>
       <p className={`text-2xl font-black tracking-tighter ${color}`}>{value}</p>
-      <div className="mt-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-tighter text-slate-500">
+      <div className="mt-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-tighter text-slate-500 dark:text-slate-400">
         {icon} {trend}
       </div>
     </div>
@@ -683,7 +712,7 @@ function FilterField({
 }>) {
   return (
     <label className="space-y-1">
-      <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+      <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
         {label}
       </span>
       {children}
@@ -692,7 +721,7 @@ function FilterField({
 }
 
 const filterInputCls =
-  "h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-primary/40 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60";
+  "h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-primary/40 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:focus:bg-slate-800";
 
 function SortableHeader({
   label,
@@ -709,7 +738,7 @@ function SortableHeader({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-full w-full cursor-pointer items-center justify-between gap-2 text-left select-none transition-colors hover:text-slate-700"
+      className="flex h-full w-full cursor-pointer items-center justify-between gap-2 text-left select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
     >
       <span>{label}</span>
       {sortIcon}
