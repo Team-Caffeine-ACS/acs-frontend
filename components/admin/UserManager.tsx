@@ -12,7 +12,7 @@ import {
   type AdminUserResponse,
   type UserRole,
 } from "@/lib/api/adminUsers";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 import { ROLE_LABELS } from "@/lib/current-user";
 
 const ROLES: UserRole[] = [

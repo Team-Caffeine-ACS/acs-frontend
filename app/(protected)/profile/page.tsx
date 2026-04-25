@@ -12,7 +12,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useCurrentUser } from "@/components/layout/current-user-provider";
 import { updateMe } from "@/lib/api/auth";
-import { ApiError } from "@/lib/apiClient";
+import { ApiError } from "@/lib/api/error";
 import { getCurrentUserDisplay } from "@/lib/current-user";
 
 const inputCls =
