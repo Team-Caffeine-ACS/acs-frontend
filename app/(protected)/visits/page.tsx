@@ -410,7 +410,7 @@ export default function VisitsPage() {
           </div>
         ) : null}
 
-        {!error ? (
+        {error ? null : (
           <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between dark:border-slate-800 dark:bg-slate-800/60">
             <div className="flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -479,7 +479,7 @@ export default function VisitsPage() {
               </div>
             </div>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );
