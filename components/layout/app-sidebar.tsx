@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation"; // 2. Impordi asukoha kontrollija
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import GroupIcon from "@mui/icons-material/Group";
 import KeyIcon from "@mui/icons-material/Key";
 import HistoryIcon from "@mui/icons-material/History";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -29,11 +28,6 @@ export function AppSidebar() {
       name: "Ülevaade",
       href: "/",
       icon: <DashboardIcon className="text-[20px]" />,
-    },
-    {
-      name: "Külalised",
-      href: "/visitors",
-      icon: <GroupIcon className="text-[20px]" />,
     },
     {
       name: "Külastused",
