@@ -24,6 +24,12 @@ export interface KeycardDetailResponse extends KeycardResponse {
   assignedPersonInRoleId: string | null;
 }
 
+export interface CreateKeycardRequest {
+  keycardNumber: string;
+  validUntil?: string;
+  initialStatus: boolean;
+}
+
 export interface ReturnKeycardRequest {
   returnAccessPointId: string;
 }
@@ -110,6 +116,15 @@ export async function getKeycard(
   };
 }
 
+export function createKeycard(
+  body: CreateKeycardRequest,
+): Promise<KeycardDetailResponse> {
+  return apiClient.post<KeycardDetailResponse, CreateKeycardRequest>(
+    "/api/keycards",
+    body,
+  );
+}
+
 export function returnKeycard(
   cardId: string,
   body: ReturnKeycardRequest,
@@ -159,7 +174,14 @@ function mapKeycardSummary(raw: unknown): KeycardResponse | null {
   const rawActive = pickBoolean(record, ["active"]);
   const assignedUser = pickString(record, ["assignedUser"]);
   const assignedTime = pickString(record, ["assignedTime"]);
-  const lastReturnTime = pickString(record, ["lastReturnTime"]);
+  // TODO: remove guard once backend ensures lastReturnTime is always a past timestamp.
+  // Currently the backend may populate lastReturnTime with a future planned-return date,
+  // which belongs in validUntil instead.
+  const rawLastReturnTime = pickString(record, ["lastReturnTime"]);
+  const lastReturnTime =
+    rawLastReturnTime && new Date(rawLastReturnTime) <= new Date()
+      ? rawLastReturnTime
+      : null;
   const validUntil = pickString(record, ["validUntil"]);
   const rawStatus = pickString(record, ["status"]);
   const status =
