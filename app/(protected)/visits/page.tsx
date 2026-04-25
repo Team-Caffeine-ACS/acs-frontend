@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -13,11 +14,30 @@ import { ApiError } from "@/lib/api/error";
 import {
   deriveVisitStatus,
   getVisits,
+  type VisitListPage,
   type VisitListItemResponse,
   type VisitStatusKey,
 } from "@/lib/api/visits";
 
 type StatusFilter = "all" | "planned" | "in_building" | "departed" | "expired";
+type VisitPageMetadata = VisitListPage["page"];
+
+const DEFAULT_PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 300;
+
+function useDebouncedValue(value: string, delayMs: number): string {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeoutId = globalThis.setTimeout(() => {
+      setDebouncedValue(value);
+    }, delayMs);
+
+    return () => globalThis.clearTimeout(timeoutId);
+  }, [delayMs, value]);
+
+  return debouncedValue;
+}
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
@@ -104,12 +124,32 @@ function getInitials(fullName: string | null): string {
 
 export default function VisitsPage() {
   const [visits, setVisits] = useState<VisitListItemResponse[]>([]);
+  const [pageMeta, setPageMeta] = useState<VisitPageMetadata>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [reloadKey, setReloadKey] = useState(0);
+
+  const debouncedSearch = useDebouncedValue(
+    search.trim(),
+    SEARCH_DEBOUNCE_MS,
+  );
+  const totalVisits = pageMeta?.totalElements ?? visits.length;
+  const totalPages = Math.max(
+    1,
+    pageMeta?.totalPages ?? Math.ceil(totalVisits / pageSize),
+  );
+  const visiblePageIndex = Math.min(pageIndex, totalPages - 1);
+  const visibleRangeStart =
+    totalVisits === 0 ? 0 : visiblePageIndex * pageSize + 1;
+  const visibleRangeEnd =
+    totalVisits === 0
+      ? 0
+      : Math.min(visiblePageIndex * pageSize + pageSize, totalVisits);
+  const isFilteredResult = debouncedSearch.length > 0 || status !== "all";
 
   function startLoading() {
     setIsLoading(true);
@@ -121,13 +161,26 @@ export default function VisitsPage() {
 
     void getVisits(
       {
-        search: search.trim() || undefined,
+        search: debouncedSearch || undefined,
         status,
+        page: pageIndex,
+        size: pageSize,
       },
       controller.signal,
     )
-      .then((items) => {
-        setVisits(items);
+      .then((page) => {
+        const nextTotalPages = page.page?.totalPages;
+        if (nextTotalPages !== undefined) {
+          const lastPageIndex = Math.max(0, nextTotalPages - 1);
+
+          if (pageIndex > lastPageIndex) {
+            setPageIndex(lastPageIndex);
+            return;
+          }
+        }
+
+        setVisits(page.content);
+        setPageMeta(page.page);
         setIsLoading(false);
       })
       .catch((loadError) => {
@@ -136,11 +189,13 @@ export default function VisitsPage() {
         }
 
         setError(getErrorMessage(loadError));
+        setVisits([]);
+        setPageMeta(null);
         setIsLoading(false);
       });
 
     return () => controller.abort();
-  }, [search, status, reloadKey]);
+  }, [debouncedSearch, pageIndex, pageSize, reloadKey, status]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
@@ -188,13 +243,11 @@ export default function VisitsPage() {
             <FilterListIcon className="!text-lg" />
           </div>
           <input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                startLoading();
-                setSearch(searchInput);
-              }
+            value={search}
+            onChange={(event) => {
+              startLoading();
+              setSearch(event.target.value);
+              setPageIndex(0);
             }}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-bold placeholder:text-slate-300"
             placeholder="Otsi külastaja nime, dokumendi või hosti järgi..."
@@ -207,6 +260,7 @@ export default function VisitsPage() {
             onChange={(event) => {
               startLoading();
               setStatus(event.target.value as StatusFilter);
+              setPageIndex(0);
             }}
             className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white transition-all"
           >
@@ -216,18 +270,6 @@ export default function VisitsPage() {
             <option value="departed">Staatus: lahkunud</option>
             <option value="expired">Staatus: aegunud</option>
           </select>
-
-          <Button
-            type="button"
-            className="bg-primary hover:bg-primary/90 text-white font-black py-5 px-8 rounded-xl shadow-xl shadow-primary/20 gap-2 uppercase tracking-widest text-xs"
-            onClick={() => {
-              startLoading();
-              setSearch(searchInput);
-            }}
-          >
-            <FilterListIcon className="!text-sm" />
-            Teosta otsing
-          </Button>
 
           <button
             type="button"
@@ -247,7 +289,7 @@ export default function VisitsPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-display">
         <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            Leitud <span className="text-slate-900">{visits.length}</span>{" "}
+            Leitud <span className="text-slate-900">{totalVisits}</span>{" "}
             külastust
           </p>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -360,6 +402,77 @@ export default function VisitsPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        ) : null}
+
+        {!error ? (
+          <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <span>Ridu lehel</span>
+                <select
+                  value={pageSize}
+                  onChange={(event) => {
+                    startLoading();
+                    setPageSize(Number(event.target.value));
+                    setPageIndex(0);
+                  }}
+                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </label>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Näitan{" "}
+                <span className="text-slate-900">{visibleRangeStart}</span>
+                {" - "}
+                <span className="text-slate-900">{visibleRangeEnd}</span> /{" "}
+                <span className="text-slate-900">{totalVisits}</span>
+                {isFilteredResult ? " filtreeritud" : null}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Leht{" "}
+                <span className="text-slate-900">{visiblePageIndex + 1}</span>{" "}
+                / <span className="text-slate-900">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="rounded-xl text-slate-500"
+                  onClick={() => {
+                    startLoading();
+                    setPageIndex((current) => Math.max(0, current - 1));
+                  }}
+                  disabled={isLoading || visiblePageIndex === 0}
+                  aria-label="Eelmine leht"
+                >
+                  <ChevronLeftIcon className="!text-lg" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="rounded-xl text-slate-500"
+                  onClick={() => {
+                    startLoading();
+                    setPageIndex((current) =>
+                      Math.min(totalPages - 1, current + 1),
+                    );
+                  }}
+                  disabled={isLoading || visiblePageIndex >= totalPages - 1}
+                  aria-label="Järgmine leht"
+                >
+                  <ChevronRightIcon className="!text-lg" />
+                </Button>
+              </div>
+            </div>
           </div>
         ) : null}
       </div>

@@ -37,6 +37,18 @@ export interface VisitListItemResponse {
   visitorId: string | null;
 }
 
+export interface VisitPageMetadata {
+  size: number;
+  number: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface VisitListPage {
+  content: VisitListItemResponse[];
+  page: VisitPageMetadata | null;
+}
+
 export function createVisit(
   body: CreateVisitRequest,
 ): Promise<CreateVisitResponse> {
@@ -117,6 +129,28 @@ function getNullableString(
   return null;
 }
 
+function getNullableNumber(
+  record: Record<string, unknown>,
+  ...keys: string[]
+): number | null {
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === "string" && value.trim()) {
+      const parsedValue = Number(value);
+      if (Number.isFinite(parsedValue)) {
+        return parsedValue;
+      }
+    }
+  }
+
+  return null;
+}
+
 function normalizeVisitDetailResponse(raw: unknown): VisitDetailResponse {
   if (!isRecord(raw)) {
     return {
@@ -184,21 +218,60 @@ function normalizeVisitListItem(
   };
 }
 
-function normalizeVisitListResponse(raw: unknown): VisitListItemResponse[] {
+function normalizeVisitPageMetadata(raw: unknown): VisitPageMetadata | null {
+  if (!isRecord(raw)) {
+    return null;
+  }
+
+  const size = getNullableNumber(raw, "size", "pageSize");
+  const number = getNullableNumber(raw, "number", "page", "pageNumber");
+  const totalElements = getNullableNumber(
+    raw,
+    "totalElements",
+    "totalItems",
+    "total",
+  );
+  const totalPages = getNullableNumber(raw, "totalPages", "pages");
+
+  if (
+    size === null &&
+    number === null &&
+    totalElements === null &&
+    totalPages === null
+  ) {
+    return null;
+  }
+
+  return {
+    size: Math.max(0, size ?? 0),
+    number: Math.max(0, number ?? 0),
+    totalElements: Math.max(0, totalElements ?? 0),
+    totalPages: Math.max(0, totalPages ?? 0),
+  };
+}
+
+function normalizeVisitListResponse(raw: unknown): VisitListPage {
   if (Array.isArray(raw)) {
-    return raw.filter(isRecord).map(normalizeVisitListItem);
+    return {
+      content: raw.filter(isRecord).map(normalizeVisitListItem),
+      page: null,
+    };
   }
 
   if (!isRecord(raw)) {
-    return [];
+    return { content: [], page: null };
   }
 
   const nestedCollection = raw.content ?? raw.items ?? raw.data;
-  if (!Array.isArray(nestedCollection)) {
-    return [];
-  }
+  const content = Array.isArray(nestedCollection)
+    ? nestedCollection.filter(isRecord).map(normalizeVisitListItem)
+    : [];
+  const pageSource = isRecord(raw.page) ? raw.page : raw;
 
-  return nestedCollection.filter(isRecord).map(normalizeVisitListItem);
+  return {
+    content,
+    page: normalizeVisitPageMetadata(pageSource),
+  };
 }
 
 function normalizeTimelineEvent(
@@ -323,7 +396,7 @@ export async function getVisits(
     size?: number;
   },
   signal?: AbortSignal,
-): Promise<VisitListItemResponse[]> {
+): Promise<VisitListPage> {
   const searchParams = new URLSearchParams();
 
   if (params?.search) {
