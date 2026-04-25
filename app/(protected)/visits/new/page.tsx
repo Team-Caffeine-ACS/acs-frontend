@@ -153,8 +153,15 @@ export default function NewVisitPage() {
       let personId: string;
 
       if (showCreateForm && !selectedVisitor) {
-        if (!givenName.trim() || !surname.trim() || !email.trim()) {
-          setSubmitError("Täida eesnimi, perekonnanimi ja e-posti aadress.");
+        if (
+          !givenName.trim() ||
+          !surname.trim() ||
+          !identityCode.trim() ||
+          !email.trim()
+        ) {
+          setSubmitError(
+            "Täida eesnimi, perekonnanimi, isikukood ja e-posti aadress.",
+          );
           setIsSubmitting(false);
           return;
         }
@@ -372,13 +379,14 @@ export default function NewVisitPage() {
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Isikukood">
+                <Field label="Isikukood *">
                   <input
                     type="text"
                     value={identityCode}
                     onChange={(e) => setIdentityCode(e.target.value)}
                     placeholder="Sisesta isikukood"
                     maxLength={128}
+                    required
                     className={inputCls}
                   />
                 </Field>
