@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import BadgeIcon from "@mui/icons-material/Badge";
 import EmailIcon from "@mui/icons-material/Email";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -10,16 +10,10 @@ import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import ShieldIcon from "@mui/icons-material/Shield";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { getMe, logout, updateMe, type MeResponse } from "@/lib/api/auth";
+import { useCurrentUser } from "@/components/layout/current-user-provider";
+import { updateMe } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/error";
-import { clearStoredAccessToken } from "@/lib/auth/accessToken";
-
-const ROLE_LABELS: Record<MeResponse["role"], string> = {
-  VISITOR: "Külastaja",
-  RECEPTIONIST: "Administraator",
-  SECURITY_CHIEF: "Turvaülem",
-  ADMIN: "Süsteemiadmin",
-};
+import { getCurrentUserDisplay } from "@/lib/current-user";
 
 const inputCls =
   "w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition";
@@ -40,8 +34,7 @@ function validatePassword(password: string, confirm: string): string | null {
 }
 
 export default function ProfilePage() {
-  const [me, setMe] = useState<MeResponse | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const { errorMessage, status, user: me } = useCurrentUser();
 
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -49,14 +42,6 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  useEffect(() => {
-    getMe()
-      .then(setMe)
-      .catch((err) => {
-        if (err instanceof ApiError) setLoadError(err.message);
-      });
-  }, []);
 
   const handleSave = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -104,15 +89,15 @@ export default function ProfilePage() {
     }
   };
 
-  if (loadError) {
+  if (status === "error") {
     return (
       <p className="text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
-        {loadError}
+        {errorMessage ?? "Kasutaja andmete laadimine ebaõnnestus."}
       </p>
     );
   }
 
-  if (!me) {
+  if (status === "loading" || !me) {
     return (
       <div className="max-w-xl mx-auto space-y-4 animate-pulse">
         {SKELETON_KEYS.map((key) => (
@@ -123,9 +108,7 @@ export default function ProfilePage() {
   }
 
   const { person } = me;
-  const displayName = person
-    ? `${person.givenName} ${person.surname}`
-    : me.email;
+  const { displayName, displayRole, roleLabel } = getCurrentUserDisplay(me);
   const initials = person
     ? `${person.givenName[0]}${person.surname[0]}`.toUpperCase()
     : me.email[0].toUpperCase();
@@ -141,16 +124,14 @@ export default function ProfilePage() {
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">
             {displayName}
           </h2>
-          <p className="text-sm text-slate-500">
-            {person?.jobTitle ?? ROLE_LABELS[me.role]}
-          </p>
+          <p className="text-sm text-slate-500">{displayRole}</p>
         </div>
       </div>
 
       {/* Profile info */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100">
         <Row icon={<EmailIcon />} label="E-post" value={me.email} />
-        <Row icon={<ShieldIcon />} label="Roll" value={ROLE_LABELS[me.role]} />
+        <Row icon={<ShieldIcon />} label="Roll" value={roleLabel} />
         {person ? (
           <>
             <Row
