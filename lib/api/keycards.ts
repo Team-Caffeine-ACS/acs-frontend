@@ -174,14 +174,7 @@ function mapKeycardSummary(raw: unknown): KeycardResponse | null {
   const rawActive = pickBoolean(record, ["active"]);
   const assignedUser = pickString(record, ["assignedUser"]);
   const assignedTime = pickString(record, ["assignedTime"]);
-  // TODO: remove guard once backend ensures lastReturnTime is always a past timestamp.
-  // Currently the backend may populate lastReturnTime with a future planned-return date,
-  // which belongs in validUntil instead.
-  const rawLastReturnTime = pickString(record, ["lastReturnTime"]);
-  const lastReturnTime =
-    rawLastReturnTime && new Date(rawLastReturnTime) <= new Date()
-      ? rawLastReturnTime
-      : null;
+  const lastReturnTime = pickString(record, ["lastReturnTime"]);
   const validUntil = pickString(record, ["validUntil"]);
   const rawStatus = pickString(record, ["status"]);
   const status =
