@@ -220,7 +220,7 @@ export default function NewVisitPage() {
           title="Külalise andmed"
         >
           {/* Visitor search */}
-          {!selectedVisitor && (
+          {!selectedVisitor && !showCreateForm && (
             <div className="space-y-3">
               <div className="flex gap-2">
                 <input
