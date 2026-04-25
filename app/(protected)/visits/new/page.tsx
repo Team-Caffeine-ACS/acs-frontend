@@ -372,13 +372,13 @@ export default function NewVisitPage() {
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="E-posti aadress *">
+                <Field label="Isikukood">
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nt. jaan@example.com"
-                    maxLength={255}
+                    type="text"
+                    value={identityCode}
+                    onChange={(e) => setIdentityCode(e.target.value)}
+                    placeholder="Sisesta isikukood"
+                    maxLength={128}
                     className={inputCls}
                   />
                 </Field>
@@ -394,13 +394,13 @@ export default function NewVisitPage() {
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Isikukood">
+                <Field label="E-posti aadress *">
                   <input
-                    type="text"
-                    value={identityCode}
-                    onChange={(e) => setIdentityCode(e.target.value)}
-                    placeholder="Sisesta isikukood"
-                    maxLength={128}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nt. jaan@example.com"
+                    maxLength={255}
                     className={inputCls}
                   />
                 </Field>
@@ -638,10 +638,14 @@ function Field({
   readonly label: string;
   readonly children: React.ReactNode;
 }) {
+  const isRequired = label.endsWith(" *");
+  const visibleLabel = isRequired ? label.slice(0, -2) : label;
+
   return (
     <fieldset className="space-y-1.5">
       <legend className="block text-sm font-medium text-slate-700">
-        {label}
+        {visibleLabel}
+        {isRequired && <span className="text-rose-600"> *</span>}
       </legend>
       {children}
     </fieldset>
