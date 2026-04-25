@@ -1,26 +1,14 @@
 "use client"; // 1. Lisa see rida faili algusesse, et kasutada konksusid
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // 2. Impordi asukoha kontrollija
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import KeyIcon from "@mui/icons-material/Key";
 import HistoryIcon from "@mui/icons-material/History";
-import SettingsIcon from "@mui/icons-material/Settings";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
-import LogoutIcon from "@mui/icons-material/Logout";
-import { getMe } from "@/lib/api/auth";
 
 export function AppSidebar() {
   const pathname = usePathname(); // 3. Haara praegune aadress (nt "/" või "/visitors")
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    getMe()
-      .then((me) => setIsAdmin(me.role === "ADMIN"))
-      .catch(() => setIsAdmin(false));
-  }, []);
 
   // 4. Mugavam on hoida linke massiivis
   const menuItems = [
@@ -83,23 +71,6 @@ export function AppSidebar() {
             </Link>
           );
         })}
-
-        {isAdmin && (
-          <>
-            <div className="my-4 h-px bg-slate-100 dark:bg-slate-800" />
-            <Link
-              href="/settings"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all ${
-                pathname === "/settings"
-                  ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                  : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800"
-              }`}
-            >
-              <SettingsIcon className="text-[20px]" />
-              <span className="text-sm">Seadistused</span>
-            </Link>
-          </>
-        )}
       </nav>
 
       <div className="mt-auto space-y-3">
@@ -114,19 +85,6 @@ export function AppSidebar() {
             </p>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            globalThis.localStorage.removeItem("token");
-            globalThis.document.cookie = "token=; path=/; max-age=0";
-            globalThis.window.location.href = "/login";
-          }}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400 transition-all"
-        >
-          <LogoutIcon className="text-[20px]" />
-          <span className="text-sm">Logi välja</span>
-        </button>
       </div>
     </aside>
   );

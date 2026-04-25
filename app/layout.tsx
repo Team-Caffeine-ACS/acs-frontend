@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="et">
       <body
-        className={`${inter.className} bg-slate-50 text-slate-900 antialiased`}
+        className={`${inter.className} bg-slate-50 text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-50`}
       >
         <ThemeRegistry>{children}</ThemeRegistry>
       </body>
