@@ -22,7 +22,6 @@ import {
   type KeycardStatus,
   type KeycardResponse,
 } from "@/lib/api/keycards";
-import { ApiError } from "@/lib/api/error";
 
 type StatusFilterValue = "all" | KeycardStatus;
 type SortDirection = "default" | "asc" | "desc";
