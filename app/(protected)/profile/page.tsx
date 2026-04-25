@@ -11,8 +11,9 @@ import ShieldIcon from "@mui/icons-material/Shield";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useCurrentUser } from "@/components/layout/current-user-provider";
-import { updateMe } from "@/lib/api/auth";
+import { updateMe, logout } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/error";
+import { clearStoredAccessToken } from "@/lib/auth/accessToken";
 import { getCurrentUserDisplay } from "@/lib/current-user";
 
 const inputCls =
