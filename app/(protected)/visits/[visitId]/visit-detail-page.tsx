@@ -550,15 +550,8 @@ function EditVisitModal({
   );
   const hostAbortRef = useRef<AbortController | null>(null);
 
-  // Assignor (required)
-  const [assignorQuery, setAssignorQuery] = useState("");
-  const [assignorResults, setAssignorResults] = useState<
-    PersonInRoleResponse[]
-  >([]);
-  const [isSearchingAssignor, setIsSearchingAssignor] = useState(false);
   const [selectedAssignor, setSelectedAssignor] =
     useState<PersonInRoleResponse | null>(null);
-  const assignorAbortRef = useRef<AbortController | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -609,24 +602,6 @@ function EditVisitModal({
       setHostResults([]);
     } finally {
       setIsSearchingHost(false);
-    }
-  }
-
-  async function handleAssignorSearch() {
-    if (assignorQuery.trim().length < 2) return;
-    assignorAbortRef.current?.abort();
-    assignorAbortRef.current = new AbortController();
-    setIsSearchingAssignor(true);
-    try {
-      const results = await searchEmployees(
-        assignorQuery.trim(),
-        assignorAbortRef.current.signal,
-      );
-      setAssignorResults(results);
-    } catch {
-      setAssignorResults([]);
-    } finally {
-      setIsSearchingAssignor(false);
     }
   }
 
