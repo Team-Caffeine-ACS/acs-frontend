@@ -59,6 +59,8 @@ export default function NewVisitPage() {
   const [givenName, setGivenName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
+  const [organization, setOrganization] = useState("");
+  const [identityCode, setIdentityCode] = useState("");
   const [documentTypeId, setDocumentTypeId] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
 
@@ -160,6 +162,8 @@ export default function NewVisitPage() {
           givenName: givenName.trim(),
           surname: surname.trim(),
           email: email.trim(),
+          organization: organization.trim() || undefined,
+          socialSecurityNumber: identityCode.trim() || undefined,
           documentTypeId: documentTypeId || undefined,
           documentNumber: documentNumber.trim() || undefined,
         });
@@ -375,6 +379,28 @@ export default function NewVisitPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="nt. jaan@example.com"
                     maxLength={255}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Organisatsioon">
+                  <input
+                    type="text"
+                    value={organization}
+                    onChange={(e) => setOrganization(e.target.value)}
+                    placeholder="Sisesta organisatsioon"
+                    maxLength={255}
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Isikukood">
+                  <input
+                    type="text"
+                    value={identityCode}
+                    onChange={(e) => setIdentityCode(e.target.value)}
+                    placeholder="Sisesta isikukood"
+                    maxLength={128}
                     className={inputCls}
                   />
                 </Field>
