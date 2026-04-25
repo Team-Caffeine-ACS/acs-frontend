@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 
 // Context to pass locale to CalendarDayButton without a closure over Calendar's props
-const CalendarLocaleContext = React.createContext<
-  Partial<Locale> | undefined
->(undefined);
+const CalendarLocaleContext = React.createContext<Partial<Locale> | undefined>(
+  undefined,
+);
 
 function CalendarRoot({ className, rootRef, ...props }: RootProps) {
   return (
@@ -37,15 +37,11 @@ function CalendarRoot({ className, rootRef, ...props }: RootProps) {
 
 function CalendarChevron({ className, orientation, ...props }: ChevronProps) {
   if (orientation === "left") {
-    return (
-      <ChevronLeftIcon className={cn("size-4", className)} {...props} />
-    );
+    return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
   }
 
   if (orientation === "right") {
-    return (
-      <ChevronRightIcon className={cn("size-4", className)} {...props} />
-    );
+    return <ChevronRightIcon className={cn("size-4", className)} {...props} />;
   }
 
   return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
@@ -61,7 +57,9 @@ function CalendarWeekNumber({ children, ...props }: WeekNumberProps) {
   );
 }
 
-function CalendarDayButtonWrapper(props: React.ComponentProps<typeof DayButton>) {
+function CalendarDayButtonWrapper(
+  props: React.ComponentProps<typeof DayButton>,
+) {
   const locale = React.useContext(CalendarLocaleContext);
   return <CalendarDayButton locale={locale} {...props} />;
 }
