@@ -47,6 +47,7 @@ import {
 import { searchEmployees, type PersonInRoleResponse } from "@/lib/api/persons";
 import { getCurrentUserRoleInfo } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { getMe, type MeResponse } from "@/lib/api/auth";
 
 interface VisitDetailPageProps {
   readonly visitId: string;
@@ -563,8 +564,20 @@ function EditVisitModal({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    getAccessPoints()
-      .then(setAccessPoints)
+    getAccessPoints().then(setAccessPoints).catch(() => {});
+    getMe()
+      .then((me: MeResponse) => {
+        if (me.person) {
+          searchEmployees(me.person.givenName)
+            .then((results: PersonInRoleResponse[]) => {
+              const match = results.find((r: PersonInRoleResponse) => r.personId === me.personId);
+              if (match) {
+                setSelectedAssignor(match);
+              }
+            })
+            .catch(() => {});
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -770,33 +783,6 @@ function EditVisitModal({
                 }}
                 clearLabel="Eemalda Võõrustaja"
                 highlightSelected={false}
-              />
-            </ModalField>
-
-            <ModalField label="Muudatuse tegija">
-              <PersonSearchField
-                query={assignorQuery}
-                results={assignorResults}
-                isSearching={isSearchingAssignor}
-                selected={selectedAssignor}
-                placeholder="Otsi töötajat nimega…"
-                onQueryChange={(v) => {
-                  setAssignorQuery(v);
-                  setAssignorResults([]);
-                }}
-                onSearch={handleAssignorSearch}
-                onSelect={(p) => {
-                  setSelectedAssignor(p);
-                  setAssignorResults([]);
-                  setAssignorQuery("");
-                }}
-                onClear={() => {
-                  setSelectedAssignor(null);
-                  setAssignorQuery("");
-                  setAssignorResults([]);
-                }}
-                clearLabel="Eemalda muudatuse tegija"
-                highlightSelected
               />
             </ModalField>
 
