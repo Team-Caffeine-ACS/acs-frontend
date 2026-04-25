@@ -138,10 +138,7 @@ export default function VisitsPage() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const debouncedSearch = useDebouncedValue(
-    search.trim(),
-    SEARCH_DEBOUNCE_MS,
-  );
+  const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const totalVisits = pageMeta?.totalElements ?? visits.length;
   const totalPages = Math.max(
     1,
@@ -294,12 +291,17 @@ export default function VisitsPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-display dark:border-slate-800 dark:bg-slate-900">
         <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between dark:border-slate-800 dark:bg-slate-800/60">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest dark:text-slate-500">
-            Leitud <span className="text-slate-900 dark:text-slate-100">{totalVisits}</span>{" "}
+            Leitud{" "}
+            <span className="text-slate-900 dark:text-slate-100">
+              {totalVisits}
+            </span>{" "}
             külastust
           </p>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest dark:text-slate-500">
             Andmeallikas:{" "}
-            <span className="text-slate-900 dark:text-slate-100">GET /api/visits</span>
+            <span className="text-slate-900 dark:text-slate-100">
+              GET /api/visits
+            </span>
           </p>
         </div>
 
@@ -432,18 +434,30 @@ export default function VisitsPage() {
               </label>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Näitan{" "}
-                <span className="text-slate-900 dark:text-slate-100">{visibleRangeStart}</span>
+                <span className="text-slate-900 dark:text-slate-100">
+                  {visibleRangeStart}
+                </span>
                 {" - "}
-                <span className="text-slate-900 dark:text-slate-100">{visibleRangeEnd}</span> /{" "}
-                <span className="text-slate-900 dark:text-slate-100">{totalVisits}</span>
+                <span className="text-slate-900 dark:text-slate-100">
+                  {visibleRangeEnd}
+                </span>{" "}
+                /{" "}
+                <span className="text-slate-900 dark:text-slate-100">
+                  {totalVisits}
+                </span>
                 {isFilteredResult ? " filtreeritud" : null}
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Leht{" "}
-                <span className="text-slate-900 dark:text-slate-100">{visiblePageIndex + 1}</span>{" "}
-                / <span className="text-slate-900 dark:text-slate-100">{totalPages}</span>
+                <span className="text-slate-900 dark:text-slate-100">
+                  {visiblePageIndex + 1}
+                </span>{" "}
+                /{" "}
+                <span className="text-slate-900 dark:text-slate-100">
+                  {totalPages}
+                </span>
               </p>
               <div className="flex items-center gap-2">
                 <Button

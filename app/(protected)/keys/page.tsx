@@ -624,9 +624,7 @@ function DateTimeStack({
 }>) {
   if (!value) {
     return (
-      <p className="text-sm text-slate-400 dark:text-slate-500">
-        {emptyLabel}
-      </p>
+      <p className="text-sm text-slate-400 dark:text-slate-500">{emptyLabel}</p>
     );
   }
 
