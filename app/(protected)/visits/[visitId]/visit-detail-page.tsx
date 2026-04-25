@@ -564,13 +564,17 @@ function EditVisitModal({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    getAccessPoints().then(setAccessPoints).catch(() => {});
+    getAccessPoints()
+      .then(setAccessPoints)
+      .catch(() => {});
     getMe()
       .then((me: MeResponse) => {
         if (me.person) {
           searchEmployees(me.person.givenName)
             .then((results: PersonInRoleResponse[]) => {
-              const match = results.find((r: PersonInRoleResponse) => r.personId === me.personId);
+              const match = results.find(
+                (r: PersonInRoleResponse) => r.personId === me.personId,
+              );
               if (match) {
                 setSelectedAssignor(match);
               }
