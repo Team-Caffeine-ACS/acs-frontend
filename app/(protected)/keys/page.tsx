@@ -4,11 +4,11 @@ import Link from "next/link";
 import { type ReactNode, useDeferredValue, useEffect, useState } from "react";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import SearchIcon from "@mui/icons-material/Search";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import InfoIcon from "@mui/icons-material/Info";
@@ -262,21 +262,21 @@ export default function KeycardsPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="relative min-w-[280px] flex-1">
-          <div className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 dark:text-slate-500">
-            <FilterListIcon className="!text-lg" />
+      <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <label className="min-w-[280px] flex-1 space-y-1">
+          <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            Otsi kaardi numbri või kasutaja järgi
+          </span>
+          <div className="relative">
+            <SearchIcon className="absolute top-1/2 left-3 !text-lg -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="w-full rounded-xl bg-slate-50 py-2.5 pr-4 pl-10 text-sm font-semibold text-slate-700 placeholder:text-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+              placeholder="Sisesta otsing..."
+            />
           </div>
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="w-full rounded-xl bg-slate-50 py-2.5 pr-4 pl-10 text-sm font-semibold text-slate-700 placeholder:text-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
-            placeholder="Otsi kaardi numbri või kasutaja järgi..."
-          />
-        </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-          <FilterListIcon className="!text-lg" />
-        </div>
+        </label>
         <FilterField label="Staatus">
           <select
             value={statusFilter}
