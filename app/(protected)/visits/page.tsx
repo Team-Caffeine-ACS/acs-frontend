@@ -21,7 +21,6 @@ import {
 
 type StatusFilter = "all" | "planned" | "in_building" | "departed" | "expired";
 type SortDirection = "default" | "desc" | "asc";
-type EntrySort = SortDirection;
 type DateFilterMode = "all" | "before" | "after" | "on";
 type VisitPageMetadata = VisitListPage["page"];
 type VisitSortKey =
@@ -358,18 +357,18 @@ function getHeaderSortDirection(
   return activeSortKey === headerSortKey ? activeSortDirection : "default";
 }
 
-function getSortKeyForEntrySort(entrySort: EntrySort): VisitSortKey | null {
+function getSortKeyForEntrySort(entrySort: SortDirection): VisitSortKey | null {
   return entrySort === "default" ? null : "entryTime";
 }
 
-function getSortDirectionForEntrySort(entrySort: EntrySort): SortDirection {
+function getSortDirectionForEntrySort(entrySort: SortDirection): SortDirection {
   return entrySort;
 }
 
 function getEntrySortForHeaderSort(
   sortKey: VisitSortKey,
   sortDirection: SortDirection,
-): EntrySort {
+): SortDirection {
   return sortKey === "entryTime" ? sortDirection : "default";
 }
 
@@ -389,7 +388,7 @@ function getNextHeaderSortState(
   };
 }
 
-function useVisitSort(entrySort: EntrySort): {
+function useVisitSort(entrySort: SortDirection): {
   activeSortKey: VisitSortKey | null;
   activeSortDirection: SortDirection;
   setActiveSort: (
@@ -426,7 +425,7 @@ export default function VisitsPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
-  const [entrySort, setEntrySort] = useState<EntrySort>("default");
+  const [entrySort, setEntrySort] = useState<SortDirection>("default");
   const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("all");
   const [visitDate, setVisitDate] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
@@ -460,7 +459,7 @@ export default function VisitsPage() {
     setError(null);
   }
 
-  function handleEntrySortChange(nextEntrySort: EntrySort) {
+  function handleEntrySortChange(nextEntrySort: SortDirection) {
     setEntrySort(nextEntrySort);
     setActiveSort(
       getSortKeyForEntrySort(nextEntrySort),
@@ -614,7 +613,7 @@ export default function VisitsPage() {
           <select
             value={entrySort}
             onChange={(event) => {
-              handleEntrySortChange(event.target.value as EntrySort);
+              handleEntrySortChange(event.target.value as SortDirection);
             }}
             className={filterInputCls}
           >
