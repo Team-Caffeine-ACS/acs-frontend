@@ -209,7 +209,11 @@ function sortVisits(
   return [...visits].sort((left, right) => {
     switch (sortKey) {
       case "fullName":
-        return compareNullableText(left.fullName, right.fullName, sortDirection);
+        return compareNullableText(
+          left.fullName,
+          right.fullName,
+          sortDirection,
+        );
       case "documentNumber":
         return compareNullableText(
           left.documentNumber,
@@ -217,11 +221,23 @@ function sortVisits(
           sortDirection,
         );
       case "hostName":
-        return compareNullableText(left.hostName, right.hostName, sortDirection);
+        return compareNullableText(
+          left.hostName,
+          right.hostName,
+          sortDirection,
+        );
       case "entryTime":
-        return compareNullableDate(left.entryTime, right.entryTime, sortDirection);
+        return compareNullableDate(
+          left.entryTime,
+          right.entryTime,
+          sortDirection,
+        );
       case "exitTime":
-        return compareNullableDate(left.exitTime, right.exitTime, sortDirection);
+        return compareNullableDate(
+          left.exitTime,
+          right.exitTime,
+          sortDirection,
+        );
       case "status":
         return compareStatus(left.status, right.status, sortDirection);
     }
@@ -384,8 +400,9 @@ function useVisitSort(entrySort: EntrySort): {
   const [activeSortKey, setActiveSortKey] = useState<VisitSortKey | null>(
     getSortKeyForEntrySort(entrySort),
   );
-  const [activeSortDirection, setActiveSortDirection] =
-    useState<SortDirection>(getSortDirectionForEntrySort(entrySort));
+  const [activeSortDirection, setActiveSortDirection] = useState<SortDirection>(
+    getSortDirectionForEntrySort(entrySort),
+  );
 
   function setActiveSort(
     sortKey: VisitSortKey | null,
@@ -459,7 +476,9 @@ export default function VisitsPage() {
     );
 
     setActiveSort(nextSortState.sortKey, nextSortState.sortDirection);
-    setEntrySort(getEntrySortForHeaderSort(sortKey, nextSortState.sortDirection));
+    setEntrySort(
+      getEntrySortForHeaderSort(sortKey, nextSortState.sortDirection),
+    );
   }
 
   useEffect(() => {
@@ -785,7 +804,11 @@ export default function VisitsPage() {
                       className="cursor-pointer transition-colors hover:bg-slate-50/50 focus-within:bg-slate-50/50 focus-within:outline-2 focus-within:outline-primary/40 dark:hover:bg-slate-800/50 dark:focus-within:bg-slate-800/50"
                     >
                       <td className="relative px-6 py-4">
-                        <Link href={href} className="absolute inset-0 z-10" aria-label={label}>
+                        <Link
+                          href={href}
+                          className="absolute inset-0 z-10"
+                          aria-label={label}
+                        >
                           <span className="sr-only">{label}</span>
                         </Link>
                         <div className="flex items-center gap-3">
@@ -803,25 +826,45 @@ export default function VisitsPage() {
                         </div>
                       </td>
                       <td className="relative px-6 py-4 text-xs font-mono font-bold text-slate-500 tracking-wider dark:text-slate-400">
-                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+                        <Link
+                          href={href}
+                          className="absolute inset-0 z-10"
+                          tabIndex={-1}
+                        />
                         {visit.documentNumber ?? "—"}
                       </td>
                       <td className="relative px-6 py-4">
-                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+                        <Link
+                          href={href}
+                          className="absolute inset-0 z-10"
+                          tabIndex={-1}
+                        />
                         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                           {visit.hostName ?? "Pole saadaval"}
                         </p>
                       </td>
                       <td className="relative px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+                        <Link
+                          href={href}
+                          className="absolute inset-0 z-10"
+                          tabIndex={-1}
+                        />
                         {formatDateTime(visit.entryTime)}
                       </td>
                       <td className="relative px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+                        <Link
+                          href={href}
+                          className="absolute inset-0 z-10"
+                          tabIndex={-1}
+                        />
                         {formatDateTime(visit.exitTime)}
                       </td>
                       <td className="relative px-6 py-4 text-center">
-                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+                        <Link
+                          href={href}
+                          className="absolute inset-0 z-10"
+                          tabIndex={-1}
+                        />
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${badge.className}`}
                         >
