@@ -214,7 +214,6 @@ export default function DashboardPage() {
           <DynamicAccessPointMap accessPoints={accessPoints} />
         </div>
       </div>
-
     </div>
   );
 }
