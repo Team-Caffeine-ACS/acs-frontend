@@ -8,7 +8,6 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/error";
 import {
@@ -506,20 +505,25 @@ export default function VisitsPage() {
                   <th className="px-6 py-5">Dokument</th>
                   <th className="px-6 py-5">Vastuvõtja</th>
                   <th className="px-6 py-5">Saabumine</th>
+                  <th className="px-6 py-5">Lahkumine</th>
                   <th className="px-6 py-5 text-center">Staatus</th>
-                  <th className="px-6 py-5"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {sortedVisits.map((visit) => {
                   const badge = getStatusBadge(visit.status);
+                  const href = `/visits/${visit.id}`;
+                  const label = `Ava külastuse ${visit.id} detail`;
 
                   return (
                     <tr
                       key={visit.id}
-                      className="hover:bg-slate-50/50 transition-colors dark:hover:bg-slate-800/50"
+                      className="cursor-pointer transition-colors hover:bg-slate-50/50 focus-within:bg-slate-50/50 focus-within:outline-2 focus-within:outline-primary/40 dark:hover:bg-slate-800/50 dark:focus-within:bg-slate-800/50"
                     >
-                      <td className="px-6 py-4">
+                      <td className="relative px-6 py-4">
+                        <Link href={href} className="absolute inset-0 z-10" aria-label={label}>
+                          <span className="sr-only">{label}</span>
+                        </Link>
                         <div className="flex items-center gap-3">
                           <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xs dark:bg-primary/20 dark:text-slate-100">
                             {getInitials(visit.fullName)}
@@ -534,35 +538,31 @@ export default function VisitsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-xs font-mono font-bold text-slate-500 tracking-wider dark:text-slate-400">
+                      <td className="relative px-6 py-4 text-xs font-mono font-bold text-slate-500 tracking-wider dark:text-slate-400">
+                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
                         {visit.documentNumber ?? "—"}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="relative px-6 py-4">
+                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
                         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                           {visit.hostName ?? "Pole saadaval"}
                         </p>
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                      <td className="relative px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
                         {formatDateTime(visit.entryTime)}
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="relative px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+                        {formatDateTime(visit.exitTime)}
+                      </td>
+                      <td className="relative px-6 py-4 text-center">
+                        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${badge.className}`}
                         >
                           {badge.label}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link href={`/visits/${visit.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-primary hover:bg-primary/5 rounded-xl dark:text-slate-200 dark:hover:bg-slate-800"
-                            aria-label="Ava külastuse detail"
-                          >
-                            <VisibilityOutlinedIcon />
-                          </Button>
-                        </Link>
                       </td>
                     </tr>
                   );
