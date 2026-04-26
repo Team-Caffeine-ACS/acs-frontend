@@ -6,15 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import CloseIcon from "@mui/icons-material/Close";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { DateTimePicker } from "@/components/keycards/DateTimePicker";
 import { useCurrentUser } from "@/components/layout/current-user-provider";
 import {
   getKeycard,
@@ -27,12 +20,6 @@ const ALLOWED_ROLES = ["ADMIN", "SECURITY_CHIEF"] as const;
 
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition";
-
-const DATE_FORMATTER = new Intl.DateTimeFormat("et-EE", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
 
 function parseDateFromIso(iso: string | null): Date | undefined {
   if (!iso) return undefined;
@@ -61,7 +48,6 @@ export default function EditKeycardPage() {
   const [active, setActive] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState("00:00");
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -225,62 +211,12 @@ export default function EditKeycardPage() {
             </span>
           </span>
 
-          <div className="flex gap-2">
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="flex flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm transition hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  <CalendarMonthIcon className="shrink-0 text-slate-400 !text-[18px]" />
-                  <span
-                    className={
-                      selectedDate ? "text-slate-800" : "text-slate-400"
-                    }
-                  >
-                    {selectedDate
-                      ? DATE_FORMATTER.format(selectedDate)
-                      : "Vali kuupäev…"}
-                  </span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    setSelectedDate(date);
-                    setCalendarOpen(false);
-                  }}
-                  captionLayout="dropdown"
-                  autoFocus
-                />
-              </PopoverContent>
-            </Popover>
-
-            {selectedDate && (
-              <>
-                <input
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
-                  aria-label="Kellaaeg"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(undefined);
-                    setSelectedTime("00:00");
-                  }}
-                  className="flex items-center justify-center rounded-xl border border-slate-200 px-2.5 text-slate-400 hover:text-rose-500 hover:border-rose-200 transition"
-                  aria-label="Eemalda kuupäev"
-                >
-                  <CloseIcon className="!text-[18px]" />
-                </button>
-              </>
-            )}
-          </div>
+          <DateTimePicker
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            onDateChange={setSelectedDate}
+            onTimeChange={setSelectedTime}
+          />
         </div>
 
         <div className="flex items-center gap-3">

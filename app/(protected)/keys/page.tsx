@@ -6,7 +6,6 @@ import CreditCardIcon from "@mui/icons-material/CreditCard";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -258,12 +257,6 @@ export default function KeycardsPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="gap-2 py-6 text-xs font-bold uppercase tracking-widest"
-          >
-            <FileDownloadIcon className="!text-lg" /> Ekspordi
-          </Button>
           {canRegister && (
             <Button
               asChild
