@@ -24,6 +24,12 @@ export interface KeycardDetailResponse extends KeycardResponse {
   assignedPersonInRoleId: string | null;
 }
 
+export interface UpdateKeycardRequest {
+  keycardNumber?: string;
+  active?: boolean;
+  validUntil?: string | null;
+}
+
 export interface CreateKeycardRequest {
   keycardNumber: string;
   validUntil?: string;
@@ -114,6 +120,16 @@ export async function getKeycard(
     ...summary,
     assignedPersonInRoleId: pickString(record, ["assignedPersonInRoleId"]),
   };
+}
+
+export function updateKeycard(
+  cardId: string,
+  body: UpdateKeycardRequest,
+): Promise<KeycardDetailResponse> {
+  return apiClient.put<KeycardDetailResponse, UpdateKeycardRequest>(
+    `/api/keycards/${cardId}`,
+    body,
+  );
 }
 
 export function createKeycard(
