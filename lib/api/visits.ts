@@ -392,6 +392,8 @@ export async function getVisits(
   params?: {
     search?: string;
     status?: string;
+    dateFrom?: string;
+    dateTo?: string;
     page?: number;
     size?: number;
   },
@@ -405,6 +407,14 @@ export async function getVisits(
 
   if (params?.status && params.status !== "all") {
     searchParams.set("status", params.status);
+  }
+
+  if (params?.dateFrom) {
+    searchParams.set("dateFrom", params.dateFrom);
+  }
+
+  if (params?.dateTo) {
+    searchParams.set("dateTo", params.dateTo);
   }
 
   searchParams.set("page", String(params?.page ?? 0));

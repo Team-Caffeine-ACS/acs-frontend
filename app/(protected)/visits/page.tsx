@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -20,6 +20,8 @@ import {
 } from "@/lib/api/visits";
 
 type StatusFilter = "all" | "planned" | "in_building" | "departed" | "expired";
+type EntrySort = "default" | "desc" | "asc";
+type DateFilterMode = "all" | "before" | "after" | "on";
 type VisitPageMetadata = VisitListPage["page"];
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -68,6 +70,66 @@ function formatDateTime(value: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function toLocalDateTimeParameter(date: Date): string {
+  const pad = (value: number, length = 2) =>
+    String(value).padStart(length, "0");
+
+  return [
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}`,
+  ].join("T");
+}
+
+function getDateBoundary(dateValue: string, endOfDay = false): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, year, month, day] = match;
+  const date = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    endOfDay ? 23 : 0,
+    endOfDay ? 59 : 0,
+    endOfDay ? 59 : 0,
+    endOfDay ? 999 : 0,
+  );
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return toLocalDateTimeParameter(date);
+}
+
+function getVisitDateRange(
+  mode: DateFilterMode,
+  dateValue: string,
+): { dateFrom?: string; dateTo?: string } {
+  if (mode === "all" || !dateValue) {
+    return {};
+  }
+
+  switch (mode) {
+    case "before": {
+      const dateTo = getDateBoundary(dateValue);
+      return dateTo ? { dateTo } : {};
+    }
+    case "after": {
+      const dateFrom = getDateBoundary(dateValue, true);
+      return dateFrom ? { dateFrom } : {};
+    }
+    case "on": {
+      const dateFrom = getDateBoundary(dateValue);
+      const dateTo = getDateBoundary(dateValue, true);
+      return dateFrom && dateTo ? { dateFrom, dateTo } : {};
+    }
+  }
 }
 
 function getStatusBadge(status: string | null): {
@@ -127,6 +189,36 @@ function getInitials(fullName: string | null): string {
     .toUpperCase();
 }
 
+function sortVisitsByEntryTime(
+  visits: VisitListItemResponse[],
+  sort: EntrySort,
+): VisitListItemResponse[] {
+  if (sort === "default") {
+    return visits;
+  }
+
+  return [...visits].sort((left, right) => {
+    const leftTime = left.entryTime ? new Date(left.entryTime).getTime() : null;
+    const rightTime = right.entryTime
+      ? new Date(right.entryTime).getTime()
+      : null;
+
+    if (leftTime === null && rightTime === null) {
+      return 0;
+    }
+
+    if (leftTime === null) {
+      return 1;
+    }
+
+    if (rightTime === null) {
+      return -1;
+    }
+
+    return sort === "desc" ? rightTime - leftTime : leftTime - rightTime;
+  });
+}
+
 export default function VisitsPage() {
   const [visits, setVisits] = useState<VisitListItemResponse[]>([]);
   const [pageMeta, setPageMeta] = useState<VisitPageMetadata>(null);
@@ -134,11 +226,16 @@ export default function VisitsPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [entrySort, setEntrySort] = useState<EntrySort>("default");
+  const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("all");
+  const [visitDate, setVisitDate] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [reloadKey, setReloadKey] = useState(0);
 
   const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
+  const dateRange = getVisitDateRange(dateFilterMode, visitDate);
+  const sortedVisits = sortVisitsByEntryTime(visits, entrySort);
   const totalVisits = pageMeta?.totalElements ?? visits.length;
   const totalPages = Math.max(
     1,
@@ -151,7 +248,10 @@ export default function VisitsPage() {
     totalVisits === 0
       ? 0
       : Math.min(visiblePageIndex * pageSize + pageSize, totalVisits);
-  const isFilteredResult = debouncedSearch.length > 0 || status !== "all";
+  const isFilteredResult =
+    debouncedSearch.length > 0 ||
+    status !== "all" ||
+    Boolean(dateRange.dateFrom || dateRange.dateTo);
 
   function startLoading() {
     setIsLoading(true);
@@ -165,6 +265,8 @@ export default function VisitsPage() {
       {
         search: debouncedSearch || undefined,
         status,
+        dateFrom: dateRange.dateFrom,
+        dateTo: dateRange.dateTo,
         page: pageIndex,
         size: pageSize,
       },
@@ -197,7 +299,16 @@ export default function VisitsPage() {
       });
 
     return () => controller.abort();
-  }, [debouncedSearch, pageIndex, pageSize, reloadKey, status]);
+  }, [
+    dateRange.dateFrom,
+    dateRange.dateTo,
+    debouncedSearch,
+    entrySort,
+    pageIndex,
+    pageSize,
+    reloadKey,
+    status,
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
@@ -239,9 +350,9 @@ export default function VisitsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center gap-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex-1 min-w-[320px] relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
+      <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="relative min-w-[280px] flex-1">
+          <div className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 dark:text-slate-500">
             <FilterListIcon className="!text-lg" />
           </div>
           <input
@@ -251,12 +362,19 @@ export default function VisitsPage() {
               setSearch(event.target.value);
               setPageIndex(0);
             }}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-700 placeholder:text-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+            className="w-full rounded-xl bg-slate-50 py-2.5 pr-4 pl-10 text-sm font-semibold text-slate-700 placeholder:text-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
             placeholder="Otsi külastaja nime, dokumendi või hosti järgi..."
           />
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+          aria-hidden="true"
+        >
+          <FilterListIcon className="!text-lg" />
+        </div>
+
+        <FilterField label="Staatus">
           <select
             value={status}
             onChange={(event) => {
@@ -264,28 +382,74 @@ export default function VisitsPage() {
               setStatus(event.target.value as StatusFilter);
               setPageIndex(0);
             }}
-            className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-white transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            className={filterInputCls}
           >
-            <option value="all">Staatus: kõik</option>
-            <option value="planned">Staatus: planeeritud</option>
-            <option value="in_building">Staatus: hoones</option>
-            <option value="departed">Staatus: lahkunud</option>
-            <option value="expired">Staatus: aegunud</option>
+            <option value="all">Kõik staatused</option>
+            <option value="planned">Planeeritud</option>
+            <option value="in_building">Hoones</option>
+            <option value="departed">Lahkunud</option>
+            <option value="expired">Aegunud</option>
           </select>
+        </FilterField>
 
-          <button
-            type="button"
-            className="p-2 text-slate-400 hover:text-primary transition-colors dark:text-slate-500 dark:hover:text-slate-200"
-            aria-label="Värskenda filtreid"
-            title="Värskenda filtreid"
-            onClick={() => {
-              startLoading();
-              setReloadKey((current) => current + 1);
+        <FilterField label="Saabumise aeg">
+          <select
+            value={entrySort}
+            onChange={(event) => {
+              setEntrySort(event.target.value as EntrySort);
             }}
+            className={filterInputCls}
           >
-            <RefreshIcon />
-          </button>
-        </div>
+            <option value="default">Vaikimisi</option>
+            <option value="desc">Uuem enne</option>
+            <option value="asc">Vanem enne</option>
+          </select>
+        </FilterField>
+
+        <FilterField label="Külastuse kuupäev">
+          <div className="flex min-w-[260px] gap-2">
+            <select
+              value={dateFilterMode}
+              onChange={(event) => {
+                startLoading();
+                setDateFilterMode(event.target.value as DateFilterMode);
+                setPageIndex(0);
+              }}
+              className={filterInputCls + " min-w-[120px]"}
+            >
+              <option value="all">Kõik</option>
+              <option value="before">Enne</option>
+              <option value="after">Pärast</option>
+              <option value="on">Täpselt</option>
+            </select>
+            <input
+              type="date"
+              value={visitDate}
+              onChange={(event) => {
+                startLoading();
+                setVisitDate(event.target.value);
+                setPageIndex(0);
+              }}
+              disabled={dateFilterMode === "all"}
+              className={filterInputCls + " min-w-[140px]"}
+            />
+          </div>
+        </FilterField>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="rounded-xl text-slate-500"
+          aria-label="Värskenda filtreid"
+          title="Värskenda filtreid"
+          onClick={() => {
+            startLoading();
+            setReloadKey((current) => current + 1);
+          }}
+        >
+          <RefreshIcon />
+        </Button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-display dark:border-slate-800 dark:bg-slate-900">
@@ -337,7 +501,7 @@ export default function VisitsPage() {
           </div>
         ) : null}
 
-        {!isLoading && !error && visits.length > 0 ? (
+        {!isLoading && !error && sortedVisits.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-500">
@@ -351,7 +515,7 @@ export default function VisitsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                {visits.map((visit) => {
+                {sortedVisits.map((visit) => {
                   const badge = getStatusBadge(visit.status);
 
                   return (
@@ -498,3 +662,23 @@ export default function VisitsPage() {
     </div>
   );
 }
+
+function FilterField({
+  label,
+  children,
+}: Readonly<{
+  label: string;
+  children: ReactNode;
+}>) {
+  return (
+    <label className="space-y-1">
+      <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+const filterInputCls =
+  "h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-primary/40 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:focus:bg-slate-800";
