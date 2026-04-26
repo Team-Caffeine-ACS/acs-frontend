@@ -24,7 +24,7 @@ const AccessPointMap = ({
       : defaultCenter;
 
   return (
-    <div className="h-[400px] w-full rounded-2xl overflow-hidden border border-slate-200">
+    <div className="h-[320px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:h-[400px]">
       {/* 3. Kasutame key-atribuuti, et MapContainer end värskendaks, kui center muutub */}
       <MapContainer
         key={`${center[0]}-${center[1]}`}
