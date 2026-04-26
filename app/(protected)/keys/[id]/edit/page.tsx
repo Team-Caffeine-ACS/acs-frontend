@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type SubmitEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -24,13 +24,13 @@ const inputCls =
 function parseDateFromIso(iso: string | null): Date | undefined {
   if (!iso) return undefined;
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? undefined : d;
+  return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
 function parseTimeFromIso(iso: string | null): string {
   if (!iso) return "00:00";
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return "00:00";
+  if (Number.isNaN(d.getTime())) return "00:00";
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
@@ -122,7 +122,7 @@ export default function EditKeycardPage() {
     return `${datePart}T${selectedTime}:00`;
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaveError(null);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type SubmitEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -54,7 +54,7 @@ export default function RegisterKeycardPage() {
     return `${datePart}T${selectedTime}:00`;
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
