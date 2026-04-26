@@ -22,7 +22,6 @@ import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/error";
 import { getKeycardById, type KeycardResponse } from "@/lib/api/keycards";
@@ -663,15 +662,6 @@ function VisitPageHeader({
             Muuda andmeid
           </Button>
         ) : null}
-        <Button
-          type="button"
-          className="gap-2 bg-primary px-6 py-6 text-base font-bold text-white shadow-xl shadow-primary/20"
-          disabled
-          title="Printimise backend-tugi ei ole veel olemas."
-        >
-          <PrintOutlinedIcon className="!text-base" />
-          Prindi luba
-        </Button>
       </div>
     </div>
   );
