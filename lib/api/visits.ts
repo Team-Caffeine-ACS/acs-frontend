@@ -26,6 +26,10 @@ export interface CreateVisitResponse {
   keycardNumber: string | null;
 }
 
+interface RegisterVisitDepartureRequest {
+  exitTime: string;
+}
+
 export interface VisitListItemResponse {
   id: string;
   fullName: string | null;
@@ -149,6 +153,16 @@ function getNullableNumber(
   }
 
   return null;
+}
+
+function toLocalDateTimeValue(date: Date): string {
+  const pad = (value: number, length = 2) =>
+    String(value).padStart(length, "0");
+
+  return [
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}`,
+  ].join("T");
 }
 
 function normalizeVisitDetailResponse(raw: unknown): VisitDetailResponse {
@@ -385,7 +399,10 @@ export async function getVisitTimeline(
 }
 
 export async function registerVisitDeparture(visitId: string): Promise<void> {
-  await apiClient.put<void>(`/api/visits/${visitId}/exit`);
+  await apiClient.put<void, RegisterVisitDepartureRequest>(
+    `/api/visits/${visitId}/exit`,
+    { exitTime: toLocalDateTimeValue(new Date()) },
+  );
 }
 
 export async function getVisits(

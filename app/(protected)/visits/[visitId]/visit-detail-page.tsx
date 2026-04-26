@@ -472,6 +472,14 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
   }, [linkedCardId]);
 
   async function handleRegisterDeparture() {
+    if (
+      isRegisteringDeparture ||
+      !permissions.canRegisterDeparture ||
+      statusKey !== "in_building"
+    ) {
+      return;
+    }
+
     setActionError(null);
     setActionMessage(null);
     setIsRegisteringDeparture(true);
@@ -690,6 +698,8 @@ function VisitVisitorCardSection({
   readonly statusKey: VisitStatusKey | "loading";
   readonly onRegisterDeparture: () => void;
 }) {
+  const isDepartureActionAvailable = statusKey === "in_building";
+
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="h-3 bg-primary" />
@@ -757,8 +767,13 @@ function VisitVisitorCardSection({
         <div className="border-t border-slate-100 bg-slate-50/60 p-6 flex justify-stretch md:justify-end">
           <Button
             type="button"
-            className="w-full md:w-auto bg-primary hover:bg-primary/90 py-6 text-base font-black text-white shadow-lg shadow-primary/20"
-            disabled={isRegisteringDeparture || statusKey === "departed"}
+            className={cn(
+              "w-full md:w-auto py-6 text-base font-black",
+              isDepartureActionAvailable
+                ? "bg-blue-700 text-white shadow-lg shadow-blue-700/20 hover:bg-blue-800"
+                : "bg-slate-200 text-slate-500 shadow-none hover:bg-slate-200",
+            )}
+            disabled={isRegisteringDeparture || !isDepartureActionAvailable}
             onClick={onRegisterDeparture}
           >
             <LogoutIcon className="!text-base" />
