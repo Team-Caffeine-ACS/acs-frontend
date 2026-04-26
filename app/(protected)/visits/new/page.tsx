@@ -59,6 +59,8 @@ export default function NewVisitPage() {
   const [givenName, setGivenName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
+  const [organization, setOrganization] = useState("");
+  const [identityCode, setIdentityCode] = useState("");
   const [documentTypeId, setDocumentTypeId] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
 
@@ -151,8 +153,15 @@ export default function NewVisitPage() {
       let personId: string;
 
       if (showCreateForm && !selectedVisitor) {
-        if (!givenName.trim() || !surname.trim() || !email.trim()) {
-          setSubmitError("Täida eesnimi, perekonnanimi ja e-posti aadress.");
+        if (
+          !givenName.trim() ||
+          !surname.trim() ||
+          !identityCode.trim() ||
+          !email.trim()
+        ) {
+          setSubmitError(
+            "Täida eesnimi, perekonnanimi, isikukood ja e-posti aadress.",
+          );
           setIsSubmitting(false);
           return;
         }
@@ -160,6 +169,8 @@ export default function NewVisitPage() {
           givenName: givenName.trim(),
           surname: surname.trim(),
           email: email.trim(),
+          organization: organization.trim() || undefined,
+          socialSecurityNumber: identityCode.trim() || undefined,
           documentTypeId: documentTypeId || undefined,
           documentNumber: documentNumber.trim() || undefined,
         });
@@ -209,7 +220,7 @@ export default function NewVisitPage() {
           title="Külalise andmed"
         >
           {/* Visitor search */}
-          {!selectedVisitor && (
+          {!selectedVisitor && !showCreateForm && (
             <div className="space-y-3">
               <div className="flex gap-2">
                 <input
@@ -363,6 +374,29 @@ export default function NewVisitPage() {
                     onChange={(e) => setSurname(e.target.value)}
                     placeholder="Sisesta perekonnanimi"
                     maxLength={128}
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Isikukood *">
+                  <input
+                    type="text"
+                    value={identityCode}
+                    onChange={(e) => setIdentityCode(e.target.value)}
+                    placeholder="Sisesta isikukood"
+                    maxLength={128}
+                    required
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Organisatsioon">
+                  <input
+                    type="text"
+                    value={organization}
+                    onChange={(e) => setOrganization(e.target.value)}
+                    placeholder="Sisesta organisatsioon"
+                    maxLength={255}
                     className={inputCls}
                   />
                 </Field>
@@ -612,10 +646,14 @@ function Field({
   readonly label: string;
   readonly children: React.ReactNode;
 }) {
+  const isRequired = label.endsWith(" *");
+  const visibleLabel = isRequired ? label.slice(0, -2) : label;
+
   return (
     <fieldset className="space-y-1.5">
       <legend className="block text-sm font-medium text-slate-700">
-        {label}
+        {visibleLabel}
+        {isRequired && <span className="text-rose-600"> *</span>}
       </legend>
       {children}
     </fieldset>
