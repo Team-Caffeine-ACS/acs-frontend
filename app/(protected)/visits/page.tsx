@@ -8,6 +8,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/error";
 import {
@@ -19,9 +20,17 @@ import {
 } from "@/lib/api/visits";
 
 type StatusFilter = "all" | "planned" | "in_building" | "departed" | "expired";
-type EntrySort = "default" | "desc" | "asc";
+type SortDirection = "default" | "desc" | "asc";
+type EntrySort = SortDirection;
 type DateFilterMode = "all" | "before" | "after" | "on";
 type VisitPageMetadata = VisitListPage["page"];
+type VisitSortKey =
+  | "fullName"
+  | "documentNumber"
+  | "hostName"
+  | "entryTime"
+  | "exitTime"
+  | "status";
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -188,34 +197,209 @@ function getInitials(fullName: string | null): string {
     .toUpperCase();
 }
 
-function sortVisitsByEntryTime(
+function sortVisits(
   visits: VisitListItemResponse[],
-  sort: EntrySort,
+  sortKey: VisitSortKey | null,
+  sortDirection: SortDirection,
 ): VisitListItemResponse[] {
-  if (sort === "default") {
+  if (sortKey === null || sortDirection === "default") {
     return visits;
   }
 
   return [...visits].sort((left, right) => {
-    const leftTime = left.entryTime ? new Date(left.entryTime).getTime() : null;
-    const rightTime = right.entryTime
-      ? new Date(right.entryTime).getTime()
-      : null;
-
-    if (leftTime === null && rightTime === null) {
-      return 0;
+    switch (sortKey) {
+      case "fullName":
+        return compareNullableText(left.fullName, right.fullName, sortDirection);
+      case "documentNumber":
+        return compareNullableText(
+          left.documentNumber,
+          right.documentNumber,
+          sortDirection,
+        );
+      case "hostName":
+        return compareNullableText(left.hostName, right.hostName, sortDirection);
+      case "entryTime":
+        return compareNullableDate(left.entryTime, right.entryTime, sortDirection);
+      case "exitTime":
+        return compareNullableDate(left.exitTime, right.exitTime, sortDirection);
+      case "status":
+        return compareStatus(left.status, right.status, sortDirection);
     }
-
-    if (leftTime === null) {
-      return 1;
-    }
-
-    if (rightTime === null) {
-      return -1;
-    }
-
-    return sort === "desc" ? rightTime - leftTime : leftTime - rightTime;
   });
+}
+
+function compareNullableText(
+  left: string | null,
+  right: string | null,
+  order: SortDirection,
+): number {
+  if (!left && !right) {
+    return 0;
+  }
+
+  if (!left) {
+    return 1;
+  }
+
+  if (!right) {
+    return -1;
+  }
+
+  const comparison = left.localeCompare(right, "et", {
+    sensitivity: "base",
+  });
+
+  return order === "desc" ? -comparison : comparison;
+}
+
+function compareNullableDate(
+  left: string | null,
+  right: string | null,
+  order: SortDirection,
+): number {
+  if (!left && !right) {
+    return 0;
+  }
+
+  if (!left) {
+    return 1;
+  }
+
+  if (!right) {
+    return -1;
+  }
+
+  const leftTime = new Date(left).getTime();
+  const rightTime = new Date(right).getTime();
+
+  return order === "desc" ? rightTime - leftTime : leftTime - rightTime;
+}
+
+function compareStatus(
+  left: string | null,
+  right: string | null,
+  order: SortDirection,
+): number {
+  const comparison = getStatusBadge(left).label.localeCompare(
+    getStatusBadge(right).label,
+    "et",
+    { sensitivity: "base" },
+  );
+
+  return order === "desc" ? -comparison : comparison;
+}
+
+function getNextSortDirection(direction: SortDirection): SortDirection {
+  switch (direction) {
+    case "default":
+      return "asc";
+    case "asc":
+      return "desc";
+    case "desc":
+      return "default";
+  }
+}
+
+function getSortIcon(direction: SortDirection): ReactNode {
+  switch (direction) {
+    case "asc":
+      return <ChevronDownIcon size={16} className="shrink-0 opacity-60" />;
+    case "desc":
+      return <ChevronUpIcon size={16} className="shrink-0 opacity-60" />;
+    case "default":
+      return null;
+  }
+}
+
+function SortableHeader({
+  label,
+  direction,
+  onClick,
+}: Readonly<{
+  label: string;
+  direction: SortDirection;
+  onClick: () => void;
+}>) {
+  const sortIcon = getSortIcon(direction);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-full w-full cursor-pointer items-center justify-between gap-2 text-left select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+    >
+      <span>{label}</span>
+      {sortIcon}
+    </button>
+  );
+}
+
+function getHeaderSortDirection(
+  activeSortKey: VisitSortKey | null,
+  activeSortDirection: SortDirection,
+  headerSortKey: VisitSortKey,
+): SortDirection {
+  return activeSortKey === headerSortKey ? activeSortDirection : "default";
+}
+
+function getSortKeyForEntrySort(entrySort: EntrySort): VisitSortKey | null {
+  return entrySort === "default" ? null : "entryTime";
+}
+
+function getSortDirectionForEntrySort(entrySort: EntrySort): SortDirection {
+  return entrySort;
+}
+
+function getEntrySortForHeaderSort(
+  sortKey: VisitSortKey,
+  sortDirection: SortDirection,
+): EntrySort {
+  return sortKey === "entryTime" ? sortDirection : "default";
+}
+
+function getNextHeaderSortState(
+  activeSortKey: VisitSortKey | null,
+  activeSortDirection: SortDirection,
+  nextSortKey: VisitSortKey,
+): { sortKey: VisitSortKey | null; sortDirection: SortDirection } {
+  const nextSortDirection =
+    activeSortKey === nextSortKey
+      ? getNextSortDirection(activeSortDirection)
+      : "asc";
+
+  return {
+    sortKey: nextSortDirection === "default" ? null : nextSortKey,
+    sortDirection: nextSortDirection,
+  };
+}
+
+function useVisitSort(entrySort: EntrySort): {
+  activeSortKey: VisitSortKey | null;
+  activeSortDirection: SortDirection;
+  setActiveSort: (
+    sortKey: VisitSortKey | null,
+    sortDirection: SortDirection,
+  ) => void;
+} {
+  const [activeSortKey, setActiveSortKey] = useState<VisitSortKey | null>(
+    getSortKeyForEntrySort(entrySort),
+  );
+  const [activeSortDirection, setActiveSortDirection] =
+    useState<SortDirection>(getSortDirectionForEntrySort(entrySort));
+
+  function setActiveSort(
+    sortKey: VisitSortKey | null,
+    sortDirection: SortDirection,
+  ) {
+    setActiveSortKey(sortKey);
+    setActiveSortDirection(sortDirection);
+  }
+
+  return {
+    activeSortKey,
+    activeSortDirection,
+    setActiveSort,
+  };
 }
 
 export default function VisitsPage() {
@@ -231,10 +415,12 @@ export default function VisitsPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [reloadKey, setReloadKey] = useState(0);
+  const { activeSortKey, activeSortDirection, setActiveSort } =
+    useVisitSort(entrySort);
 
   const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const dateRange = getVisitDateRange(dateFilterMode, visitDate);
-  const sortedVisits = sortVisitsByEntryTime(visits, entrySort);
+  const sortedVisits = sortVisits(visits, activeSortKey, activeSortDirection);
   const totalVisits = pageMeta?.totalElements ?? visits.length;
   const totalPages = Math.max(
     1,
@@ -255,6 +441,25 @@ export default function VisitsPage() {
   function startLoading() {
     setIsLoading(true);
     setError(null);
+  }
+
+  function handleEntrySortChange(nextEntrySort: EntrySort) {
+    setEntrySort(nextEntrySort);
+    setActiveSort(
+      getSortKeyForEntrySort(nextEntrySort),
+      getSortDirectionForEntrySort(nextEntrySort),
+    );
+  }
+
+  function handleHeaderSort(sortKey: VisitSortKey) {
+    const nextSortState = getNextHeaderSortState(
+      activeSortKey,
+      activeSortDirection,
+      sortKey,
+    );
+
+    setActiveSort(nextSortState.sortKey, nextSortState.sortDirection);
+    setEntrySort(getEntrySortForHeaderSort(sortKey, nextSortState.sortDirection));
   }
 
   useEffect(() => {
@@ -302,7 +507,6 @@ export default function VisitsPage() {
     dateRange.dateFrom,
     dateRange.dateTo,
     debouncedSearch,
-    entrySort,
     pageIndex,
     pageSize,
     reloadKey,
@@ -391,7 +595,7 @@ export default function VisitsPage() {
           <select
             value={entrySort}
             onChange={(event) => {
-              setEntrySort(event.target.value as EntrySort);
+              handleEntrySortChange(event.target.value as EntrySort);
             }}
             className={filterInputCls}
           >
@@ -501,12 +705,72 @@ export default function VisitsPage() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-500">
                 <tr>
-                  <th className="px-6 py-5">Külastaja</th>
-                  <th className="px-6 py-5">Dokument</th>
-                  <th className="px-6 py-5">Vastuvõtja</th>
-                  <th className="px-6 py-5">Saabumine</th>
-                  <th className="px-6 py-5">Lahkumine</th>
-                  <th className="px-6 py-5 text-center">Staatus</th>
+                  <th className="px-6 py-5">
+                    <SortableHeader
+                      label="Külastaja"
+                      direction={getHeaderSortDirection(
+                        activeSortKey,
+                        activeSortDirection,
+                        "fullName",
+                      )}
+                      onClick={() => handleHeaderSort("fullName")}
+                    />
+                  </th>
+                  <th className="px-6 py-5">
+                    <SortableHeader
+                      label="Dokument"
+                      direction={getHeaderSortDirection(
+                        activeSortKey,
+                        activeSortDirection,
+                        "documentNumber",
+                      )}
+                      onClick={() => handleHeaderSort("documentNumber")}
+                    />
+                  </th>
+                  <th className="px-6 py-5">
+                    <SortableHeader
+                      label="Võõrustaja"
+                      direction={getHeaderSortDirection(
+                        activeSortKey,
+                        activeSortDirection,
+                        "hostName",
+                      )}
+                      onClick={() => handleHeaderSort("hostName")}
+                    />
+                  </th>
+                  <th className="px-6 py-5">
+                    <SortableHeader
+                      label="Saabumine"
+                      direction={getHeaderSortDirection(
+                        activeSortKey,
+                        activeSortDirection,
+                        "entryTime",
+                      )}
+                      onClick={() => handleHeaderSort("entryTime")}
+                    />
+                  </th>
+                  <th className="px-6 py-5">
+                    <SortableHeader
+                      label="Lahkumine"
+                      direction={getHeaderSortDirection(
+                        activeSortKey,
+                        activeSortDirection,
+                        "exitTime",
+                      )}
+                      onClick={() => handleHeaderSort("exitTime")}
+                    />
+                  </th>
+                  <th className="px-6 py-5">
+                    <SortableHeader
+                      label="Staatus"
+                      direction={getHeaderSortDirection(
+                        activeSortKey,
+                        activeSortDirection,
+                        "status",
+                      )}
+                      onClick={() => handleHeaderSort("status")}
+                    />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
