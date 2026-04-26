@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { type ReactNode, useEffect, useState } from "react";
+import {
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -30,6 +36,7 @@ type VisitSortKey =
   | "entryTime"
   | "exitTime"
   | "status";
+type HeaderSortKey = VisitSortKey;
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -58,25 +65,6 @@ function getErrorMessage(error: unknown): string {
   }
 
   return "Külastuste laadimine ebaõnnestus.";
-}
-
-function formatDateTime(value: string | null): string {
-  if (!value) {
-    return "Pole saadaval";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("et-EE", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 }
 
 function toLocalDateTimeParameter(date: Date): string {
@@ -150,32 +138,33 @@ function getStatusBadge(status: string | null): {
   > = {
     planned: {
       label: "Planeeritud",
-      className: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+      className:
+        "border-sky-100 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-300",
     },
     in_building: {
       label: "Hoones",
       className:
-        "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+        "border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300",
     },
     departed: {
       label: "Lahkunud",
       className:
-        "bg-slate-100 text-slate-600 dark:bg-slate-700/70 dark:text-slate-300",
+        "border-slate-100 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
     },
     expired: {
       label: "Aegunud",
       className:
-        "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+        "border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300",
     },
     cancelled: {
       label: "Tühistatud",
       className:
-        "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+        "border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300",
     },
     unknown: {
       label: "Staatus puudub",
       className:
-        "bg-slate-100 text-slate-600 dark:bg-slate-700/70 dark:text-slate-300",
+        "border-slate-100 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
     },
   };
 
@@ -198,48 +187,86 @@ function getInitials(fullName: string | null): string {
 
 function sortVisits(
   visits: VisitListItemResponse[],
-  sortKey: VisitSortKey | null,
-  sortDirection: SortDirection,
+  fullNameSort: SortDirection,
+  documentNumberSort: SortDirection,
+  hostNameSort: SortDirection,
+  entrySort: SortDirection,
+  exitTimeSort: SortDirection,
+  statusSort: SortDirection,
+  headerSortPriority: HeaderSortKey[],
 ): VisitListItemResponse[] {
-  if (sortKey === null || sortDirection === "default") {
+  const sortDirections: Record<HeaderSortKey, SortDirection> = {
+    fullName: fullNameSort,
+    documentNumber: documentNumberSort,
+    hostName: hostNameSort,
+    entryTime: entrySort,
+    exitTime: exitTimeSort,
+    status: statusSort,
+  };
+
+  if (
+    Object.values(sortDirections).every((direction) => direction === "default")
+  ) {
     return visits;
   }
 
   return [...visits].sort((left, right) => {
-    switch (sortKey) {
-      case "fullName":
-        return compareNullableText(
-          left.fullName,
-          right.fullName,
-          sortDirection,
-        );
-      case "documentNumber":
-        return compareNullableText(
-          left.documentNumber,
-          right.documentNumber,
-          sortDirection,
-        );
-      case "hostName":
-        return compareNullableText(
-          left.hostName,
-          right.hostName,
-          sortDirection,
-        );
-      case "entryTime":
-        return compareNullableDate(
-          left.entryTime,
-          right.entryTime,
-          sortDirection,
-        );
-      case "exitTime":
-        return compareNullableDate(
-          left.exitTime,
-          right.exitTime,
-          sortDirection,
-        );
-      case "status":
-        return compareStatus(left.status, right.status, sortDirection);
+    for (const sortKey of headerSortPriority) {
+      const sortDirection = sortDirections[sortKey];
+
+      if (sortDirection === "default") {
+        continue;
+      }
+
+      let comparison = 0;
+
+      switch (sortKey) {
+        case "fullName":
+          comparison = compareNullableText(
+            left.fullName,
+            right.fullName,
+            sortDirection,
+          );
+          break;
+        case "documentNumber":
+          comparison = compareNullableText(
+            left.documentNumber,
+            right.documentNumber,
+            sortDirection,
+          );
+          break;
+        case "hostName":
+          comparison = compareNullableText(
+            left.hostName,
+            right.hostName,
+            sortDirection,
+          );
+          break;
+        case "entryTime":
+          comparison = compareNullableDate(
+            left.entryTime,
+            right.entryTime,
+            sortDirection,
+          );
+          break;
+        case "exitTime":
+          comparison = compareNullableDate(
+            left.exitTime,
+            right.exitTime,
+            sortDirection,
+          );
+          break;
+        case "status":
+          comparison = compareStatus(left.status, right.status, sortDirection);
+          break;
+      }
+
+      if (comparison !== 0) {
+        return comparison;
+      }
     }
+
+    return 0;
   });
 }
 
@@ -349,94 +376,48 @@ function SortableHeader({
   );
 }
 
-function getHeaderSortDirection(
-  activeSortKey: VisitSortKey | null,
-  activeSortDirection: SortDirection,
-  headerSortKey: VisitSortKey,
-): SortDirection {
-  return activeSortKey === headerSortKey ? activeSortDirection : "default";
-}
-
-function getSortKeyForEntrySort(entrySort: SortDirection): VisitSortKey | null {
-  return entrySort === "default" ? null : "entryTime";
-}
-
-function getSortDirectionForEntrySort(entrySort: SortDirection): SortDirection {
-  return entrySort;
-}
-
-function getEntrySortForHeaderSort(
-  sortKey: VisitSortKey,
-  sortDirection: SortDirection,
-): SortDirection {
-  return sortKey === "entryTime" ? sortDirection : "default";
-}
-
-function getNextHeaderSortState(
-  activeSortKey: VisitSortKey | null,
-  activeSortDirection: SortDirection,
-  nextSortKey: VisitSortKey,
-): { sortKey: VisitSortKey | null; sortDirection: SortDirection } {
-  const nextSortDirection =
-    activeSortKey === nextSortKey
-      ? getNextSortDirection(activeSortDirection)
-      : "asc";
-
-  return {
-    sortKey: nextSortDirection === "default" ? null : nextSortKey,
-    sortDirection: nextSortDirection,
-  };
-}
-
-function useVisitSort(entrySort: SortDirection): {
-  activeSortKey: VisitSortKey | null;
-  activeSortDirection: SortDirection;
-  setActiveSort: (
-    sortKey: VisitSortKey | null,
-    sortDirection: SortDirection,
-  ) => void;
-} {
-  const [activeSortKey, setActiveSortKey] = useState<VisitSortKey | null>(
-    getSortKeyForEntrySort(entrySort),
-  );
-  const [activeSortDirection, setActiveSortDirection] = useState<SortDirection>(
-    getSortDirectionForEntrySort(entrySort),
-  );
-
-  function setActiveSort(
-    sortKey: VisitSortKey | null,
-    sortDirection: SortDirection,
-  ) {
-    setActiveSortKey(sortKey);
-    setActiveSortDirection(sortDirection);
-  }
-
-  return {
-    activeSortKey,
-    activeSortDirection,
-    setActiveSort,
-  };
-}
-
 export default function VisitsPage() {
   const [visits, setVisits] = useState<VisitListItemResponse[]>([]);
   const [pageMeta, setPageMeta] = useState<VisitPageMetadata>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [fullNameSort, setFullNameSort] = useState<SortDirection>("default");
+  const [documentNumberSort, setDocumentNumberSort] =
+    useState<SortDirection>("default");
+  const [hostNameSort, setHostNameSort] = useState<SortDirection>("default");
   const [entrySort, setEntrySort] = useState<SortDirection>("default");
+  const [exitTimeSort, setExitTimeSort] = useState<SortDirection>("default");
+  const [statusSort, setStatusSort] = useState<SortDirection>("default");
+  const [headerSortPriority, setHeaderSortPriority] = useState<HeaderSortKey[]>(
+    [
+      "fullName",
+      "documentNumber",
+      "hostName",
+      "entryTime",
+      "exitTime",
+      "status",
+    ],
+  );
   const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("all");
   const [visitDate, setVisitDate] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [reloadKey, setReloadKey] = useState(0);
-  const { activeSortKey, activeSortDirection, setActiveSort } =
-    useVisitSort(entrySort);
 
   const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const dateRange = getVisitDateRange(dateFilterMode, visitDate);
-  const sortedVisits = sortVisits(visits, activeSortKey, activeSortDirection);
+  const sortedVisits = sortVisits(
+    visits,
+    fullNameSort,
+    documentNumberSort,
+    hostNameSort,
+    entrySort,
+    exitTimeSort,
+    statusSort,
+    headerSortPriority,
+  );
   const totalVisits = pageMeta?.totalElements ?? visits.length;
   const totalPages = Math.max(
     1,
@@ -451,7 +432,7 @@ export default function VisitsPage() {
       : Math.min(visiblePageIndex * pageSize + pageSize, totalVisits);
   const isFilteredResult =
     debouncedSearch.length > 0 ||
-    status !== "all" ||
+    statusFilter !== "all" ||
     Boolean(dateRange.dateFrom || dateRange.dateTo);
 
   function startLoading() {
@@ -459,25 +440,16 @@ export default function VisitsPage() {
     setError(null);
   }
 
-  function handleEntrySortChange(nextEntrySort: SortDirection) {
-    setEntrySort(nextEntrySort);
-    setActiveSort(
-      getSortKeyForEntrySort(nextEntrySort),
-      getSortDirectionForEntrySort(nextEntrySort),
-    );
-  }
-
-  function handleHeaderSort(sortKey: VisitSortKey) {
-    const nextSortState = getNextHeaderSortState(
-      activeSortKey,
-      activeSortDirection,
+  function updateHeaderSort(
+    sortKey: HeaderSortKey,
+    setSort: Dispatch<SetStateAction<SortDirection>>,
+  ) {
+    setSort((current) => getNextSortDirection(current));
+    setHeaderSortPriority((current) => [
       sortKey,
-    );
-
-    setActiveSort(nextSortState.sortKey, nextSortState.sortDirection);
-    setEntrySort(
-      getEntrySortForHeaderSort(sortKey, nextSortState.sortDirection),
-    );
+      ...current.filter((key) => key !== sortKey),
+    ]);
+    setPageIndex(0);
   }
 
   useEffect(() => {
@@ -486,7 +458,7 @@ export default function VisitsPage() {
     void getVisits(
       {
         search: debouncedSearch || undefined,
-        status,
+        status: statusFilter,
         dateFrom: dateRange.dateFrom,
         dateTo: dateRange.dateTo,
         page: pageIndex,
@@ -528,8 +500,29 @@ export default function VisitsPage() {
     pageIndex,
     pageSize,
     reloadKey,
-    status,
+    statusFilter,
   ]);
+
+  let tableBodyContent: ReactNode;
+
+  if (isLoading) {
+    tableBodyContent = <LoadingRow />;
+  } else if (error) {
+    tableBodyContent = (
+      <EmptyRow title="Külastuste laadimine ebaõnnestus" description={error} />
+    );
+  } else if (sortedVisits.length > 0) {
+    tableBodyContent = sortedVisits.map((visit) => (
+      <VisitRow key={visit.id} visit={visit} />
+    ));
+  } else {
+    tableBodyContent = (
+      <EmptyRow
+        title="Külastusi ei leitud"
+        description="Muuda otsingut või lisa uus külastus."
+      />
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
@@ -593,10 +586,10 @@ export default function VisitsPage() {
 
         <FilterField label="Staatus">
           <select
-            value={status}
+            value={statusFilter}
             onChange={(event) => {
               startLoading();
-              setStatus(event.target.value as StatusFilter);
+              setStatusFilter(event.target.value as StatusFilter);
               setPageIndex(0);
             }}
             className={filterInputCls}
@@ -613,7 +606,8 @@ export default function VisitsPage() {
           <select
             value={entrySort}
             onChange={(event) => {
-              handleEntrySortChange(event.target.value as SortDirection);
+              setEntrySort(event.target.value as SortDirection);
+              setPageIndex(0);
             }}
             className={filterInputCls}
           >
@@ -669,283 +663,293 @@ export default function VisitsPage() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-display dark:border-slate-800 dark:bg-slate-900">
-        {isLoading ? (
-          <div className="p-6 space-y-3">
-            {Array.from({ length: 6 }, (_, index) => (
-              <div
-                key={index}
-                className="h-18 rounded-2xl bg-slate-100 animate-pulse dark:bg-slate-800"
-              />
-            ))}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
+            <thead className="border-b border-slate-100 bg-slate-50/80 text-sm font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
+              <tr>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Külastaja"
+                    direction={fullNameSort}
+                    onClick={() =>
+                      updateHeaderSort("fullName", setFullNameSort)
+                    }
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Dokument"
+                    direction={documentNumberSort}
+                    onClick={() =>
+                      updateHeaderSort("documentNumber", setDocumentNumberSort)
+                    }
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Võõrustaja"
+                    direction={hostNameSort}
+                    onClick={() =>
+                      updateHeaderSort("hostName", setHostNameSort)
+                    }
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Saabumine"
+                    direction={entrySort}
+                    onClick={() => updateHeaderSort("entryTime", setEntrySort)}
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Lahkumine"
+                    direction={exitTimeSort}
+                    onClick={() =>
+                      updateHeaderSort("exitTime", setExitTimeSort)
+                    }
+                  />
+                </th>
+                <th className="px-6 py-5">
+                  <SortableHeader
+                    label="Staatus"
+                    direction={statusSort}
+                    onClick={() => updateHeaderSort("status", setStatusSort)}
+                  />
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {tableBodyContent}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between dark:border-slate-800 dark:bg-slate-800/60">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <span>Ridu lehel</span>
+              <select
+                value={pageSize}
+                onChange={(event) => {
+                  startLoading();
+                  setPageSize(Number(event.target.value));
+                  setPageIndex(0);
+                }}
+                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </label>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Näitan{" "}
+              <span className="text-slate-900 dark:text-slate-100">
+                {visibleRangeStart}
+              </span>
+              {" - "}
+              <span className="text-slate-900 dark:text-slate-100">
+                {visibleRangeEnd}
+              </span>{" "}
+              /{" "}
+              <span className="text-slate-900 dark:text-slate-100">
+                {totalVisits}
+              </span>
+              {isFilteredResult ? " filtreeritud" : null}
+            </p>
           </div>
-        ) : null}
-
-        {!isLoading && error ? (
-          <div className="p-6">
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
-              {error}
-            </div>
-          </div>
-        ) : null}
-
-        {!isLoading && !error && visits.length === 0 ? (
-          <div className="p-6">
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-800/70">
-              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                Külastusi ei leitud
-              </p>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                Muuda otsingut või lisa uus külastus.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {!isLoading && !error && sortedVisits.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-500">
-                <tr>
-                  <th className="px-6 py-5">
-                    <SortableHeader
-                      label="Külastaja"
-                      direction={getHeaderSortDirection(
-                        activeSortKey,
-                        activeSortDirection,
-                        "fullName",
-                      )}
-                      onClick={() => handleHeaderSort("fullName")}
-                    />
-                  </th>
-                  <th className="px-6 py-5">
-                    <SortableHeader
-                      label="Dokument"
-                      direction={getHeaderSortDirection(
-                        activeSortKey,
-                        activeSortDirection,
-                        "documentNumber",
-                      )}
-                      onClick={() => handleHeaderSort("documentNumber")}
-                    />
-                  </th>
-                  <th className="px-6 py-5">
-                    <SortableHeader
-                      label="Võõrustaja"
-                      direction={getHeaderSortDirection(
-                        activeSortKey,
-                        activeSortDirection,
-                        "hostName",
-                      )}
-                      onClick={() => handleHeaderSort("hostName")}
-                    />
-                  </th>
-                  <th className="px-6 py-5">
-                    <SortableHeader
-                      label="Saabumine"
-                      direction={getHeaderSortDirection(
-                        activeSortKey,
-                        activeSortDirection,
-                        "entryTime",
-                      )}
-                      onClick={() => handleHeaderSort("entryTime")}
-                    />
-                  </th>
-                  <th className="px-6 py-5">
-                    <SortableHeader
-                      label="Lahkumine"
-                      direction={getHeaderSortDirection(
-                        activeSortKey,
-                        activeSortDirection,
-                        "exitTime",
-                      )}
-                      onClick={() => handleHeaderSort("exitTime")}
-                    />
-                  </th>
-                  <th className="px-6 py-5">
-                    <SortableHeader
-                      label="Staatus"
-                      direction={getHeaderSortDirection(
-                        activeSortKey,
-                        activeSortDirection,
-                        "status",
-                      )}
-                      onClick={() => handleHeaderSort("status")}
-                    />
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                {sortedVisits.map((visit) => {
-                  const badge = getStatusBadge(visit.status);
-                  const href = `/visits/${visit.id}`;
-                  const label = `Ava külastuse ${visit.id} detail`;
-
-                  return (
-                    <tr
-                      key={visit.id}
-                      className="cursor-pointer transition-colors hover:bg-slate-50/50 focus-within:bg-slate-50/50 focus-within:outline-2 focus-within:outline-primary/40 dark:hover:bg-slate-800/50 dark:focus-within:bg-slate-800/50"
-                    >
-                      <td className="relative px-6 py-4">
-                        <Link
-                          href={href}
-                          className="absolute inset-0 z-10"
-                          aria-label={label}
-                        >
-                          <span className="sr-only">{label}</span>
-                        </Link>
-                        <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xs dark:bg-primary/20 dark:text-slate-100">
-                            {getInitials(visit.fullName)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                              {visit.fullName ?? "Pole saadaval"}
-                            </p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter font-mono dark:text-slate-500">
-                              {visit.id}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="relative px-6 py-4 text-xs font-mono font-bold text-slate-500 tracking-wider dark:text-slate-400">
-                        <Link
-                          href={href}
-                          className="absolute inset-0 z-10"
-                          tabIndex={-1}
-                        />
-                        {visit.documentNumber ?? "—"}
-                      </td>
-                      <td className="relative px-6 py-4">
-                        <Link
-                          href={href}
-                          className="absolute inset-0 z-10"
-                          tabIndex={-1}
-                        />
-                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                          {visit.hostName ?? "Pole saadaval"}
-                        </p>
-                      </td>
-                      <td className="relative px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        <Link
-                          href={href}
-                          className="absolute inset-0 z-10"
-                          tabIndex={-1}
-                        />
-                        {formatDateTime(visit.entryTime)}
-                      </td>
-                      <td className="relative px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        <Link
-                          href={href}
-                          className="absolute inset-0 z-10"
-                          tabIndex={-1}
-                        />
-                        {formatDateTime(visit.exitTime)}
-                      </td>
-                      <td className="relative px-6 py-4 text-center">
-                        <Link
-                          href={href}
-                          className="absolute inset-0 z-10"
-                          tabIndex={-1}
-                        />
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${badge.className}`}
-                        >
-                          {badge.label}
-                        </span>
-                      </td>
-                    </tr>
+          <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Leht{" "}
+              <span className="text-slate-900 dark:text-slate-100">
+                {visiblePageIndex + 1}
+              </span>{" "}
+              /{" "}
+              <span className="text-slate-900 dark:text-slate-100">
+                {totalPages}
+              </span>
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-xl text-slate-500"
+                onClick={() => {
+                  startLoading();
+                  setPageIndex((current) => Math.max(0, current - 1));
+                }}
+                disabled={isLoading || visiblePageIndex === 0}
+                aria-label="Eelmine leht"
+              >
+                <ChevronLeftIcon className="!text-lg" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-xl text-slate-500"
+                onClick={() => {
+                  startLoading();
+                  setPageIndex((current) =>
+                    Math.min(totalPages - 1, current + 1),
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-
-        {error ? null : (
-          <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 md:flex-row md:items-center md:justify-between dark:border-slate-800 dark:bg-slate-800/60">
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                <span>Ridu lehel</span>
-                <select
-                  value={pageSize}
-                  onChange={(event) => {
-                    startLoading();
-                    setPageSize(Number(event.target.value));
-                    setPageIndex(0);
-                  }}
-                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none transition-colors focus:border-primary/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </label>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Näitan{" "}
-                <span className="text-slate-900 dark:text-slate-100">
-                  {visibleRangeStart}
-                </span>
-                {" - "}
-                <span className="text-slate-900 dark:text-slate-100">
-                  {visibleRangeEnd}
-                </span>{" "}
-                /{" "}
-                <span className="text-slate-900 dark:text-slate-100">
-                  {totalVisits}
-                </span>
-                {isFilteredResult ? " filtreeritud" : null}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Leht{" "}
-                <span className="text-slate-900 dark:text-slate-100">
-                  {visiblePageIndex + 1}
-                </span>{" "}
-                /{" "}
-                <span className="text-slate-900 dark:text-slate-100">
-                  {totalPages}
-                </span>
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="rounded-xl text-slate-500"
-                  onClick={() => {
-                    startLoading();
-                    setPageIndex((current) => Math.max(0, current - 1));
-                  }}
-                  disabled={isLoading || visiblePageIndex === 0}
-                  aria-label="Eelmine leht"
-                >
-                  <ChevronLeftIcon className="!text-lg" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="rounded-xl text-slate-500"
-                  onClick={() => {
-                    startLoading();
-                    setPageIndex((current) =>
-                      Math.min(totalPages - 1, current + 1),
-                    );
-                  }}
-                  disabled={isLoading || visiblePageIndex >= totalPages - 1}
-                  aria-label="Järgmine leht"
-                >
-                  <ChevronRightIcon className="!text-lg" />
-                </Button>
-              </div>
+                }}
+                disabled={isLoading || visiblePageIndex >= totalPages - 1}
+                aria-label="Järgmine leht"
+              >
+                <ChevronRightIcon className="!text-lg" />
+              </Button>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
+  );
+}
+
+function VisitRow({ visit }: Readonly<{ visit: VisitListItemResponse }>) {
+  const href = `/visits/${visit.id}`;
+  const label = `Ava külastuse ${visit.id} detail`;
+
+  return (
+    <tr className="cursor-pointer transition-colors hover:bg-slate-50/70 focus-within:bg-slate-50/70 focus-within:outline-2 focus-within:outline-primary/40 dark:hover:bg-slate-800/50 dark:focus-within:bg-slate-800/50">
+      <td className="relative px-6 py-4 whitespace-nowrap">
+        <Link href={href} className="absolute inset-0 z-10" aria-label={label}>
+          <span className="sr-only">{label}</span>
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-black text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+            {getInitials(visit.fullName)}
+          </div>
+          <div>
+            <p className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              {visit.fullName ?? "Pole saadaval"}
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              ID {visit.id.slice(0, 8)}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        {visit.documentNumber ? (
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {visit.documentNumber}
+          </p>
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500">Puudub</p>
+        )}
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        {visit.hostName ? (
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {visit.hostName}
+          </p>
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            Määramata
+          </p>
+        )}
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        <DateTimeStack value={visit.entryTime} emptyLabel="Puudub" />
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        <DateTimeStack value={visit.exitTime} emptyLabel="Lahkumine puudub" />
+      </td>
+      <td className="relative px-6 py-4">
+        <Link href={href} className="absolute inset-0 z-10" tabIndex={-1} />
+        <VisitStatusBadge status={visit.status} />
+      </td>
+    </tr>
+  );
+}
+
+function VisitStatusBadge({ status }: Readonly<{ status: string | null }>) {
+  const badge = getStatusBadge(status);
+
+  return (
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${badge.className}`}
+    >
+      {badge.label}
+    </span>
+  );
+}
+
+function DateTimeStack({
+  value,
+  emptyLabel,
+}: Readonly<{
+  value: string | null;
+  emptyLabel: string;
+}>) {
+  if (!value) {
+    return (
+      <p className="text-sm text-slate-400 dark:text-slate-500">{emptyLabel}</p>
+    );
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return (
+      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        {value}
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        {new Intl.DateTimeFormat("et-EE", { dateStyle: "medium" }).format(date)}
+      </div>
+      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        {new Intl.DateTimeFormat("et-EE", { timeStyle: "short" }).format(date)}
+      </div>
+    </div>
+  );
+}
+
+function LoadingRow() {
+  return (
+    <tr>
+      <td colSpan={6} className="px-6 py-14 text-center">
+        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+          Laen külastusi...
+        </p>
+      </td>
+    </tr>
+  );
+}
+
+function EmptyRow({
+  title,
+  description,
+}: Readonly<{
+  title: string;
+  description: string;
+}>) {
+  return (
+    <tr>
+      <td colSpan={6} className="px-6 py-14 text-center">
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {title}
+        </p>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          {description}
+        </p>
+      </td>
+    </tr>
   );
 }
 
