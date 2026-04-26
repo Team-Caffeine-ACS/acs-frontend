@@ -670,22 +670,6 @@ export default function VisitsPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden font-display dark:border-slate-800 dark:bg-slate-900">
-        <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between dark:border-slate-800 dark:bg-slate-800/60">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest dark:text-slate-500">
-            Leitud{" "}
-            <span className="text-slate-900 dark:text-slate-100">
-              {totalVisits}
-            </span>{" "}
-            külastust
-          </p>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest dark:text-slate-500">
-            Andmeallikas:{" "}
-            <span className="text-slate-900 dark:text-slate-100">
-              GET /api/visits
-            </span>
-          </p>
-        </div>
-
         {isLoading ? (
           <div className="p-6 space-y-3">
             {Array.from({ length: 6 }, (_, index) => (
