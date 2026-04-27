@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Divider from "@mui/material/Divider";
@@ -17,10 +17,10 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { useCurrentUser } from "@/components/layout/current-user-provider";
+import { useTheme } from "@/components/theme/theme-provider";
 import { getCurrentUserDisplay } from "@/lib/current-user";
 import type { SxProps, Theme } from "@mui/material/styles";
 
-const THEME_STORAGE_KEY = "theme";
 const DATE_FORMATTER = new Intl.DateTimeFormat("et-EE", {
   day: "2-digit",
   month: "2-digit",
@@ -62,35 +62,6 @@ function useCurrentMinute() {
   }, []);
 
   return currentDateTime;
-}
-
-function getInitialDarkMode() {
-  if (globalThis.window === undefined) {
-    return false;
-  }
-
-  const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
-  if (storedTheme !== null) {
-    return storedTheme === "dark";
-  }
-
-  return globalThis.document.documentElement.classList.contains("dark");
-}
-
-function useDarkModeState() {
-  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
-
-  useEffect(() => {
-    const root = globalThis.document.documentElement;
-    root.classList.toggle("dark", isDarkMode);
-    root.style.colorScheme = isDarkMode ? "dark" : "light";
-    globalThis.localStorage.setItem(
-      THEME_STORAGE_KEY,
-      isDarkMode ? "dark" : "light",
-    );
-  }, [isDarkMode]);
-
-  return { isDarkMode, setIsDarkMode };
 }
 
 function getFormattedDateTime(currentDateTime: Date | null) {
@@ -190,7 +161,7 @@ export function AppHeader() {
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
   const { errorMessage, status, user } = useCurrentUser();
   const currentDateTime = useCurrentMinute();
-  const { isDarkMode, setIsDarkMode } = useDarkModeState();
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const isMenuOpen = Boolean(menuAnchorEl);
   const { currentDate, currentTime } = getFormattedDateTime(currentDateTime);
   const { userNameText, userRoleText } = getUserText(
@@ -209,10 +180,6 @@ export function AppHeader() {
 
   function handleCloseUserMenu() {
     setMenuAnchorEl(null);
-  }
-
-  function handleToggleTheme() {
-    setIsDarkMode((currentValue) => !currentValue);
   }
 
   function handleLogout() {
@@ -259,7 +226,7 @@ export function AppHeader() {
             aria-label={isDarkMode ? "Lülita hele teema" : "Lülita tume teema"}
             title={isDarkMode ? "Lülita hele teema" : "Lülita tume teema"}
             type="button"
-            onClick={handleToggleTheme}
+            onClick={toggleDarkMode}
           >
             {/* Both icons rendered always; CSS dark: controls which is visible — avoids SSR/client icon mismatch */}
             <Brightness2OutlinedIcon className="text-[20px] dark:hidden" />
