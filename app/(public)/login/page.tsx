@@ -101,7 +101,7 @@ export default function LoginPage() {
           <div className="space-y-6 px-8 py-8">
             <div className="space-y-1 text-center">
               <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                Tere tulemast tagasi
+                Tere tulemast!
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Palun logige sisse, et pääseda külastajate haldussüsteemi
@@ -207,8 +207,16 @@ export default function LoginPage() {
 
       {/* Page footer */}
       <footer className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
-        © 2024 Pääsla infosüsteem. Kõik õigused kaitstud.
-      </footer>
+  © {new Date().getFullYear()} Pääsla infosüsteem.{" "}
+  <a
+    href="https://github.com/Team-Caffeine-ACS/acs-frontend?tab=MIT-1-ov-file"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="underline hover:text-slate-600 dark:hover:text-slate-300"
+  >
+    Kõik õigused kaitstud
+  </a>
+</footer>
     </div>
   );
 }
