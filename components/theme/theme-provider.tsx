@@ -25,7 +25,9 @@ function getInitialDarkMode() {
   return globalThis.document.documentElement.classList.contains("dark");
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
 
   useEffect(() => {
