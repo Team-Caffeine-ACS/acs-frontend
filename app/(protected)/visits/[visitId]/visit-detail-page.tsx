@@ -525,6 +525,28 @@ interface EditVisitModalProps {
   readonly onSuccess: () => Promise<void>;
 }
 
+function handleEscapeKey(onClose: () => void) {
+  return function handleKey(e: KeyboardEvent) {
+    if (e.key === "Escape") onClose();
+  };
+}
+
+async function loadCurrentAssignor(
+  setSelectedAssignor: (p: PersonInRoleResponse | null) => void,
+) {
+  try {
+    const me: MeResponse = await getMe();
+    if (!me.person) return;
+    const results: PersonInRoleResponse[] = await searchEmployees(
+      me.person.givenName,
+    );
+    const match = results.find((r) => r.personId === me.personId);
+    if (match) setSelectedAssignor(match);
+  } catch {
+    // Silently ignore — assignor field stays empty for manual selection.
+  }
+}
+
 function EditVisitModal({
   visitId,
   detail,
@@ -541,7 +563,6 @@ function EditVisitModal({
   const [exitTime, setExitTime] = useState(toDatetimeLocal(detail?.exitTime));
   const [comment, setComment] = useState(detail?.visitReason ?? "");
 
-  // Host (optional)
   const [hostQuery, setHostQuery] = useState("");
   const [hostResults, setHostResults] = useState<PersonInRoleResponse[]>([]);
   const [isSearchingHost, setIsSearchingHost] = useState(false);
@@ -560,31 +581,13 @@ function EditVisitModal({
     getAccessPoints()
       .then(setAccessPoints)
       .catch(() => {});
-    getMe()
-      .then((me: MeResponse) => {
-        if (me.person) {
-          searchEmployees(me.person.givenName)
-            .then((results: PersonInRoleResponse[]) => {
-              const match = results.find(
-                (r: PersonInRoleResponse) => r.personId === me.personId,
-              );
-              if (match) {
-                setSelectedAssignor(match);
-              }
-            })
-            .catch(() => {});
-        }
-      })
-      .catch(() => {});
+    void loadCurrentAssignor(setSelectedAssignor);
   }, []);
 
-  // Close on Escape
   useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    const handler = handleEscapeKey(onClose);
+    globalThis.window.addEventListener("keydown", handler);
+    return () => globalThis.window.removeEventListener("keydown", handler);
   }, [onClose]);
 
   async function handleHostSearch() {
@@ -630,10 +633,9 @@ function EditVisitModal({
       entryTime: entryTime ? fromDatetimeLocal(entryTime) : undefined,
       exitTime: exitTime ? fromDatetimeLocal(exitTime) : undefined,
       comment:
-        comment.trim() !== ""
-          ? comment.trim()
-          : detail?.visitReason || undefined,
-      hostId: selectedHost ? selectedHost.personId : undefined,
+        comment.trim() === ""
+          ? detail?.visitReason || undefined
+          : comment.trim(),
     };
 
     setIsSubmitting(true);
@@ -684,13 +686,13 @@ function EditVisitModal({
           {/* Scrollable fields */}
           <div className="flex-1 overflow-y-auto space-y-6 p-7">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <ModalField label="Osakond">
+              <ModalField label="Pääsla">
                 <select
                   value={accessPointId}
                   onChange={(e) => setAccessPointId(e.target.value)}
                   className={inputCls}
                 >
-                  <option value="">Vali Osakond</option>
+                  <option value="">Vali Pääsla</option>
                   {accessPoints.map((ap) => (
                     <option key={ap.id} value={ap.id}>
                       {ap.name}
@@ -1320,12 +1322,12 @@ function VisitKeycardSection({
         Seotud võtmekaart
       </div>
 
-      {!hasLinkedCard ? (
+      {hasLinkedCard ? null : (
         <EmptyState
           title="Kiipkaart puudub"
           description="Selle külastuse detailandmed ei sisalda seotud kaardi ID-d."
         />
-      ) : null}
+      )}
 
       {hasLinkedCard && keycardState.isLoading ? (
         <SectionSkeleton lines={2} />
