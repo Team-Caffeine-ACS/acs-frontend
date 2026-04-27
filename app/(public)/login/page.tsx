@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ShieldIcon from "@mui/icons-material/Shield";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -50,9 +51,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col bg-slate-100 transition-colors dark:bg-slate-950">
       {/* Top bar */}
       <header className="flex items-center justify-between px-8 py-4">
-        <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
-          <ShieldIcon className="text-blue-700 !text-xl" />
-          Pääsla infosüsteem
+        <div className="flex items-center gap-8">
+          <div className="flex items-center text-primary">
+            <div className="flex size-10 items-center justify-center rounded-xl">
+              <VerifiedUserIcon className="text-[22px]" color="primary" />
+            </div>
+            <h2 className="whitespace-nowrap text-lg font-bold leading-tight tracking-tight text-slate-900 dark:text-white">
+              Pääsla infosüsteem
+            </h2>
+          </div>
         </div>
         <nav className="flex items-center gap-6">
           <button
