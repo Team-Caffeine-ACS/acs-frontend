@@ -10,7 +10,6 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import LoginIcon from "@mui/icons-material/Login";
 import SecurityIcon from "@mui/icons-material/Security";
-import LanguageIcon from "@mui/icons-material/Language";
 import Brightness2OutlinedIcon from "@mui/icons-material/Brightness2Outlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import { useTheme } from "@/components/theme/theme-provider";
@@ -207,16 +206,16 @@ export default function LoginPage() {
 
       {/* Page footer */}
       <footer className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
-  © {new Date().getFullYear()} Pääsla infosüsteem.{" "}
-  <a
-    href="https://github.com/Team-Caffeine-ACS/acs-frontend?tab=MIT-1-ov-file"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="underline hover:text-slate-600 dark:hover:text-slate-300"
-  >
-    Kõik õigused kaitstud
-  </a>
-</footer>
+        © {new Date().getFullYear()} Pääsla infosüsteem.{" "}
+        <a
+          href="https://github.com/Team-Caffeine-ACS/acs-frontend?tab=MIT-1-ov-file"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-slate-600 dark:hover:text-slate-300"
+        >
+          Kõik õigused kaitstud
+        </a>
+      </footer>
     </div>
   );
 }
