@@ -62,31 +62,27 @@ export default function LoginPage() {
           </div>
         </div>
         <nav className="flex items-center gap-6">
-          <button
-            type="button"
+          <a
+            href="https://github.com/Team-Caffeine-ACS"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
           >
-            Abi
-          </button>
+            Github repository
+          </a>
+
           <button
-            type="button"
-            className="text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-          >
-            Kontakt
-          </button>
-          <button
-            suppressHydrationWarning
             type="button"
             aria-label="Vaheta teema"
             title={isDarkMode ? "Lülita hele teema" : "Lülita tume teema"}
             onClick={toggleDarkMode}
             className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-800"
           >
-            <Brightness2OutlinedIcon className="!text-lg dark:hidden" />
-            <LightModeOutlinedIcon className="hidden !text-lg dark:block" />
-          </button>
-          <button className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
-            <LanguageIcon className="!text-lg" /> ET
+            {isDarkMode ? (
+              <LightModeOutlinedIcon className="!text-lg" />
+            ) : (
+              <Brightness2OutlinedIcon className="!text-lg" />
+            )}
           </button>
         </nav>
       </header>
