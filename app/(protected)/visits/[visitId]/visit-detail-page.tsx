@@ -164,8 +164,7 @@ function getStatusPresentation(status: VisitStatusKey | "loading"): {
     },
     planned: {
       label: "Planeeritud",
-      className:
-        "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+      className: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
     },
     in_building: {
       label: "Aktiivne",
@@ -885,12 +884,12 @@ function PersonSearchField({
   if (selected) {
     return (
       <div
-            className={cn(
-              "flex items-center justify-between rounded-xl border px-3 py-2.5",
-              highlightSelected
-                ? "border-primary/30 bg-primary/5 dark:border-primary/40 dark:bg-primary/10"
-                : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900",
-            )}
+        className={cn(
+          "flex items-center justify-between rounded-xl border px-3 py-2.5",
+          highlightSelected
+            ? "border-primary/30 bg-primary/5 dark:border-primary/40 dark:bg-primary/10"
+            : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900",
+        )}
       >
         <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
           {selected.givenName} {selected.surname}
@@ -1113,9 +1112,9 @@ function VisitPageHeader({
             ) : (
               "Alustatud"
             )}{" "}
-              <span className="font-semibold text-slate-700 dark:text-slate-200">
-                {formatDateTime(arrivalTime)}
-              </span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              {formatDateTime(arrivalTime)}
+            </span>
           </p>
         </div>
       </div>
@@ -1479,7 +1478,9 @@ function InfoField({
       <div
         className={cn(
           "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em]",
-          future ? "text-sky-500 dark:text-sky-300" : "text-slate-400 dark:text-slate-500",
+          future
+            ? "text-sky-500 dark:text-sky-300"
+            : "text-slate-400 dark:text-slate-500",
         )}
       >
         <span
@@ -1521,7 +1522,9 @@ function MetaRow({
       <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
         {label}
       </p>
-      <p className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">{value}</p>
+      <p className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+        {value}
+      </p>
     </div>
   );
 }
@@ -1556,8 +1559,12 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-800/50">
-      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{description}</p>
+      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+        {title}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+        {description}
+      </p>
     </div>
   );
 }
@@ -1605,7 +1612,10 @@ function SectionSkeleton({ lines }: { readonly lines: number }) {
   return (
     <div className="p-6 space-y-3">
       {Array.from({ length: lines }, (_, i) => (
-        <div key={i} className="h-18 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+        <div
+          key={i}
+          className="h-18 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"
+        />
       ))}
     </div>
   );

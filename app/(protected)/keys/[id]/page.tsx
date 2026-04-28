@@ -139,7 +139,9 @@ export default function KeycardDetailsPage() {
             <p className="text-sm font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
               ID: {keycard.id}
             </p>
-            <p className="max-w-2xl text-slate-500 dark:text-slate-400">{currentStateText}</p>
+            <p className="max-w-2xl text-slate-500 dark:text-slate-400">
+              {currentStateText}
+            </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -259,9 +261,13 @@ function PageState({
   return (
     <div className="mx-auto flex min-h-[50vh] max-w-3xl items-center justify-center">
       <div className="rounded-3xl border border-slate-200 bg-white px-8 py-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</p>
+        <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {title}
+        </p>
         {description ? (
-          <p className="mt-2 max-w-lg text-sm text-slate-500 dark:text-slate-400">{description}</p>
+          <p className="mt-2 max-w-lg text-sm text-slate-500 dark:text-slate-400">
+            {description}
+          </p>
         ) : null}
       </div>
     </div>
@@ -355,7 +361,8 @@ function getDetailFieldClasses({
 }>) {
   if (isMissing) {
     return {
-      containerClass: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+      containerClass:
+        "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
       valueClass: "text-slate-500 dark:text-slate-400",
     };
   }
@@ -393,10 +400,16 @@ function SummaryEvent({
         <div className="flex items-start gap-2">
           <LinkIcon className="mt-0.5 !text-base text-slate-400 dark:text-slate-500" />
           <div>
-            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</p>
-            <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{value}</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              {title}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              {value}
+            </p>
             {description ? (
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                {description}
+              </p>
             ) : null}
           </div>
         </div>

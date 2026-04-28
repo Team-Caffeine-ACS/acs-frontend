@@ -323,7 +323,9 @@ export default function NewVisitPage() {
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {selectedVisitor.givenName} {selectedVisitor.surname}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Olemasolev külastaja</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Olemasolev külastaja
+                  </p>
                 </div>
               </div>
               <button
