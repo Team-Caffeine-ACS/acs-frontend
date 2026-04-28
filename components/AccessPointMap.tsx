@@ -1,4 +1,4 @@
-// components/AccessPointMap.tsx (lihtsustatud versioon)
+"use client";
 
 import React from "react";
 import { AccessPointResponse } from "@/lib/api/accessPoints";
@@ -12,15 +12,17 @@ const AccessPointMap = ({
 }) => {
   // 1. Määrame vaikekoordinaadid (nt Tallinn)
   const defaultCenter: [number, number] = [59.437, 24.753];
+  const firstAccessPoint = accessPoints[0];
+  const hasValidFirstCoordinates =
+    firstAccessPoint !== undefined &&
+    Number.isFinite(Number(firstAccessPoint.latitude)) &&
+    Number.isFinite(Number(firstAccessPoint.longitude));
 
   // 2. Kontrollime turvaliselt, kas meil on vähemalt üks punkt olemas
   // Kasutame optional chaining (?.) ja kontrollime, et lat/lon oleks olemas
   const center: [number, number] =
-    accessPoints &&
-    accessPoints.length > 0 &&
-    accessPoints[0].latitude &&
-    accessPoints[0].longitude
-      ? [Number(accessPoints[0].latitude), Number(accessPoints[0].longitude)]
+    hasValidFirstCoordinates
+      ? [Number(firstAccessPoint.latitude), Number(firstAccessPoint.longitude)]
       : defaultCenter;
 
   return (

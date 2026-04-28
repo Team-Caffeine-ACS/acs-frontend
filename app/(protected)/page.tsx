@@ -111,8 +111,8 @@ export default function DashboardPage() {
             </p>
           </div>
           <Link href="/visits/new" className="w-full sm:w-auto">
-            <Button className="w-full gap-2 rounded-xl bg-blue-700 px-6 py-5 text-xs font-black uppercase tracking-widest text-white shadow-lg hover:bg-blue-800 sm:w-auto">
-              <AddIcon className="!text-base" /> Lisa külastus
+            <Button className="w-full gap-2 rounded-xl bg-blue-700 px-8 py-6 text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-blue-900/20 hover:bg-blue-800 sm:w-auto">
+              <AddIcon className="!text-lg" /> Lisa külastus
             </Button>
           </Link>
         </div>

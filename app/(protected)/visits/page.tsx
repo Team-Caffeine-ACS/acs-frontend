@@ -544,7 +544,7 @@ export default function VisitsPage() {
             Ekspordi nimekiri
           </Button>
           <Link href="/visits/new">
-            <Button className="gap-2 font-bold text-xs uppercase tracking-widest py-6 px-8 shadow-xl shadow-primary/20 bg-primary">
+            <Button className="gap-2 bg-blue-700 px-8 py-6 text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-blue-900/20 hover:bg-blue-800 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-800">
               <AddIcon className="!text-lg" />
               Lisa külastus
             </Button>

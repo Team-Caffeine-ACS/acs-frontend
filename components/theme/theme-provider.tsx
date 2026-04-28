@@ -1,48 +1,39 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 import {
-  THEME_STORAGE_KEY,
   resolveDarkModePreference,
+  setThemePreference,
+  subscribeToThemePreference,
 } from "@/lib/theme";
 
 type ThemeContextValue = {
   isDarkMode: boolean;
-  setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
   toggleDarkMode: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function getInitialDarkMode() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return resolveDarkModePreference();
-}
-
 export function ThemeProvider({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
+  const isDarkMode = useSyncExternalStore(
+    subscribeToThemePreference,
+    resolveDarkModePreference,
+    () => false,
+  );
 
   useEffect(() => {
     const root = globalThis.document.documentElement;
     root.classList.toggle("dark", isDarkMode);
     root.style.colorScheme = isDarkMode ? "dark" : "light";
-    globalThis.localStorage.setItem(
-      THEME_STORAGE_KEY,
-      isDarkMode ? "dark" : "light",
-    );
   }, [isDarkMode]);
 
   const value = useMemo(
     () => ({
       isDarkMode,
-      setIsDarkMode,
       toggleDarkMode: () => {
-        setIsDarkMode((currentValue) => !currentValue);
+        setThemePreference(!isDarkMode);
       },
     }),
     [isDarkMode],
