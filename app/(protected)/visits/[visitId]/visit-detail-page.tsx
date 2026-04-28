@@ -521,6 +521,8 @@ const inputCls =
 interface EditVisitModalProps {
   readonly visitId: string;
   readonly detail: VisitDetailResponse | null;
+  readonly arrivalTime: string | null;
+  readonly departureTime: string | null;
   readonly onClose: () => void;
   readonly onSuccess: () => Promise<void>;
 }
@@ -550,6 +552,8 @@ async function loadCurrentAssignor(
 function EditVisitModal({
   visitId,
   detail,
+  arrivalTime,
+  departureTime,
   onClose,
   onSuccess,
 }: EditVisitModalProps) {
@@ -557,10 +561,8 @@ function EditVisitModal({
   const [accessPointId, setAccessPointId] = useState(
     detail?.accessPointId ?? "",
   );
-  const [entryTime, setEntryTime] = useState(
-    toDatetimeLocal(detail?.arrivalTime),
-  );
-  const [exitTime, setExitTime] = useState(toDatetimeLocal(detail?.exitTime));
+  const [entryTime, setEntryTime] = useState(toDatetimeLocal(arrivalTime));
+  const [exitTime, setExitTime] = useState(toDatetimeLocal(departureTime));
   const [comment, setComment] = useState(detail?.visitReason ?? "");
 
   const [hostQuery, setHostQuery] = useState("");
@@ -579,10 +581,27 @@ function EditVisitModal({
 
   useEffect(() => {
     getAccessPoints()
-      .then(setAccessPoints)
+      .then((points) => {
+        setAccessPoints(points);
+        if (!accessPointId && detail?.accessPointName) {
+          const match = points.find((ap) => ap.name === detail.accessPointName);
+          if (match) setAccessPointId(match.id);
+        }
+      })
       .catch(() => {});
     void loadCurrentAssignor(setSelectedAssignor);
-  }, []);
+
+    if (detail?.hostName) {
+      searchEmployees(detail.hostName)
+        .then((results: PersonInRoleResponse[]) => {
+          const match = results.find(
+            (r) => `${r.givenName} ${r.surname}` === detail.hostName,
+          );
+          if (match) setSelectedHost(match);
+        })
+        .catch(() => {});
+    }
+  }, [detail?.hostName, detail?.accessPointName, accessPointId]);
 
   useEffect(() => {
     const handler = handleEscapeKey(onClose);
@@ -998,6 +1017,8 @@ function VisitDetailContent({
         <EditVisitModal
           visitId={visitId}
           detail={model.detail}
+          arrivalTime={model.arrivalTime}
+          departureTime={model.departureTime}
           onClose={model.closeEditModal}
           onSuccess={async () => {
             await Promise.all([model.refreshDetail(), model.refreshTimeline()]);
