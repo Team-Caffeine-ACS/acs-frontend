@@ -36,7 +36,6 @@ type VisitSortKey =
   | "entryTime"
   | "exitTime"
   | "status";
-type HeaderSortKey = VisitSortKey;
 
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -187,23 +186,9 @@ function getInitials(fullName: string | null): string {
 
 function sortVisits(
   visits: VisitListItemResponse[],
-  fullNameSort: SortDirection,
-  documentNumberSort: SortDirection,
-  hostNameSort: SortDirection,
-  entrySort: SortDirection,
-  exitTimeSort: SortDirection,
-  statusSort: SortDirection,
-  headerSortPriority: HeaderSortKey[],
+  sortDirections: Record<VisitSortKey, SortDirection>,
+  headerSortPriority: VisitSortKey[],
 ): VisitListItemResponse[] {
-  const sortDirections: Record<HeaderSortKey, SortDirection> = {
-    fullName: fullNameSort,
-    documentNumber: documentNumberSort,
-    hostName: hostNameSort,
-    entryTime: entrySort,
-    exitTime: exitTimeSort,
-    status: statusSort,
-  };
-
   if (
     Object.values(sortDirections).every((direction) => direction === "default")
   ) {
@@ -390,7 +375,7 @@ export default function VisitsPage() {
   const [entrySort, setEntrySort] = useState<SortDirection>("default");
   const [exitTimeSort, setExitTimeSort] = useState<SortDirection>("default");
   const [statusSort, setStatusSort] = useState<SortDirection>("default");
-  const [headerSortPriority, setHeaderSortPriority] = useState<HeaderSortKey[]>(
+  const [headerSortPriority, setHeaderSortPriority] = useState<VisitSortKey[]>(
     [
       "fullName",
       "documentNumber",
@@ -408,14 +393,17 @@ export default function VisitsPage() {
 
   const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const dateRange = getVisitDateRange(dateFilterMode, visitDate);
+  const sortDirections: Record<VisitSortKey, SortDirection> = {
+    fullName: fullNameSort,
+    documentNumber: documentNumberSort,
+    hostName: hostNameSort,
+    entryTime: entrySort,
+    exitTime: exitTimeSort,
+    status: statusSort,
+  };
   const sortedVisits = sortVisits(
     visits,
-    fullNameSort,
-    documentNumberSort,
-    hostNameSort,
-    entrySort,
-    exitTimeSort,
-    statusSort,
+    sortDirections,
     headerSortPriority,
   );
   const totalVisits = pageMeta?.totalElements ?? visits.length;
@@ -441,7 +429,7 @@ export default function VisitsPage() {
   }
 
   function updateHeaderSort(
-    sortKey: HeaderSortKey,
+    sortKey: VisitSortKey,
     setSort: Dispatch<SetStateAction<SortDirection>>,
   ) {
     setSort((current) => getNextSortDirection(current));
