@@ -16,6 +16,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { primaryCtaButtonClassName } from "@/components/ui/button-styles";
 import { ApiError } from "@/lib/api/error";
 import {
   deriveVisitStatus,
@@ -538,7 +539,7 @@ export default function VisitsPage() {
             Ekspordi nimekiri
           </Button>
           <Link href="/visits/new">
-            <Button className="gap-2 bg-blue-700 px-8 py-6 text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-blue-900/20 hover:bg-blue-800 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-800">
+            <Button className={primaryCtaButtonClassName}>
               <AddIcon className="!text-lg" />
               Lisa külastus
             </Button>

@@ -14,6 +14,7 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import InfoIcon from "@mui/icons-material/Info";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { primaryCtaButtonClassName } from "@/components/ui/button-styles";
 import { ApiError } from "@/lib/api/error";
 import {
   getKeycard,
@@ -256,7 +257,7 @@ export default function KeycardsPage() {
           >
             <FileDownloadIcon className="!text-lg" /> Ekspordi
           </Button>
-          <Button className="gap-2 bg-blue-700 px-8 py-6 text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-blue-900/20 hover:bg-blue-800 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-800">
+          <Button className={primaryCtaButtonClassName}>
             <AddIcon className="!text-lg" /> Registreeri kaart
           </Button>
         </div>

@@ -22,7 +22,9 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import { Button } from "@/components/ui/button";
+import { primaryCtaButtonClassName } from "@/components/ui/button-styles";
 import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
 
 const DynamicAccessPointMap = dynamic(
   () => import("@/components/AccessPointMap"),
@@ -111,7 +113,12 @@ export default function DashboardPage() {
             </p>
           </div>
           <Link href="/visits/new" className="w-full sm:w-auto">
-            <Button className="w-full gap-2 rounded-xl bg-blue-700 px-8 py-6 text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-blue-900/20 hover:bg-blue-800 sm:w-auto">
+            <Button
+              className={cn(
+                primaryCtaButtonClassName,
+                "w-full rounded-xl sm:w-auto",
+              )}
+            >
               <AddIcon className="!text-lg" /> Lisa külastus
             </Button>
           </Link>
