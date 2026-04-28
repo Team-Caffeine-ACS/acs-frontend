@@ -46,7 +46,9 @@ export default function RootLayout({
       <body
         className={`${inter.className} bg-slate-50 text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-50`}
       >
-        <script dangerouslySetInnerHTML={{ __html: getThemeInitializationScript() }} />
+        <script
+          dangerouslySetInnerHTML={{ __html: getThemeInitializationScript() }}
+        />
         <ThemeRegistry>
           <ThemeProvider>{children}</ThemeProvider>
         </ThemeRegistry>

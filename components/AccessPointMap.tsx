@@ -20,10 +20,9 @@ const AccessPointMap = ({
 
   // 2. Kontrollime turvaliselt, kas meil on vähemalt üks punkt olemas
   // Kasutame optional chaining (?.) ja kontrollime, et lat/lon oleks olemas
-  const center: [number, number] =
-    hasValidFirstCoordinates
-      ? [Number(firstAccessPoint.latitude), Number(firstAccessPoint.longitude)]
-      : defaultCenter;
+  const center: [number, number] = hasValidFirstCoordinates
+    ? [Number(firstAccessPoint.latitude), Number(firstAccessPoint.longitude)]
+    : defaultCenter;
 
   return (
     <div className="h-[320px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:h-[400px]">

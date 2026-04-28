@@ -375,16 +375,14 @@ export default function VisitsPage() {
   const [entrySort, setEntrySort] = useState<SortDirection>("default");
   const [exitTimeSort, setExitTimeSort] = useState<SortDirection>("default");
   const [statusSort, setStatusSort] = useState<SortDirection>("default");
-  const [headerSortPriority, setHeaderSortPriority] = useState<VisitSortKey[]>(
-    [
-      "fullName",
-      "documentNumber",
-      "hostName",
-      "entryTime",
-      "exitTime",
-      "status",
-    ],
-  );
+  const [headerSortPriority, setHeaderSortPriority] = useState<VisitSortKey[]>([
+    "fullName",
+    "documentNumber",
+    "hostName",
+    "entryTime",
+    "exitTime",
+    "status",
+  ]);
   const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>("all");
   const [visitDate, setVisitDate] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
@@ -401,11 +399,7 @@ export default function VisitsPage() {
     exitTime: exitTimeSort,
     status: statusSort,
   };
-  const sortedVisits = sortVisits(
-    visits,
-    sortDirections,
-    headerSortPriority,
-  );
+  const sortedVisits = sortVisits(visits, sortDirections, headerSortPriority);
   const totalVisits = pageMeta?.totalElements ?? visits.length;
   const totalPages = Math.max(
     1,
