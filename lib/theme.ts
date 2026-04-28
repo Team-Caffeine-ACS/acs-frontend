@@ -3,7 +3,7 @@ const DARK_THEME_MEDIA_QUERY = "(prefers-color-scheme: dark)";
 const THEME_CHANGE_EVENT = "theme-change";
 
 export function resolveDarkModePreference() {
-  if (typeof globalThis.window === "undefined") {
+  if (globalThis.window === undefined) {
     return false;
   }
 
@@ -21,7 +21,7 @@ export function resolveDarkModePreference() {
 }
 
 export function subscribeToThemePreference(onChange: () => void) {
-  if (typeof globalThis.window === "undefined") {
+  if (globalThis.window === undefined) {
     return () => undefined;
   }
 
@@ -45,7 +45,7 @@ export function subscribeToThemePreference(onChange: () => void) {
 }
 
 export function setThemePreference(isDarkMode: boolean) {
-  if (typeof globalThis.window === "undefined") {
+  if (globalThis.window === undefined) {
     return;
   }
 
