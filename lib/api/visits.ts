@@ -443,3 +443,20 @@ export async function getVisits(
 
   return normalizeVisitListResponse(raw);
 }
+
+export interface EditVisitRequest {
+  hostId?: string;
+  assignorId?: string | null;
+  accessPointId?: string;
+  entryTime?: string;
+  exitTime?: string;
+  comment?: string;
+}
+
+export async function editVisit(
+  visitId: string,
+  body: EditVisitRequest,
+): Promise<VisitDetailResponse> {
+  const raw = await apiClient.put<unknown>(`/api/visits/${visitId}/edit`, body);
+  return normalizeVisitDetailResponse(raw);
+}
