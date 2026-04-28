@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ThemeRegistry from "./ThemeRegistry";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { getThemeInitializationScript } from "@/lib/theme";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,7 +29,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1d4ed8",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
 
 export default function RootLayout({
@@ -37,10 +42,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="et">
+    <html lang="et" suppressHydrationWarning>
       <body
         className={`${inter.className} bg-slate-50 text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-50`}
       >
+        <script dangerouslySetInnerHTML={{ __html: getThemeInitializationScript() }} />
         <ThemeRegistry>
           <ThemeProvider>{children}</ThemeProvider>
         </ThemeRegistry>

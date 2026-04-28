@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-
-const THEME_STORAGE_KEY = "theme";
+import {
+  THEME_STORAGE_KEY,
+  resolveDarkModePreference,
+} from "@/lib/theme";
 
 type ThemeContextValue = {
   isDarkMode: boolean;
@@ -13,16 +15,11 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function getInitialDarkMode() {
-  if (globalThis.window === undefined) {
+  if (typeof window === "undefined") {
     return false;
   }
 
-  const storedTheme = globalThis.localStorage.getItem(THEME_STORAGE_KEY);
-  if (storedTheme !== null) {
-    return storedTheme === "dark";
-  }
-
-  return globalThis.document.documentElement.classList.contains("dark");
+  return resolveDarkModePreference();
 }
 
 export function ThemeProvider({

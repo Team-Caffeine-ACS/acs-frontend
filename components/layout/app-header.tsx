@@ -228,9 +228,11 @@ export function AppHeader() {
             type="button"
             onClick={toggleDarkMode}
           >
-            {/* Both icons rendered always; CSS dark: controls which is visible — avoids SSR/client icon mismatch */}
-            <Brightness2OutlinedIcon className="text-[20px] dark:hidden" />
-            <LightModeOutlinedIcon className="text-[20px] hidden dark:block" />
+            {isDarkMode ? (
+              <LightModeOutlinedIcon className="text-[20px]" />
+            ) : (
+              <Brightness2OutlinedIcon className="text-[20px]" />
+            )}
           </button>
 
           <button
