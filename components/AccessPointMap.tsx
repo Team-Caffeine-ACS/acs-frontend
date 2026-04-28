@@ -10,26 +10,13 @@ const AccessPointMap = ({
 }: {
   accessPoints: AccessPointResponse[];
 }) => {
-  // 1. Määrame vaikekoordinaadid (nt Tallinn)
+  // Vaikimisi algvaade on Tallinn.
   const defaultCenter: [number, number] = [59.437, 24.753];
-  const firstAccessPoint = accessPoints[0];
-  const hasValidFirstCoordinates =
-    firstAccessPoint !== undefined &&
-    Number.isFinite(Number(firstAccessPoint.latitude)) &&
-    Number.isFinite(Number(firstAccessPoint.longitude));
-
-  // 2. Kontrollime turvaliselt, kas meil on vähemalt üks punkt olemas
-  // Kasutame optional chaining (?.) ja kontrollime, et lat/lon oleks olemas
-  const center: [number, number] = hasValidFirstCoordinates
-    ? [Number(firstAccessPoint.latitude), Number(firstAccessPoint.longitude)]
-    : defaultCenter;
 
   return (
     <div className="h-[320px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:h-[400px]">
-      {/* 3. Kasutame key-atribuuti, et MapContainer end värskendaks, kui center muutub */}
       <MapContainer
-        key={`${center[0]}-${center[1]}`}
-        center={center}
+        center={defaultCenter}
         zoom={13}
         style={{ height: "100%", width: "100%" }}
       >
