@@ -65,6 +65,7 @@ export function DateTimePicker({
               setCalendarOpen(false);
             }}
             captionLayout="dropdown"
+            endMonth={new Date(new Date().getFullYear() + 10, 11)}
             disabled={calendarDisabled}
             autoFocus
           />
