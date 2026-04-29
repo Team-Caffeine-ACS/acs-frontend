@@ -22,14 +22,16 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import { Button } from "@/components/ui/button";
+import { primaryCtaButtonClassName } from "@/components/ui/button-styles";
 import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
 
 const DynamicAccessPointMap = dynamic(
   () => import("@/components/AccessPointMap"),
   {
     ssr: false,
     loading: () => (
-      <div className="h-[400px] w-full bg-slate-100 animate-pulse rounded-2xl" />
+      <div className="h-[320px] w-full animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800 sm:h-[400px]" />
     ),
   },
 );
@@ -71,7 +73,13 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
-  if (loading) return <div className="p-8">Laadin andmeid...</div>;
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+        Laadin andmeid...
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto space-y-8 animate-in fade-in duration-500">
@@ -94,7 +102,7 @@ export default function DashboardPage() {
           </ol>
         </nav>
 
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               Töölaud
@@ -104,16 +112,21 @@ export default function DashboardPage() {
               <span className="text-primary font-bold">{currentDate}</span>
             </p>
           </div>
-          <Link href="/visits/new">
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white font-black rounded-xl shadow-lg gap-2 uppercase tracking-widest text-xs px-6 py-5">
-              <AddIcon className="!text-base" /> Lisa külastus
+          <Link href="/visits/new" className="w-full sm:w-auto">
+            <Button
+              className={cn(
+                primaryCtaButtonClassName,
+                "w-full rounded-xl sm:w-auto",
+              )}
+            >
+              <AddIcon className="!text-lg" /> Lisa külastus
             </Button>
           </Link>
         </div>
       </div>
 
       {/* 2. KPI CARDS GRID (Sinu uued andmed) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <KpiCard
           title="Aktiivsed külastajad"
           value={summary?.activeVisitors ?? "--"}
@@ -133,72 +146,81 @@ export default function DashboardPage() {
       </div>
 
       {/* 3. VIIMASED KÜLASTUSED & KAART (Kõrvuti vaade suurel ekraanil) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:gap-8">
         {/* TABEL - võtab 2/3 laiust */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="space-y-4 xl:col-span-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wide">
               Viimased külastused
             </h3>
             <Button
+              asChild
               variant="link"
-              className="text-sm font-bold text-primary px-0"
+              className="w-fit px-0 text-sm font-bold text-primary"
             >
-              Vaata kõiki
+              <Link href="/visits">Vaata kõiki</Link>
             </Button>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50/80 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                <tr>
-                  <th className="px-6 py-4">Külastaja</th>
-                  <th className="px-6 py-4">Kellaaeg</th>
-                  <th className="px-6 py-4 text-center">Staatus</th>
-                  <th className="px-6 py-4 t">Pääsupunkt</th>
-                  <th className="px-6 py-4 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {visits.map((visit, index) => {
-                  return (
-                    <VisitorRow
-                      key={visit.id || `visit-${index}`}
-                      name={visit.fullName || "Tundmatu"}
-                      initials={getInitials(visit.fullName)}
-                      org="Külastaja"
-                      time={
-                        visit.entryTime
-                          ? new Date(visit.entryTime).toLocaleTimeString(
-                              "et-EE",
-                              { hour: "2-digit", minute: "2-digit" },
-                            )
-                          : "--:--"
-                      }
-                      status={visit.status || "Sees"}
-                      accessPointName={visit.accessPointName || " "}
-                      accessPointAddress={visit.accessPointAddress || " "}
-                      color="emerald"
-                    />
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+                <thead className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4">Külastaja</th>
+                    <th className="px-6 py-4">Kellaaeg</th>
+                    <th className="px-6 py-4 text-center">Staatus</th>
+                    <th className="px-6 py-4">Pääsupunkt</th>
+                    <th className="px-6 py-4 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {visits.length > 0 ? (
+                    visits.map((visit, index) => {
+                      return (
+                        <VisitorRow
+                          key={visit.id || `visit-${index}`}
+                          name={visit.fullName || "Tundmatu"}
+                          initials={getInitials(visit.fullName)}
+                          org="Külastaja"
+                          time={
+                            visit.entryTime
+                              ? new Date(visit.entryTime).toLocaleTimeString(
+                                  "et-EE",
+                                  { hour: "2-digit", minute: "2-digit" },
+                                )
+                              : "--:--"
+                          }
+                          status={visit.status || "Sees"}
+                          accessPointName={visit.accessPointName || " "}
+                          accessPointAddress={visit.accessPointAddress || " "}
+                          color="emerald"
+                        />
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-6 py-14 text-center text-sm font-semibold text-slate-500 dark:text-slate-400"
+                      >
+                        Tänaseid külastusi ei leitud.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
         {/* KAART - võtab 1/3 laiust */}
         <div className="space-y-4">
-          <h3 className="font-bold text-slate-900 uppercase text-sm tracking-wider mb-6">
+          <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white sm:mb-6">
             Pääsupunktide asukohad
           </h3>
           <DynamicAccessPointMap accessPoints={accessPoints} />
         </div>
       </div>
-
-      {/* FLOATING ACTION BUTTON (Arvutis võiks see olla kuskil nurgas) */}
-      <button className="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-2xl hover:scale-110 active:scale-95 transition-all shadow-primary/40">
-        <AddIcon className="!text-3xl" />
-      </button>
     </div>
   );
 }
@@ -224,9 +246,9 @@ interface VisitorRowProps {
 function KpiCard({ title, value, change, icon }: KpiCardProps) {
   type Trend = "up" | "down" | "neutral";
   const trendColors: Record<Trend, string> = {
-    up: "text-emerald-600",
-    down: "text-rose-600",
-    neutral: "text-slate-400",
+    up: "text-emerald-600 dark:text-emerald-300",
+    down: "text-rose-600 dark:text-rose-300",
+    neutral: "text-slate-400 dark:text-slate-500",
   };
 
   let trend: "up" | "down" | "neutral" = "neutral";
@@ -243,15 +265,15 @@ function KpiCard({ title, value, change, icon }: KpiCardProps) {
     neutral: <HorizontalRuleIcon className="!text-xs" />,
   };
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex min-h-32 flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
           {title}
         </span>
-        <div className="text-primary/60">{icon}</div>
+        <div className="text-primary/60 dark:text-blue-300/80">{icon}</div>
       </div>
       <div className="flex items-end gap-2">
-        <span className="text-3xl font-black text-slate-900 tracking-tighter">
+        <span className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white">
           {value}
         </span>
         {change && change !== "0%" && change !== "--" && (
@@ -278,28 +300,31 @@ function VisitorRow({
   accessPointAddress,
 }: VisitorRowProps) {
   const statusStyles: Record<string, string> = {
-    emerald: "bg-emerald-100 text-emerald-700",
-    slate: "bg-slate-100 text-slate-600",
-    amber: "bg-amber-100 text-amber-700",
+    emerald:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+    slate:
+      "bg-slate-100 text-slate-600 dark:bg-slate-700/70 dark:text-slate-300",
+    amber:
+      "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
   };
   return (
-    <tr className="hover:bg-slate-50 transition-colors">
-      <td className="px-6 py-4">
+    <tr className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+      <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xs">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-xs font-black text-primary dark:bg-primary/20 dark:text-blue-200">
             {initials}
           </div>
           <div>
-            <div className="font-bold text-slate-900 text-sm tracking-tight">
+            <div className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
               {name}
             </div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+            <div className="text-[10px] font-bold uppercase tracking-tighter text-slate-400 dark:text-slate-500">
               {org}
             </div>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 text-xs text-slate-500 italic font-medium">
+      <td className="px-6 py-4 text-xs font-medium text-slate-500 italic dark:text-slate-400">
         {time}
       </td>
       <td className="px-6 py-4 text-center">
@@ -309,12 +334,20 @@ function VisitorRow({
           {status}
         </span>
       </td>
-      <td className="px-6 py-4 text-xs text-slate-500">
-        {accessPointName && <div>{accessPointName}</div>}
+      <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
+        {accessPointName && (
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
+            {accessPointName}
+          </div>
+        )}
         {accessPointAddress && <div>{accessPointAddress}</div>}
       </td>
       <td className="px-6 py-4 text-right">
-        <button className="text-slate-300 hover:text-primary">
+        <button
+          type="button"
+          aria-label="Ava külastuse tegevused"
+          className="rounded-lg text-slate-300 transition-colors hover:text-primary dark:text-slate-600 dark:hover:text-slate-300"
+        >
           <MoreVertIcon />
         </button>
       </td>
