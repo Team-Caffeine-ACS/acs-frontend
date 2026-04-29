@@ -24,7 +24,6 @@ import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/error";
@@ -158,18 +157,39 @@ function getStatusPresentation(status: VisitStatusKey | "loading"): {
   className: string;
 } {
   const map: Record<string, { label: string; className: string }> = {
-    loading: { label: "Laadimisel", className: "bg-slate-100 text-slate-600" },
-    planned: { label: "Planeeritud", className: "bg-sky-100 text-sky-700" },
+    loading: {
+      label: "Laadimisel",
+      className:
+        "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+    },
+    planned: {
+      label: "Planeeritud",
+      className: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+    },
     in_building: {
       label: "Aktiivne",
-      className: "bg-emerald-100 text-emerald-700",
+      className:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
     },
-    departed: { label: "Lahkunud", className: "bg-slate-100 text-slate-600" },
-    expired: { label: "Aegunud", className: "bg-amber-100 text-amber-700" },
-    cancelled: { label: "Tühistatud", className: "bg-rose-100 text-rose-700" },
+    departed: {
+      label: "Lahkunud",
+      className:
+        "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+    },
+    expired: {
+      label: "Aegunud",
+      className:
+        "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+    },
+    cancelled: {
+      label: "Tühistatud",
+      className:
+        "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+    },
     unknown: {
       label: "Staatus puudub",
-      className: "bg-slate-100 text-slate-600",
+      className:
+        "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
     },
   };
   return map[status];
@@ -192,7 +212,8 @@ function getTimelineEventCopy(eventType: string, occurredAt?: string | null) {
           title: "Oodatav registreerimine",
           description:
             "Külastaja eeldatav saabumise aeg. Registreerimine toimub saabumisel.",
-          iconClassName: "bg-sky-100 text-sky-700 ring-sky-100",
+          iconClassName:
+            "bg-sky-100 text-sky-700 ring-sky-100 dark:bg-sky-500/15 dark:text-sky-300 dark:ring-sky-500/20",
         };
       }
       return {
@@ -208,7 +229,8 @@ function getTimelineEventCopy(eventType: string, occurredAt?: string | null) {
           eyebrow: "Lahkumine",
           title: "Oodatav lahkumine",
           description: "Külastaja eeldatav lahkumise aeg.",
-          iconClassName: "bg-amber-100 text-amber-700 ring-amber-100",
+          iconClassName:
+            "bg-amber-100 text-amber-700 ring-amber-100 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20",
         };
       }
       return {
@@ -216,7 +238,8 @@ function getTimelineEventCopy(eventType: string, occurredAt?: string | null) {
         title: "Registreeritud lahkumine",
         description:
           "Külastaja lahkumine registreeriti süsteemis ja visiit on lõpetatud.",
-        iconClassName: "bg-slate-100 text-slate-600 ring-slate-100",
+        iconClassName:
+          "bg-slate-100 text-slate-600 ring-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
       };
 
     default:
@@ -224,7 +247,8 @@ function getTimelineEventCopy(eventType: string, occurredAt?: string | null) {
         eyebrow: "Sündmus",
         title: eventType.replaceAll("_", " ").toLowerCase(),
         description: "Sündmus tagastati backendist.",
-        iconClassName: "bg-slate-100 text-slate-600 ring-slate-100",
+        iconClassName:
+          "bg-slate-100 text-slate-600 ring-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
       };
   }
 }
@@ -346,7 +370,7 @@ function getDepartureButtonLabel(
 function getAuditEventIconClass(iconClassName: string): string {
   return iconClassName.includes("text-white")
     ? "bg-primary/10 text-primary"
-    : "bg-slate-100 text-slate-500";
+    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
 }
 
 function TimelineEventIcon({ eventType }: { readonly eventType: string }) {
@@ -458,6 +482,14 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
   }, [linkedCardId]);
 
   async function handleRegisterDeparture() {
+    if (
+      isRegisteringDeparture ||
+      !permissions.canRegisterDeparture ||
+      statusKey !== "in_building"
+    ) {
+      return;
+    }
+
     setActionError(null);
     setActionMessage(null);
     setIsRegisteringDeparture(true);
@@ -515,8 +547,9 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
 // Edit Visit Modal
 
 const inputCls =
-  "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 " +
-  "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition";
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 " +
+  "placeholder:text-slate-400 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 " +
+  "dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500";
 
 interface EditVisitModalProps {
   readonly visitId: string;
@@ -678,15 +711,15 @@ function EditVisitModal({
     >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative z-10 w-full max-w-2xl max-h-[92dvh] flex flex-col rounded-t-3xl md:rounded-3xl bg-white shadow-2xl animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-300">
+      <div className="relative z-10 flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-t-3xl bg-white shadow-2xl animate-in slide-in-from-bottom-4 duration-300 md:rounded-3xl md:zoom-in-95 dark:bg-slate-950 dark:shadow-slate-950/60">
         {/* Sticky header */}
-        <div className="shrink-0 sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-7 py-5 backdrop-blur-sm">
+        <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/95 px-7 py-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/95">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
               <EditOutlinedIcon className="text-primary !text-xl" />
             </div>
             <div>
-              <h2 className="text-lg font-black tracking-tight text-slate-900">
+              <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
                 Muuda külastust
               </h2>
             </div>
@@ -694,7 +727,7 @@ function EditVisitModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="flex size-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
             aria-label="Sulge"
           >
             <CloseIcon className="!text-lg" />
@@ -754,9 +787,9 @@ function EditVisitModal({
 
             <ModalField label="Võõrustaja">
               {detail?.hostName ? (
-                <p className="mb-2 text-xs text-slate-400">
+                <p className="mb-2 text-xs text-slate-400 dark:text-slate-500">
                   Võõrustaja:{" "}
-                  <span className="font-semibold text-slate-600">
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">
                     {detail.hostName}
                   </span>{" "}
                   — otsi allalt muutmiseks, jäta tühjaks eemaldamiseks.
@@ -789,15 +822,15 @@ function EditVisitModal({
             </ModalField>
 
             {submitError ? (
-              <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-                <ErrorOutlineIcon className="mt-0.5 shrink-0 text-rose-500" />
+              <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300">
+                <ErrorOutlineIcon className="mt-0.5 shrink-0 text-rose-500 dark:text-rose-300" />
                 {submitError}
               </div>
             ) : null}
           </div>
 
           {/* Sticky footer */}
-          <div className="shrink-0 border-t border-slate-100 bg-white px-7 py-5 flex flex-col sm:flex-row justify-end gap-3">
+          <div className="flex shrink-0 flex-col justify-end gap-3 border-t border-slate-100 bg-white px-7 py-5 sm:flex-row dark:border-slate-800 dark:bg-slate-950">
             <Button
               type="button"
               variant="outline"
@@ -854,20 +887,20 @@ function PersonSearchField({
         className={cn(
           "flex items-center justify-between rounded-xl border px-3 py-2.5",
           highlightSelected
-            ? "border-primary/30 bg-primary/5"
-            : "border-slate-200 bg-slate-50",
+            ? "border-primary/30 bg-primary/5 dark:border-primary/40 dark:bg-primary/10"
+            : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900",
         )}
       >
-        <span className="text-sm font-semibold text-slate-800">
+        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
           {selected.givenName} {selected.surname}
-          <span className="ml-2 text-xs font-normal text-slate-400">
+          <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
             {selected.roleName}
           </span>
         </span>
         <button
           type="button"
           onClick={onClear}
-          className="ml-2 text-slate-400 transition-colors hover:text-slate-600"
+          className="ml-2 text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-200"
           aria-label={clearLabel}
         >
           <CloseIcon className="!text-sm" />
@@ -893,7 +926,7 @@ function PersonSearchField({
           type="button"
           onClick={onSearch}
           disabled={isSearching || query.trim().length < 2}
-          className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-40"
+          className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
         >
           {isSearching ? (
             <span className="text-xs font-bold">…</span>
@@ -904,16 +937,16 @@ function PersonSearchField({
       </div>
 
       {results.length > 0 && (
-        <ul className="overflow-hidden rounded-xl border border-slate-200 divide-y divide-slate-100">
+        <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
           {results.map((r) => (
             <li key={r.id}>
               <button
                 type="button"
                 onClick={() => onSelect(r)}
-                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-900 transition-colors hover:bg-primary/5"
+                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-900 transition-colors hover:bg-primary/5 dark:text-slate-100 dark:hover:bg-primary/10"
               >
                 {r.givenName} {r.surname}
-                <span className="ml-2 text-xs font-normal text-slate-400">
+                <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
                   {r.roleName}
                 </span>
               </button>
@@ -934,7 +967,7 @@ function ModalField({
 }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
         {label}
       </p>
       {children}
@@ -1051,7 +1084,7 @@ function VisitPageHeader({
           asChild
           variant="ghost"
           size="sm"
-          className="w-fit px-0 text-sm font-semibold text-slate-500 hover:bg-transparent hover:text-slate-900"
+          className="w-fit px-0 text-sm font-semibold text-slate-500 hover:bg-transparent hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
           <Link href="/visits" aria-label="Tagasi külastuste nimekirja">
             <ArrowBackIcon className="!text-base" />
@@ -1061,7 +1094,7 @@ function VisitPageHeader({
         <Breadcrumb />
         <div className="space-y-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
               Külastuse üksikasjad
             </h1>
             <span
@@ -1073,13 +1106,13 @@ function VisitPageHeader({
               {statusPresentation.label}
             </span>
           </div>
-          <p className="text-slate-500 text-sm md:text-base">
+          <p className="text-sm text-slate-500 md:text-base dark:text-slate-400">
             {arrivalIsFuture ? (
               <span className="font-medium text-sky-600">Oodatav algus</span>
             ) : (
               "Alustatud"
             )}{" "}
-            <span className="font-semibold text-slate-700">
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
               {formatDateTime(arrivalTime)}
             </span>
           </p>
@@ -1091,19 +1124,10 @@ function VisitPageHeader({
           type="button"
           variant="outline"
           onClick={onEdit}
-          className="gap-2 bg-white px-6 py-6 text-base font-bold shadow-sm"
+          className="gap-2 bg-white px-6 py-6 text-base font-bold shadow-sm dark:bg-slate-900 dark:text-slate-100"
         >
           <EditOutlinedIcon className="!text-base" />
           Muuda andmeid
-        </Button>
-        <Button
-          type="button"
-          className="gap-2 bg-primary px-6 py-6 text-base font-bold text-white shadow-xl shadow-primary/20"
-          disabled
-          title="Printimise backend-tugi ei ole veel olemas."
-        >
-          <PrintOutlinedIcon className="!text-base" />
-          Prindi luba
         </Button>
       </div>
     </div>
@@ -1135,14 +1159,14 @@ function VisitVisitorCardSection({
   readonly statusKey: VisitStatusKey | "loading";
   readonly onRegisterDeparture: () => void;
 }) {
+  const isDepartureActionAvailable = statusKey === "in_building";
   const arrivalIsFuture = isInFuture(arrivalTime);
   const departureIsFuture = isInFuture(departureTime);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="h-3 bg-primary" />
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="p-8 space-y-8">
-        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
+        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
           <BadgeOutlinedIcon className="text-primary !text-2xl" />
           Külastaja andmed
         </div>
@@ -1213,11 +1237,16 @@ function VisitVisitorCardSection({
       </div>
 
       {canRegisterDeparture ? (
-        <div className="border-t border-slate-100 bg-slate-50/60 p-6 flex justify-stretch md:justify-end">
+        <div className="flex justify-stretch border-t border-slate-100 bg-slate-50/60 p-6 md:justify-end dark:border-slate-800 dark:bg-slate-800/60">
           <Button
             type="button"
-            className="w-full md:w-auto bg-primary hover:bg-primary/90 py-6 text-base font-black text-white shadow-lg shadow-primary/20"
-            disabled={isRegisteringDeparture || statusKey === "departed"}
+            className={cn(
+              "w-full md:w-auto py-6 text-base font-black",
+              isDepartureActionAvailable
+                ? "bg-blue-700 text-white shadow-lg shadow-blue-700/20 hover:bg-blue-800"
+                : "bg-slate-200 text-slate-500 shadow-none hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-800",
+            )}
+            disabled={isRegisteringDeparture || !isDepartureActionAvailable}
             onClick={onRegisterDeparture}
           >
             <LogoutIcon className="!text-base" />
@@ -1250,15 +1279,15 @@ function VisitAuditLogSection({
     reversedTimeline.length === 0;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="px-8 py-6 border-b border-slate-100">
-        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="border-b border-slate-100 px-8 py-6 dark:border-slate-800">
+        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
           <HistoryOutlinedIcon className="text-primary !text-2xl" />
           Ajajoon
         </div>
       </div>
 
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">
         {isLoadingInitialTimeline ? <SectionSkeleton lines={3} /> : null}
 
         {hasTimelineError ? (
@@ -1297,19 +1326,19 @@ function VisitAuditLogSection({
                   <TimelineEventIcon eventType={event.eventType} />
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900">
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
                     {copy.title}
                   </p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {event.description ?? copy.description}
                   </p>
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-lg font-semibold text-slate-900">
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {formatTime(event.occurredAt)}
                 </p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-400 dark:text-slate-500">
                   {formatDateTime(event.occurredAt)}
                 </p>
               </div>
@@ -1339,8 +1368,8 @@ function VisitKeycardSection({
   const hasKeycardError = keycardError != null;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
-      <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="mb-6 flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
         <CreditCardOutlinedIcon className="text-primary !text-2xl" />
         Seotud võtmekaart
       </div>
@@ -1415,7 +1444,7 @@ export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
 
 function Breadcrumb() {
   return (
-    <nav className="flex items-center gap-2 text-sm text-slate-400">
+    <nav className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
       <Link href="/" className="hover:text-primary transition-colors">
         Avaleht
       </Link>
@@ -1449,22 +1478,30 @@ function InfoField({
       <div
         className={cn(
           "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em]",
-          future ? "text-sky-500" : "text-slate-400",
+          future
+            ? "text-sky-500 dark:text-sky-300"
+            : "text-slate-400 dark:text-slate-500",
         )}
       >
-        <span className={future ? "text-sky-400" : "text-slate-300"}>
+        <span
+          className={
+            future
+              ? "text-sky-400 dark:text-sky-300"
+              : "text-slate-300 dark:text-slate-600"
+          }
+        >
           {icon}
         </span>
         {label}
       </div>
       <div
         className={cn(
-          "text-slate-900",
+          "text-slate-900 dark:text-slate-100",
           prominent
             ? "text-3xl font-black tracking-tight"
             : "text-xl font-semibold",
           linkLike && "text-primary",
-          future && "text-sky-700",
+          future && "text-sky-700 dark:text-sky-300",
         )}
       >
         {value}
@@ -1481,11 +1518,13 @@ function MetaRow({
   readonly value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-800/70">
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
         {label}
       </p>
-      <p className="mt-2 text-lg font-bold text-slate-900">{value}</p>
+      <p className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+        {value}
+      </p>
     </div>
   );
 }
@@ -1502,8 +1541,8 @@ function InlineMessage({
       className={cn(
         "rounded-2xl border px-4 py-3 text-sm font-semibold",
         variant === "error"
-          ? "border-rose-200 bg-rose-50 text-rose-700"
-          : "border-emerald-200 bg-emerald-50 text-emerald-700",
+          ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300"
+          : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300",
       )}
     >
       {children}
@@ -1519,9 +1558,13 @@ function EmptyState({
   readonly description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5">
-      <p className="text-sm font-bold text-slate-900">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-800/50">
+      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+        {title}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+        {description}
+      </p>
     </div>
   );
 }
@@ -1542,7 +1585,7 @@ function SectionError({
   return (
     <div
       className={cn(
-        "rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-700",
+        "rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300",
         compact && "rounded-2xl p-5",
       )}
     >
@@ -1554,7 +1597,7 @@ function SectionError({
           <Button
             type="button"
             variant="outline"
-            className="rounded-xl border-rose-200 bg-white font-semibold text-rose-700 hover:bg-rose-100"
+            className="rounded-xl border-rose-200 bg-white font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
             onClick={onAction}
           >
             {actionLabel}
@@ -1569,7 +1612,10 @@ function SectionSkeleton({ lines }: { readonly lines: number }) {
   return (
     <div className="p-6 space-y-3">
       {Array.from({ length: lines }, (_, i) => (
-        <div key={i} className="h-18 rounded-2xl bg-slate-100 animate-pulse" />
+        <div
+          key={i}
+          className="h-18 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"
+        />
       ))}
     </div>
   );
@@ -1578,25 +1624,25 @@ function SectionSkeleton({ lines }: { readonly lines: number }) {
 function VisitDetailSkeleton() {
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
-      <div className="h-5 w-80 rounded-full bg-slate-200 animate-pulse" />
+      <div className="h-5 w-80 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
       <div className="flex justify-between gap-6">
         <div className="space-y-3">
-          <div className="h-10 w-96 rounded-full bg-slate-100 animate-pulse" />
-          <div className="h-6 w-80 rounded-full bg-slate-100 animate-pulse" />
+          <div className="h-10 w-96 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
+          <div className="h-6 w-80 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
         </div>
         <div className="flex gap-3">
-          <div className="h-14 w-52 rounded-2xl bg-slate-100 animate-pulse" />
-          <div className="h-14 w-44 rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-14 w-52 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-14 w-44 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
         </div>
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,1.05fr)] gap-8">
         <div className="space-y-8">
-          <div className="h-[520px] rounded-2xl bg-slate-100 animate-pulse" />
-          <div className="h-[300px] rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-[520px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-[300px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
         </div>
         <div className="space-y-8">
-          <div className="h-[720px] rounded-2xl bg-slate-100 animate-pulse" />
-          <div className="h-[260px] rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-[720px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-[260px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
         </div>
       </div>
     </div>
