@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type SubmitEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import ShieldIcon from "@mui/icons-material/Shield";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
@@ -26,7 +26,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);

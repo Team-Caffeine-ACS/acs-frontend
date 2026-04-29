@@ -11,7 +11,9 @@ import LinkIcon from "@mui/icons-material/Link";
 import HistoryIcon from "@mui/icons-material/History";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
+import EditIcon from "@mui/icons-material/Edit";
 import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/components/layout/current-user-provider";
 import { ApiError } from "@/lib/api/error";
 import {
   getKeycard,
@@ -19,9 +21,15 @@ import {
   type KeycardDetailResponse,
 } from "@/lib/api/keycards";
 
+const ALLOWED_ROLES = ["ADMIN", "SECURITY_CHIEF"] as const;
+
 export default function KeycardDetailsPage() {
   const params = useParams<{ id: string }>();
   const keycardId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const { user } = useCurrentUser();
+  const canEdit = user
+    ? ALLOWED_ROLES.includes(user.role as (typeof ALLOWED_ROLES)[number])
+    : false;
 
   const [keycard, setKeycard] = useState<KeycardDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -153,6 +161,14 @@ export default function KeycardDetailsPage() {
                 </Link>
               </Button>
             ) : null}
+            {canEdit && (
+              <Button asChild variant="outline" className="gap-2 rounded-xl">
+                <Link href={`/keys/${keycard.id}/edit`}>
+                  <EditIcon className="!text-base" />
+                  Muuda
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="outline" className="gap-2 rounded-xl">
               <Link href="/keys">
                 <ArrowBackIcon className="!text-base" />

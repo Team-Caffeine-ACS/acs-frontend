@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { type SubmitEvent, type ReactNode, useEffect, useState } from "react";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
@@ -117,7 +117,7 @@ export default function ReturnKeycardPage() {
     keycard.status === "in_use" &&
     Boolean(keycard.assignedUser || keycard.assignedTime);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!selectedAccessPointId) {

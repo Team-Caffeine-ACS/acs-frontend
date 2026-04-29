@@ -5,7 +5,6 @@ import { type ReactNode, useDeferredValue, useEffect, useState } from "react";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import SearchIcon from "@mui/icons-material/Search";
@@ -14,6 +13,7 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import InfoIcon from "@mui/icons-material/Info";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/components/layout/current-user-provider";
 import { primaryCtaButtonClassName } from "@/components/ui/button-styles";
 import { ApiError } from "@/lib/api/error";
 import {
@@ -24,12 +24,19 @@ import {
   type KeycardResponse,
 } from "@/lib/api/keycards";
 
+const ALLOWED_ROLES = ["ADMIN", "SECURITY_CHIEF"] as const;
+
 type StatusFilterValue = "all" | KeycardStatus;
 type SortDirection = "default" | "asc" | "desc";
 type LastReturnFilterMode = "all" | "before" | "after" | "on";
 type HeaderSortKey = "number" | "status" | "user" | "issued" | "returned";
 
 export default function KeycardsPage() {
+  const { user } = useCurrentUser();
+  const canRegister = user
+    ? ALLOWED_ROLES.includes(user.role as (typeof ALLOWED_ROLES)[number])
+    : false;
+
   const [keycards, setKeycards] = useState<KeycardResponse[]>([]);
   const [search, setSearch] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
@@ -251,16 +258,43 @@ export default function KeycardsPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="gap-2 py-6 text-xs font-bold uppercase tracking-widest"
-          >
-            <FileDownloadIcon className="!text-lg" /> Ekspordi
-          </Button>
-          <Button className={primaryCtaButtonClassName}>
-            <AddIcon className="!text-lg" /> Registreeri kaart
-          </Button>
+          {canRegister && (
+            <Button asChild className={primaryCtaButtonClassName}>
+              <Link href="/keys/new">
+                <AddIcon className="!text-lg" /> Registreeri kaart
+              </Link>
+            </Button>
+          )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <StatSmall
+          title="Kaarte kokku"
+          value={summary.total}
+          trend="Kõik süsteemis nähtavad kaardid"
+          icon={<TrendingUpIcon className="!text-sm text-emerald-500" />}
+        />
+        <StatSmall
+          title="Aktiivsed"
+          value={summary.active}
+          trend="Saadaval või kasutuses"
+          icon={<InfoIcon className="!text-sm text-slate-400" />}
+        />
+        <StatSmall
+          title="Kasutuses"
+          value={summary.inUse}
+          trend="Praegu külastajate käes"
+          icon={<CreditCardIcon className="!text-sm text-blue-600" />}
+          color="text-blue-600 dark:text-blue-300"
+        />
+        <StatSmall
+          title="Saadaval"
+          value={summary.available}
+          trend="Valmis uuesti väljastamiseks"
+          icon={<MeetingRoomIcon className="!text-sm text-emerald-500" />}
+          color="text-emerald-600 dark:text-emerald-300"
+        />
       </div>
 
       <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -504,35 +538,6 @@ export default function KeycardsPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <StatSmall
-          title="Kaarte kokku"
-          value={summary.total}
-          trend="Kõik süsteemis nähtavad kaardid"
-          icon={<TrendingUpIcon className="!text-sm text-emerald-500" />}
-        />
-        <StatSmall
-          title="Aktiivsed"
-          value={summary.active}
-          trend="Saadaval või kasutuses"
-          icon={<InfoIcon className="!text-sm text-slate-400" />}
-        />
-        <StatSmall
-          title="Kasutuses"
-          value={summary.inUse}
-          trend="Praegu külastajate käes"
-          icon={<CreditCardIcon className="!text-sm text-blue-600" />}
-          color="text-blue-600 dark:text-blue-300"
-        />
-        <StatSmall
-          title="Saadaval"
-          value={summary.available}
-          trend="Valmis uuesti väljastamiseks"
-          icon={<MeetingRoomIcon className="!text-sm text-emerald-500" />}
-          color="text-emerald-600 dark:text-emerald-300"
-        />
       </div>
     </div>
   );
