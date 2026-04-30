@@ -6,6 +6,7 @@ import {
   type SetStateAction,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -14,6 +15,7 @@ import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurned
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import CloseIcon from "@mui/icons-material/Close";
 import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
@@ -22,21 +24,29 @@ import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
+import SearchIcon from "@mui/icons-material/Search";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/error";
 import { getKeycardById, type KeycardResponse } from "@/lib/api/keycards";
 import {
+  editVisit,
   deriveVisitStatus,
   getVisitDetail,
   getVisitTimeline,
   registerVisitDeparture,
+  type EditVisitRequest,
   type VisitDetailResponse,
   type VisitStatusKey,
   type VisitTimelineEvent,
 } from "@/lib/api/visits";
+import {
+  getAccessPoints,
+  type AccessPointResponse,
+} from "@/lib/api/accessPoints";
+import { searchEmployees, type PersonInRoleResponse } from "@/lib/api/persons";
 import { getCurrentUserRoleInfo } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { getMe, type MeResponse } from "@/lib/api/auth";
 
 interface VisitDetailPageProps {
   readonly visitId: string;
@@ -53,35 +63,19 @@ const EXIT_ALLOWED_ROLES = new Set(["ADMIN", "SECURITY_CHIEF", "RECEPTIONIST"]);
 const EDIT_ALLOWED_ROLES = new Set(["ADMIN", "SECURITY_CHIEF"]);
 
 function createInitialState<T>(data: T | null = null): RequestState<T> {
-  return {
-    data,
-    isLoading: data === null,
-    error: null,
-  };
+  return { data, isLoading: data === null, error: null };
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
+  if (error instanceof ApiError) return error.message;
+  if (error instanceof Error) return error.message;
   return fallback;
 }
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) {
-    return NOT_AVAILABLE;
-  }
-
+  if (!value) return NOT_AVAILABLE;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
+  if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("et-EE", {
     day: "2-digit",
     month: "short",
@@ -92,15 +86,9 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 function formatTime(value: string | null | undefined): string {
-  if (!value) {
-    return NOT_AVAILABLE;
-  }
-
+  if (!value) return NOT_AVAILABLE;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
+  if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("et-EE", {
     hour: "2-digit",
     minute: "2-digit",
@@ -128,88 +116,144 @@ function getInitials(name: string): string {
 
 function getArrivalFromTimeline(events: VisitTimelineEvent[]): string | null {
   return (
-    events.find((event) => event.eventType === "ARRIVAL_REGISTERED")
-      ?.occurredAt ?? null
+    events.find((e) => e.eventType === "ARRIVAL_REGISTERED")?.occurredAt ?? null
   );
 }
 
 function getDepartureFromTimeline(events: VisitTimelineEvent[]): string | null {
   return (
-    events.find((event) => event.eventType === "DEPARTURE_REGISTERED")
-      ?.occurredAt ?? null
+    events.find((e) => e.eventType === "DEPARTURE_REGISTERED")?.occurredAt ??
+    null
   );
+}
+
+/** True when the ISO timestamp is strictly in the future. */
+function isInFuture(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  return date > new Date();
+}
+
+/** Converts any Date-parseable string to "YYYY-MM-DDTHH:mm" for datetime-local input. */
+function toDatetimeLocal(value: string | null | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  );
+}
+
+/** Converts datetime-local value to ISO local string Spring's LocalDateTime can parse. */
+function fromDatetimeLocal(value: string): string {
+  return value.length === 16 ? `${value}:00` : value;
 }
 
 function getStatusPresentation(status: VisitStatusKey | "loading"): {
   label: string;
   className: string;
 } {
-  const presentations: Record<string, { label: string; className: string }> = {
+  const map: Record<string, { label: string; className: string }> = {
     loading: {
       label: "Laadimisel",
-      className: "bg-slate-100 text-slate-600",
+      className:
+        "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
     },
     planned: {
       label: "Planeeritud",
-      className: "bg-sky-100 text-sky-700",
+      className: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
     },
     in_building: {
       label: "Aktiivne",
-      className: "bg-emerald-100 text-emerald-700",
+      className:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
     },
     departed: {
       label: "Lahkunud",
-      className: "bg-slate-100 text-slate-600",
+      className:
+        "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
     },
     expired: {
       label: "Aegunud",
-      className: "bg-amber-100 text-amber-700",
+      className:
+        "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
     },
     cancelled: {
       label: "Tühistatud",
-      className: "bg-rose-100 text-rose-700",
+      className:
+        "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
     },
     unknown: {
       label: "Staatus puudub",
-      className: "bg-slate-100 text-slate-600",
+      className:
+        "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
     },
   };
-
-  return presentations[status];
+  return map[status];
 }
 
-function getTimelineEventCopy(eventType: string): {
-  eyebrow: string;
-  title: string;
-  description: string;
-  iconClassName: string;
-} {
+function isFuture(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const d = new Date(value);
+  return !Number.isNaN(d.getTime()) && d > new Date();
+}
+
+function getTimelineEventCopy(eventType: string, occurredAt?: string | null) {
+  const future = isFuture(occurredAt);
+
   switch (eventType) {
     case "ARRIVAL_REGISTERED":
+      if (future) {
+        return {
+          eyebrow: "Saabumine",
+          title: "Oodatav registreerimine",
+          description:
+            "Külastaja eeldatav saabumise aeg. Registreerimine toimub saabumisel.",
+          iconClassName:
+            "bg-sky-100 text-sky-700 ring-sky-100 dark:bg-sky-500/15 dark:text-sky-300 dark:ring-sky-500/20",
+        };
+      }
       return {
         eyebrow: "Saabumine",
         title: "Registreeritud saabumine",
-        description:
-          "Külastaja saabumine registreeriti süsteemis. Ajajoones kuvatakse ainult backendist tagastatud sündmused.",
+        description: "Külastaja saabumine registreeriti süsteemis.",
         iconClassName: "bg-primary text-white ring-primary/10",
       };
+
     case "DEPARTURE_REGISTERED":
+      if (future) {
+        return {
+          eyebrow: "Lahkumine",
+          title: "Oodatav lahkumine",
+          description: "Külastaja eeldatav lahkumise aeg.",
+          iconClassName:
+            "bg-amber-100 text-amber-700 ring-amber-100 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20",
+        };
+      }
       return {
         eyebrow: "Lahkumine",
         title: "Registreeritud lahkumine",
         description:
           "Külastaja lahkumine registreeriti süsteemis ja visiit on lõpetatud.",
-        iconClassName: "bg-slate-100 text-slate-600 ring-slate-100",
+        iconClassName:
+          "bg-slate-100 text-slate-600 ring-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
       };
+
     default:
       return {
         eyebrow: "Sündmus",
         title: eventType.replaceAll("_", " ").toLowerCase(),
         description: "Sündmus tagastati backendist.",
-        iconClassName: "bg-slate-100 text-slate-600 ring-slate-100",
+        iconClassName:
+          "bg-slate-100 text-slate-600 ring-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
       };
   }
 }
+
+// View model
 
 interface VisitDetailViewModel {
   readonly detailState: RequestState<VisitDetailResponse>;
@@ -219,10 +263,7 @@ interface VisitDetailViewModel {
   readonly canEdit: boolean;
   readonly canRegisterDeparture: boolean;
   readonly statusKey: VisitStatusKey | "loading";
-  readonly statusPresentation: {
-    label: string;
-    className: string;
-  };
+  readonly statusPresentation: { label: string; className: string };
   readonly arrivalTime: string | null;
   readonly departureTime: string | null;
   readonly linkedCardId: string | null;
@@ -232,6 +273,7 @@ interface VisitDetailViewModel {
   readonly isRegisteringDeparture: boolean;
   readonly actionError: string | null;
   readonly actionMessage: string | null;
+  readonly isEditModalOpen: boolean;
   readonly refreshDetail: (
     signal?: AbortSignal,
   ) => Promise<VisitDetailResponse | null>;
@@ -243,6 +285,9 @@ interface VisitDetailViewModel {
     signal?: AbortSignal,
   ) => Promise<KeycardResponse | null>;
   readonly handleRegisterDeparture: () => Promise<void>;
+  readonly openEditModal: () => void;
+  readonly closeEditModal: () => void;
+  readonly handleEditSuccess: () => Promise<void>;
 }
 
 function isAbortError(error: unknown): boolean {
@@ -265,20 +310,12 @@ async function loadIntoState<T>({
     isLoading: true,
     error: null,
   }));
-
   try {
     const data = await load();
-    setState({
-      data,
-      isLoading: false,
-      error: null,
-    });
+    setState({ data, isLoading: false, error: null });
     return data;
   } catch (error) {
-    if (isAbortError(error)) {
-      return null;
-    }
-
+    if (isAbortError(error)) return null;
     setState({
       data: null,
       isLoading: false,
@@ -290,7 +327,6 @@ async function loadIntoState<T>({
 
 function getVisitPermissions() {
   const roleInfo = getCurrentUserRoleInfo();
-
   return {
     canEdit:
       roleInfo.hasRoleInfo &&
@@ -304,12 +340,10 @@ function getVisitPermissions() {
 function sortTimelineEvents(
   events: VisitTimelineEvent[],
 ): VisitTimelineEvent[] {
-  return [...events].sort((left, right) => {
-    const leftTime = left.occurredAt ? new Date(left.occurredAt).getTime() : 0;
-    const rightTime = right.occurredAt
-      ? new Date(right.occurredAt).getTime()
-      : 0;
-    return leftTime - rightTime;
+  return [...events].sort((a, b) => {
+    const at = a.occurredAt ? new Date(a.occurredAt).getTime() : 0;
+    const bt = b.occurredAt ? new Date(b.occurredAt).getTime() : 0;
+    return at - bt;
   });
 }
 
@@ -318,47 +352,30 @@ function deriveStatusKey(
   timelineState: RequestState<VisitTimelineEvent[]>,
   timeline: VisitTimelineEvent[],
 ): VisitStatusKey | "loading" {
-  if (detail?.status != null) {
-    return deriveVisitStatus(detail.status, timeline);
-  }
-
-  if (timelineState.isLoading && !timelineState.data) {
-    return "loading";
-  }
-
-  if (timelineState.error && !timelineState.data) {
-    return "unknown";
-  }
-
+  if (detail?.status != null) return deriveVisitStatus(detail.status, timeline);
+  if (timelineState.isLoading && !timelineState.data) return "loading";
+  if (timelineState.error && !timelineState.data) return "unknown";
   return deriveVisitStatus(null, timeline);
 }
 
 function getDepartureButtonLabel(
   statusKey: VisitStatusKey | "loading",
-  isRegisteringDeparture: boolean,
+  isRegistering: boolean,
 ): string {
-  if (statusKey === "departed") {
-    return "Lahkumine registreeritud";
-  }
-
-  if (isRegisteringDeparture) {
-    return "Registreerin lahkumist...";
-  }
-
+  if (statusKey === "departed") return "Lahkumine registreeritud";
+  if (isRegistering) return "Registreerin lahkumist...";
   return "Registreeri lahkumine";
 }
 
 function getAuditEventIconClass(iconClassName: string): string {
   return iconClassName.includes("text-white")
     ? "bg-primary/10 text-primary"
-    : "bg-slate-100 text-slate-500";
+    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
 }
 
 function TimelineEventIcon({ eventType }: { readonly eventType: string }) {
-  if (eventType === "ARRIVAL_REGISTERED") {
+  if (eventType === "ARRIVAL_REGISTERED")
     return <LoginIcon className="!text-lg" />;
-  }
-
   return <LogoutIcon className="!text-lg" />;
 }
 
@@ -373,6 +390,7 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
   const [isRegisteringDeparture, setIsRegisteringDeparture] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const permissions = useMemo(() => getVisitPermissions(), []);
   const detail = detailState.data;
@@ -426,7 +444,6 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
 
   useEffect(() => {
     const controller = new AbortController();
-
     setActionError(null);
     setActionMessage(null);
     setDetailState(createInitialState());
@@ -451,31 +468,31 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
 
   useEffect(() => {
     const controller = new AbortController();
-
     if (!linkedCardId) {
-      setKeycardState({
-        data: null,
-        isLoading: false,
-        error: null,
-      });
+      setKeycardState({ data: null, isLoading: false, error: null });
       return () => controller.abort();
     }
-
     void loadIntoState({
       load: () => getKeycardById(linkedCardId, controller.signal),
       setState: setKeycardState,
       fallback: "Seotud võtmekaarti ei saanud laadida.",
       signal: controller.signal,
     });
-
     return () => controller.abort();
   }, [linkedCardId]);
 
   async function handleRegisterDeparture() {
+    if (
+      isRegisteringDeparture ||
+      !permissions.canRegisterDeparture ||
+      statusKey !== "in_building"
+    ) {
+      return;
+    }
+
     setActionError(null);
     setActionMessage(null);
     setIsRegisteringDeparture(true);
-
     try {
       await registerVisitDeparture(visitId);
       await Promise.all([refreshDetail(), refreshTimeline()]);
@@ -487,6 +504,11 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
     } finally {
       setIsRegisteringDeparture(false);
     }
+  }
+
+  async function handleEditSuccess() {
+    setActionMessage("Külastuse andmed uuendati edukalt.");
+    await Promise.all([refreshDetail(), refreshTimeline()]);
   }
 
   return {
@@ -507,12 +529,453 @@ function useVisitDetailPageModel(visitId: string): VisitDetailViewModel {
     isRegisteringDeparture,
     actionError,
     actionMessage,
+    isEditModalOpen,
     refreshDetail,
     refreshTimeline,
     refreshKeycard,
     handleRegisterDeparture,
+    handleEditSuccess,
+    openEditModal: () => {
+      setActionError(null);
+      setActionMessage(null);
+      setIsEditModalOpen(true);
+    },
+    closeEditModal: () => setIsEditModalOpen(false),
   };
 }
+
+// Edit Visit Modal
+
+const inputCls =
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 " +
+  "placeholder:text-slate-400 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 " +
+  "dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500";
+
+interface EditVisitModalProps {
+  readonly visitId: string;
+  readonly detail: VisitDetailResponse | null;
+  readonly arrivalTime: string | null;
+  readonly departureTime: string | null;
+  readonly onClose: () => void;
+  readonly onSuccess: () => Promise<void>;
+}
+
+function handleEscapeKey(onClose: () => void) {
+  return function handleKey(e: KeyboardEvent) {
+    if (e.key === "Escape") onClose();
+  };
+}
+
+async function loadCurrentAssignor(
+  setSelectedAssignor: (p: PersonInRoleResponse | null) => void,
+) {
+  try {
+    const me: MeResponse = await getMe();
+    if (!me.person) return;
+    const results: PersonInRoleResponse[] = await searchEmployees(
+      me.person.givenName,
+    );
+    const match = results.find((r) => r.personId === me.personId);
+    if (match) setSelectedAssignor(match);
+  } catch {
+    // Silently ignore — assignor field stays empty for manual selection.
+  }
+}
+
+function EditVisitModal({
+  visitId,
+  detail,
+  arrivalTime,
+  departureTime,
+  onClose,
+  onSuccess,
+}: EditVisitModalProps) {
+  const [accessPoints, setAccessPoints] = useState<AccessPointResponse[]>([]);
+  const [accessPointId, setAccessPointId] = useState(
+    detail?.accessPointId ?? "",
+  );
+  const [entryTime, setEntryTime] = useState(toDatetimeLocal(arrivalTime));
+  const [exitTime, setExitTime] = useState(toDatetimeLocal(departureTime));
+  const [comment, setComment] = useState(detail?.visitReason ?? "");
+
+  const [hostQuery, setHostQuery] = useState("");
+  const [hostResults, setHostResults] = useState<PersonInRoleResponse[]>([]);
+  const [isSearchingHost, setIsSearchingHost] = useState(false);
+  const [selectedHost, setSelectedHost] = useState<PersonInRoleResponse | null>(
+    null,
+  );
+  const hostAbortRef = useRef<AbortController | null>(null);
+
+  const [selectedAssignor, setSelectedAssignor] =
+    useState<PersonInRoleResponse | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAccessPoints()
+      .then((points) => {
+        setAccessPoints(points);
+        if (!accessPointId && detail?.accessPointName) {
+          const match = points.find((ap) => ap.name === detail.accessPointName);
+          if (match) setAccessPointId(match.id);
+        }
+      })
+      .catch(() => {});
+    void loadCurrentAssignor(setSelectedAssignor);
+
+    if (detail?.hostName) {
+      searchEmployees(detail.hostName)
+        .then((results: PersonInRoleResponse[]) => {
+          const match = results.find(
+            (r) => `${r.givenName} ${r.surname}` === detail.hostName,
+          );
+          if (match) setSelectedHost(match);
+        })
+        .catch(() => {});
+    }
+  }, [detail?.hostName, detail?.accessPointName, accessPointId]);
+
+  useEffect(() => {
+    const handler = handleEscapeKey(onClose);
+    globalThis.window.addEventListener("keydown", handler);
+    return () => globalThis.window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  async function handleHostSearch() {
+    if (hostQuery.trim().length < 2) return;
+    hostAbortRef.current?.abort();
+    hostAbortRef.current = new AbortController();
+    setIsSearchingHost(true);
+    try {
+      const results = await searchEmployees(
+        hostQuery.trim(),
+        hostAbortRef.current.signal,
+      );
+      setHostResults(results);
+    } catch {
+      setHostResults([]);
+    } finally {
+      setIsSearchingHost(false);
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitError(null);
+
+    if (!selectedAssignor) {
+      setSubmitError("Vali muudatuse tegija.");
+      return;
+    }
+
+    if (entryTime && exitTime) {
+      const entry = new Date(entryTime);
+      const exit = new Date(exitTime);
+
+      if (exit < entry) {
+        setSubmitError("Lahkumise aeg ei saa olla enne saabumist.");
+        return;
+      }
+    }
+
+    const body: EditVisitRequest = {
+      accessPointId: accessPointId || detail?.accessPointId || undefined,
+      assignorId: selectedAssignor.id,
+      entryTime: entryTime ? fromDatetimeLocal(entryTime) : undefined,
+      exitTime: exitTime ? fromDatetimeLocal(exitTime) : undefined,
+      comment:
+        comment.trim() === ""
+          ? detail?.visitReason || undefined
+          : comment.trim(),
+    };
+
+    setIsSubmitting(true);
+    try {
+      await editVisit(visitId, body);
+      await onSuccess();
+      onClose();
+    } catch (err) {
+      setSubmitError(
+        getErrorMessage(err, "Külastuse muutmine ebaõnnestus. Proovi uuesti."),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 animate-in fade-in duration-200"
+      style={{ background: "rgba(15,23,42,0.55)", backdropFilter: "blur(2px)" }}
+    >
+      <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
+
+      <div className="relative z-10 flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-t-3xl bg-white shadow-2xl animate-in slide-in-from-bottom-4 duration-300 md:rounded-3xl md:zoom-in-95 dark:bg-slate-950 dark:shadow-slate-950/60">
+        {/* Sticky header */}
+        <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/95 px-7 py-5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/95">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+              <EditOutlinedIcon className="text-primary !text-xl" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
+                Muuda külastust
+              </h2>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            aria-label="Sulge"
+          >
+            <CloseIcon className="!text-lg" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          {/* Scrollable fields */}
+          <div className="flex-1 overflow-y-auto space-y-6 p-7">
+            <div className="space-y-4">
+              <ModalField label="Pääsla">
+                <select
+                  value={accessPointId}
+                  onChange={(e) => setAccessPointId(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">Vali Pääsla</option>
+                  {accessPoints.map((ap) => (
+                    <option key={ap.id} value={ap.id}>
+                      {ap.name}
+                    </option>
+                  ))}
+                </select>
+              </ModalField>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <ModalField label="Saabumise aeg">
+                  <input
+                    type="datetime-local"
+                    value={entryTime}
+                    onChange={(e) => setEntryTime(e.target.value)}
+                    className={inputCls}
+                  />
+                </ModalField>
+
+                <ModalField label="Lahkumise aeg">
+                  <input
+                    type="datetime-local"
+                    value={exitTime}
+                    onChange={(e) => setExitTime(e.target.value)}
+                    className={inputCls}
+                  />
+                </ModalField>
+              </div>
+            </div>
+
+            <ModalField label="Külastuse eesmärk / kommentaar">
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Kirjelda külastuse eesmärki…"
+                maxLength={1024}
+                rows={3}
+                className={inputCls + " resize-none"}
+              />
+            </ModalField>
+
+            <ModalField label="Võõrustaja">
+              {detail?.hostName ? (
+                <p className="mb-2 text-xs text-slate-400 dark:text-slate-500">
+                  Võõrustaja:{" "}
+                  <span className="font-semibold text-slate-600 dark:text-slate-300">
+                    {detail.hostName}
+                  </span>{" "}
+                  — otsi allalt muutmiseks, jäta tühjaks eemaldamiseks.
+                </p>
+              ) : null}
+              <PersonSearchField
+                query={hostQuery}
+                results={hostResults}
+                isSearching={isSearchingHost}
+                selected={selectedHost}
+                placeholder="Otsi töötajat nimega…"
+                onQueryChange={(v) => {
+                  setHostQuery(v);
+                  setHostResults([]);
+                }}
+                onSearch={handleHostSearch}
+                onSelect={(p) => {
+                  setSelectedHost(p);
+                  setHostResults([]);
+                  setHostQuery("");
+                }}
+                onClear={() => {
+                  setSelectedHost(null);
+                  setHostQuery("");
+                  setHostResults([]);
+                }}
+                clearLabel="Eemalda Võõrustaja"
+                highlightSelected={false}
+              />
+            </ModalField>
+
+            {submitError ? (
+              <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300">
+                <ErrorOutlineIcon className="mt-0.5 shrink-0 text-rose-500 dark:text-rose-300" />
+                {submitError}
+              </div>
+            ) : null}
+          </div>
+
+          {/* Sticky footer */}
+          <div className="flex shrink-0 flex-col justify-end gap-3 border-t border-slate-100 bg-white px-7 py-5 sm:flex-row dark:border-slate-800 dark:bg-slate-950">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="rounded-xl px-6 font-semibold"
+            >
+              Tühista
+            </Button>
+            <Button
+              type="submit"
+              variant="default"
+              disabled={isSubmitting}
+              className="rounded-xl px-6 font-semibold"
+            >
+              Salvesta
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Reusable employee search widget used for both host and assignor
+function PersonSearchField({
+  query,
+  results,
+  isSearching,
+  selected,
+  placeholder,
+  onQueryChange,
+  onSearch,
+  onSelect,
+  onClear,
+  clearLabel,
+  highlightSelected,
+}: {
+  readonly query: string;
+  readonly results: PersonInRoleResponse[];
+  readonly isSearching: boolean;
+  readonly selected: PersonInRoleResponse | null;
+  readonly placeholder: string;
+  readonly onQueryChange: (v: string) => void;
+  readonly onSearch: () => void;
+  readonly onSelect: (p: PersonInRoleResponse) => void;
+  readonly onClear: () => void;
+  readonly clearLabel: string;
+  readonly highlightSelected: boolean;
+}) {
+  if (selected) {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-between rounded-xl border px-3 py-2.5",
+          highlightSelected
+            ? "border-primary/30 bg-primary/5 dark:border-primary/40 dark:bg-primary/10"
+            : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900",
+        )}
+      >
+        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+          {selected.givenName} {selected.surname}
+          <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
+            {selected.roleName}
+          </span>
+        </span>
+        <button
+          type="button"
+          onClick={onClear}
+          className="ml-2 text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-200"
+          aria-label={clearLabel}
+        >
+          <CloseIcon className="!text-sm" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          onKeyDown={(e) =>
+            e.key === "Enter" && (e.preventDefault(), onSearch())
+          }
+          placeholder={placeholder}
+          className={inputCls + " flex-1"}
+        />
+        <button
+          type="button"
+          onClick={onSearch}
+          disabled={isSearching || query.trim().length < 2}
+          className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+        >
+          {isSearching ? (
+            <span className="text-xs font-bold">…</span>
+          ) : (
+            <SearchIcon className="!text-base" />
+          )}
+        </button>
+      </div>
+
+      {results.length > 0 && (
+        <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
+          {results.map((r) => (
+            <li key={r.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(r)}
+                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-900 transition-colors hover:bg-primary/5 dark:text-slate-100 dark:hover:bg-primary/10"
+              >
+                {r.givenName} {r.surname}
+                <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
+                  {r.roleName}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ModalField({
+  label,
+  children,
+}: {
+  readonly label: string;
+  readonly children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+        {label}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+// Page shell
 
 function VisitDetailErrorState({
   error,
@@ -534,19 +997,19 @@ function VisitDetailErrorState({
   );
 }
 
-interface VisitDetailContentProps {
+function VisitDetailContent({
+  visitId,
+  model,
+}: {
   readonly visitId: string;
   readonly model: VisitDetailViewModel;
-}
-
-function VisitDetailContent({ visitId, model }: VisitDetailContentProps) {
+}) {
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
       <VisitPageHeader
-        visitId={visitId}
         arrivalTime={model.arrivalTime}
-        canEdit={model.canEdit}
         statusPresentation={model.statusPresentation}
+        onEdit={model.openEditModal}
       />
 
       {model.actionError ? (
@@ -560,6 +1023,7 @@ function VisitDetailContent({ visitId, model }: VisitDetailContentProps) {
         <VisitVisitorCardSection
           detail={model.detail}
           displayName={model.displayName}
+          arrivalTime={model.arrivalTime}
           departureTime={model.departureTime}
           keycardNumber={model.keycardNumber}
           linkedCardId={model.linkedCardId}
@@ -583,24 +1047,36 @@ function VisitDetailContent({ visitId, model }: VisitDetailContentProps) {
           }
         />
       </div>
+
+      {model.isEditModalOpen ? (
+        <EditVisitModal
+          visitId={visitId}
+          detail={model.detail}
+          arrivalTime={model.arrivalTime}
+          departureTime={model.departureTime}
+          onClose={model.closeEditModal}
+          onSuccess={async () => {
+            await Promise.all([model.refreshDetail(), model.refreshTimeline()]);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
 
+// Header
+
 function VisitPageHeader({
-  visitId,
   arrivalTime,
-  canEdit,
   statusPresentation,
+  onEdit,
 }: {
-  readonly visitId: string;
   readonly arrivalTime: string | null;
-  readonly canEdit: boolean;
-  readonly statusPresentation: {
-    label: string;
-    className: string;
-  };
+  readonly statusPresentation: { label: string; className: string };
+  readonly onEdit: () => void;
 }) {
+  const arrivalIsFuture = isInFuture(arrivalTime);
+
   return (
     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
       <div className="space-y-4">
@@ -608,7 +1084,7 @@ function VisitPageHeader({
           asChild
           variant="ghost"
           size="sm"
-          className="w-fit px-0 text-sm font-semibold text-slate-500 hover:bg-transparent hover:text-slate-900"
+          className="w-fit px-0 text-sm font-semibold text-slate-500 hover:bg-transparent hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
           <Link href="/visits" aria-label="Tagasi külastuste nimekirja">
             <ArrowBackIcon className="!text-base" />
@@ -618,7 +1094,7 @@ function VisitPageHeader({
         <Breadcrumb />
         <div className="space-y-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
               Külastuse üksikasjad
             </h1>
             <span
@@ -630,12 +1106,13 @@ function VisitPageHeader({
               {statusPresentation.label}
             </span>
           </div>
-          <p className="text-slate-500 text-sm md:text-base">
-            Külastuse ID{" "}
-            <span className="font-semibold text-slate-700">{visitId}</span>
-            {" · "}
-            Alustatud{" "}
-            <span className="font-semibold text-slate-700">
+          <p className="text-sm text-slate-500 md:text-base dark:text-slate-400">
+            {arrivalIsFuture ? (
+              <span className="font-medium text-sky-600">Oodatav algus</span>
+            ) : (
+              "Alustatud"
+            )}{" "}
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
               {formatDateTime(arrivalTime)}
             </span>
           </p>
@@ -643,35 +1120,26 @@ function VisitPageHeader({
       </div>
 
       <div className="flex gap-3 flex-wrap">
-        {canEdit ? (
-          <Button
-            type="button"
-            variant="outline"
-            disabled
-            className="gap-2 bg-white px-6 py-6 text-base font-bold shadow-sm"
-            title="Muutmise voog lisatakse eraldi sammuna."
-          >
-            <EditOutlinedIcon className="!text-base" />
-            Muuda andmeid
-          </Button>
-        ) : null}
         <Button
           type="button"
-          className="gap-2 bg-primary px-6 py-6 text-base font-bold text-white shadow-xl shadow-primary/20"
-          disabled
-          title="Printimise backend-tugi ei ole veel olemas."
+          variant="outline"
+          onClick={onEdit}
+          className="gap-2 bg-white px-6 py-6 text-base font-bold shadow-sm dark:bg-slate-900 dark:text-slate-100"
         >
-          <PrintOutlinedIcon className="!text-base" />
-          Prindi luba
+          <EditOutlinedIcon className="!text-base" />
+          Muuda andmeid
         </Button>
       </div>
     </div>
   );
 }
 
+// Visitor card section
+
 function VisitVisitorCardSection({
   detail,
   displayName,
+  arrivalTime,
   departureTime,
   keycardNumber,
   linkedCardId,
@@ -682,6 +1150,7 @@ function VisitVisitorCardSection({
 }: {
   readonly detail: VisitDetailResponse | null;
   readonly displayName: string;
+  readonly arrivalTime: string | null;
   readonly departureTime: string | null;
   readonly keycardNumber: string | null;
   readonly linkedCardId: string | null;
@@ -690,11 +1159,14 @@ function VisitVisitorCardSection({
   readonly statusKey: VisitStatusKey | "loading";
   readonly onRegisterDeparture: () => void;
 }) {
+  const isDepartureActionAvailable = statusKey === "in_building";
+  const arrivalIsFuture = isInFuture(arrivalTime);
+  const departureIsFuture = isInFuture(departureTime);
+
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="h-3 bg-primary" />
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="p-8 space-y-8">
-        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
+        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
           <BadgeOutlinedIcon className="text-primary !text-2xl" />
           Külastaja andmed
         </div>
@@ -745,20 +1217,36 @@ function VisitVisitorCardSection({
               icon={<CreditCardOutlinedIcon className="!text-base" />}
             />
             <InfoField
-              label="Lahkumise aeg"
+              label={
+                arrivalIsFuture ? "Oodatav saabumise aeg" : "Saabumise aeg"
+              }
+              value={formatDateTime(arrivalTime)}
+              icon={<AccessTimeIcon className="!text-base" />}
+              future={arrivalIsFuture}
+            />
+            <InfoField
+              label={
+                departureIsFuture ? "Oodatav lahkumise aeg" : "Lahkumise aeg"
+              }
               value={formatDateTime(departureTime)}
               icon={<AccessTimeIcon className="!text-base" />}
+              future={departureIsFuture}
             />
           </div>
         </div>
       </div>
 
       {canRegisterDeparture ? (
-        <div className="border-t border-slate-100 bg-slate-50/60 p-6 flex justify-stretch md:justify-end">
+        <div className="flex justify-stretch border-t border-slate-100 bg-slate-50/60 p-6 md:justify-end dark:border-slate-800 dark:bg-slate-800/60">
           <Button
             type="button"
-            className="w-full md:w-auto bg-primary hover:bg-primary/90 py-6 text-base font-black text-white shadow-lg shadow-primary/20"
-            disabled={isRegisteringDeparture || statusKey === "departed"}
+            className={cn(
+              "w-full md:w-auto py-6 text-base font-black",
+              isDepartureActionAvailable
+                ? "bg-blue-700 text-white shadow-lg shadow-blue-700/20 hover:bg-blue-800"
+                : "bg-slate-200 text-slate-500 shadow-none hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-800",
+            )}
+            disabled={isRegisteringDeparture || !isDepartureActionAvailable}
             onClick={onRegisterDeparture}
           >
             <LogoutIcon className="!text-base" />
@@ -769,6 +1257,8 @@ function VisitVisitorCardSection({
     </section>
   );
 }
+
+// Audit log section
 
 function VisitAuditLogSection({
   timelineState,
@@ -783,21 +1273,21 @@ function VisitAuditLogSection({
     timelineState.isLoading && !timelineState.data;
   const timelineError = timelineState.error;
   const hasTimelineError = timelineError != null;
-  const shouldShowEmptyAuditLog =
+  const shouldShowEmpty =
     !timelineState.isLoading &&
     !hasTimelineError &&
     reversedTimeline.length === 0;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="px-8 py-6 border-b border-slate-100">
-        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="border-b border-slate-100 px-8 py-6 dark:border-slate-800">
+        <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
           <HistoryOutlinedIcon className="text-primary !text-2xl" />
           Ajajoon
         </div>
       </div>
 
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">
         {isLoadingInitialTimeline ? <SectionSkeleton lines={3} /> : null}
 
         {hasTimelineError ? (
@@ -812,7 +1302,7 @@ function VisitAuditLogSection({
           </div>
         ) : null}
 
-        {shouldShowEmptyAuditLog ? (
+        {shouldShowEmpty ? (
           <EmptyState
             title="Ajajoone sündmusi pole"
             description="Backend ei tagastanud selle külastuse kohta ühtegi sündmust."
@@ -820,8 +1310,7 @@ function VisitAuditLogSection({
         ) : null}
 
         {reversedTimeline.map((event) => {
-          const copy = getTimelineEventCopy(event.eventType);
-
+          const copy = getTimelineEventCopy(event.eventType, event.occurredAt);
           return (
             <div
               key={`${event.id}-audit`}
@@ -837,20 +1326,19 @@ function VisitAuditLogSection({
                   <TimelineEventIcon eventType={event.eventType} />
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900">
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
                     {copy.title}
                   </p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {event.description ?? copy.description}
                   </p>
                 </div>
               </div>
-
               <div className="text-right shrink-0">
-                <p className="text-lg font-semibold text-slate-900">
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {formatTime(event.occurredAt)}
                 </p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-400 dark:text-slate-500">
                   {formatDateTime(event.occurredAt)}
                 </p>
               </div>
@@ -861,6 +1349,8 @@ function VisitAuditLogSection({
     </section>
   );
 }
+
+// Keycard section
 
 function VisitKeycardSection({
   linkedCardId,
@@ -876,21 +1366,20 @@ function VisitKeycardSection({
   const hasKeycardData = keycardData != null;
   const keycardError = keycardState.error;
   const hasKeycardError = keycardError != null;
-  const shouldShowMissingCardState = !hasLinkedCard;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
-      <div className="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 mb-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="mb-6 flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
         <CreditCardOutlinedIcon className="text-primary !text-2xl" />
         Seotud võtmekaart
       </div>
 
-      {shouldShowMissingCardState ? (
+      {hasLinkedCard ? null : (
         <EmptyState
           title="Kiipkaart puudub"
           description="Selle külastuse detailandmed ei sisalda seotud kaardi ID-d."
         />
-      ) : null}
+      )}
 
       {hasLinkedCard && keycardState.isLoading ? (
         <SectionSkeleton lines={2} />
@@ -930,13 +1419,14 @@ function VisitKeycardSection({
   );
 }
 
+// Root export
+
 export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
   const model = useVisitDetailPageModel(visitId);
   const detailError = model.detailState.error;
 
-  if (model.detailState.isLoading && !model.detail) {
+  if (model.detailState.isLoading && !model.detail)
     return <VisitDetailSkeleton />;
-  }
 
   if (detailError && !model.detail) {
     return (
@@ -950,9 +1440,11 @@ export function VisitDetailPage({ visitId }: VisitDetailPageProps) {
   return <VisitDetailContent visitId={visitId} model={model} />;
 }
 
+// Shared small components
+
 function Breadcrumb() {
   return (
-    <nav className="flex items-center gap-2 text-sm text-slate-400">
+    <nav className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
       <Link href="/" className="hover:text-primary transition-colors">
         Avaleht
       </Link>
@@ -972,26 +1464,44 @@ function InfoField({
   icon,
   prominent = false,
   linkLike = false,
+  future = false,
 }: {
   readonly label: string;
   readonly value: string;
   readonly icon: React.ReactNode;
   readonly prominent?: boolean;
   readonly linkLike?: boolean;
+  readonly future?: boolean;
 }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-        <span className="text-slate-300">{icon}</span>
+      <div
+        className={cn(
+          "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em]",
+          future
+            ? "text-sky-500 dark:text-sky-300"
+            : "text-slate-400 dark:text-slate-500",
+        )}
+      >
+        <span
+          className={
+            future
+              ? "text-sky-400 dark:text-sky-300"
+              : "text-slate-300 dark:text-slate-600"
+          }
+        >
+          {icon}
+        </span>
         {label}
       </div>
       <div
         className={cn(
-          "text-slate-900",
+          "text-slate-900 dark:text-slate-100",
           prominent
             ? "text-3xl font-black tracking-tight"
             : "text-xl font-semibold",
           linkLike && "text-primary",
+          future && "text-sky-700 dark:text-sky-300",
         )}
       >
         {value}
@@ -1008,11 +1518,13 @@ function MetaRow({
   readonly value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-800/70">
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
         {label}
       </p>
-      <p className="mt-2 text-lg font-bold text-slate-900">{value}</p>
+      <p className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+        {value}
+      </p>
     </div>
   );
 }
@@ -1029,8 +1541,8 @@ function InlineMessage({
       className={cn(
         "rounded-2xl border px-4 py-3 text-sm font-semibold",
         variant === "error"
-          ? "border-rose-200 bg-rose-50 text-rose-700"
-          : "border-emerald-200 bg-emerald-50 text-emerald-700",
+          ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300"
+          : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300",
       )}
     >
       {children}
@@ -1046,9 +1558,13 @@ function EmptyState({
   readonly description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5">
-      <p className="text-sm font-bold text-slate-900">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-800/50">
+      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+        {title}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+        {description}
+      </p>
     </div>
   );
 }
@@ -1069,7 +1585,7 @@ function SectionError({
   return (
     <div
       className={cn(
-        "rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-700",
+        "rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300",
         compact && "rounded-2xl p-5",
       )}
     >
@@ -1081,7 +1597,7 @@ function SectionError({
           <Button
             type="button"
             variant="outline"
-            className="rounded-xl border-rose-200 bg-white font-semibold text-rose-700 hover:bg-rose-100"
+            className="rounded-xl border-rose-200 bg-white font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
             onClick={onAction}
           >
             {actionLabel}
@@ -1095,10 +1611,10 @@ function SectionError({
 function SectionSkeleton({ lines }: { readonly lines: number }) {
   return (
     <div className="p-6 space-y-3">
-      {Array.from({ length: lines }, (_, index) => (
+      {Array.from({ length: lines }, (_, i) => (
         <div
-          key={index}
-          className="h-18 rounded-2xl bg-slate-100 animate-pulse"
+          key={i}
+          className="h-18 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"
         />
       ))}
     </div>
@@ -1108,25 +1624,25 @@ function SectionSkeleton({ lines }: { readonly lines: number }) {
 function VisitDetailSkeleton() {
   return (
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
-      <div className="h-5 w-80 rounded-full bg-slate-200 animate-pulse" />
+      <div className="h-5 w-80 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
       <div className="flex justify-between gap-6">
         <div className="space-y-3">
-          <div className="h-10 w-96 rounded-full bg-slate-100 animate-pulse" />
-          <div className="h-6 w-80 rounded-full bg-slate-100 animate-pulse" />
+          <div className="h-10 w-96 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
+          <div className="h-6 w-80 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
         </div>
         <div className="flex gap-3">
-          <div className="h-14 w-52 rounded-2xl bg-slate-100 animate-pulse" />
-          <div className="h-14 w-44 rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-14 w-52 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-14 w-44 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
         </div>
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,1.05fr)] gap-8">
         <div className="space-y-8">
-          <div className="h-[520px] rounded-2xl bg-slate-100 animate-pulse" />
-          <div className="h-[300px] rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-[520px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-[300px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
         </div>
         <div className="space-y-8">
-          <div className="h-[720px] rounded-2xl bg-slate-100 animate-pulse" />
-          <div className="h-[260px] rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-[720px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-[260px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
         </div>
       </div>
     </div>

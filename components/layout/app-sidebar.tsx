@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation"; // 2. Impordi asukoha kontrollija
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import KeyIcon from "@mui/icons-material/Key";
-import HistoryIcon from "@mui/icons-material/History";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 
 export function AppSidebar() {
@@ -26,11 +25,6 @@ export function AppSidebar() {
       name: "Võtmekaardid",
       href: "/keys",
       icon: <KeyIcon className="text-[20px]" />,
-    },
-    {
-      name: "Logid",
-      href: "/logs",
-      icon: <HistoryIcon className="text-[20px]" />,
     },
   ];
 

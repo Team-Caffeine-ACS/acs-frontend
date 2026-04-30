@@ -135,7 +135,7 @@ export default function NewVisitPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitError(null);
 
@@ -202,12 +202,12 @@ export default function NewVisitPage() {
   const selectedKeycard = keycards.find((k) => k.id === keycardId);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="mx-auto max-w-2xl space-y-6 animate-in fade-in duration-500 pb-12">
       <div>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+        <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
           Lisa külastus
         </h2>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Registreerige uus külastus ja määrake külastajale vajalikud
           pääsuõigused.
         </p>
@@ -236,7 +236,7 @@ export default function NewVisitPage() {
                     (e.preventDefault(), handleVisitorSearch())
                   }
                   placeholder="Otsi olemasolevat külastajat nimega…"
-                  className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
                 <button
                   type="button"
@@ -250,7 +250,7 @@ export default function NewVisitPage() {
 
               {/* Search results */}
               {searchResults.length > 0 && (
-                <ul className="rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+                <ul className="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
                   {searchResults.map((r) => (
                     <li key={r.id}>
                       <button
@@ -264,13 +264,13 @@ export default function NewVisitPage() {
                           setShowCreateForm(false);
                           setSearchResults([]);
                         }}
-                        className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors flex items-center justify-between"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-blue-50 dark:hover:bg-blue-500/10"
                       >
                         <div>
-                          <span className="text-sm font-semibold text-slate-900">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {r.givenName} {r.surname}
                           </span>
-                          <span className="ml-2 text-xs text-slate-400">
+                          <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
                             {r.roleName}
                           </span>
                         </div>
@@ -284,7 +284,7 @@ export default function NewVisitPage() {
               )}
 
               {hasSearched && searchResults.length === 0 && (
-                <p className="text-sm text-slate-500 px-1">
+                <p className="px-1 text-sm text-slate-500 dark:text-slate-400">
                   Külastajat ei leitud.{" "}
                   <button
                     type="button"
@@ -297,7 +297,7 @@ export default function NewVisitPage() {
               )}
 
               {!hasSearched && !showCreateForm && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-400 dark:text-slate-500">
                   Ei leia?{" "}
                   <button
                     type="button"
@@ -313,17 +313,19 @@ export default function NewVisitPage() {
 
           {/* Selected visitor chip */}
           {selectedVisitor && (
-            <div className="flex items-center justify-between px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-500/30 dark:bg-blue-500/10">
               <div className="flex items-center gap-3">
                 <div className="size-9 rounded-lg bg-blue-700 text-white flex items-center justify-center font-black text-xs">
                   {selectedVisitor.givenName[0]}
                   {selectedVisitor.surname[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {selectedVisitor.givenName} {selectedVisitor.surname}
                   </p>
-                  <p className="text-xs text-slate-500">Olemasolev külastaja</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Olemasolev külastaja
+                  </p>
                 </div>
               </div>
               <button
@@ -333,7 +335,7 @@ export default function NewVisitPage() {
                   setSearchQuery("");
                   setHasSearched(false);
                 }}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-200"
                 aria-label="Eemalda valik"
               >
                 <CloseIcon className="!text-base" />
@@ -345,13 +347,13 @@ export default function NewVisitPage() {
           {showCreateForm && !selectedVisitor && (
             <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Uue külastaja andmed
                 </p>
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  className="text-xs text-slate-400 hover:text-slate-600"
+                  className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-200"
                 >
                   ← Tagasi otsingusse
                 </button>
@@ -467,8 +469,8 @@ export default function NewVisitPage() {
 
             <Field label="Vastuvõtja (Host)">
               {selectedHost ? (
-                <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50">
-                  <span className="text-sm font-semibold text-slate-800">
+                <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900">
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {selectedHost.givenName} {selectedHost.surname}
                   </span>
                   <button
@@ -478,7 +480,7 @@ export default function NewVisitPage() {
                       setHostQuery("");
                       setHostResults([]);
                     }}
-                    className="text-slate-400 hover:text-slate-600 ml-2"
+                    className="ml-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-200"
                     aria-label="Eemalda host"
                   >
                     <CloseIcon className="!text-sm" />
@@ -505,13 +507,13 @@ export default function NewVisitPage() {
                       type="button"
                       onClick={handleHostSearch}
                       disabled={isSearchingHost || hostQuery.trim().length < 2}
-                      className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 rounded-lg transition-colors"
+                      className="rounded-lg bg-slate-100 px-3 py-2.5 transition-colors hover:bg-slate-200 disabled:opacity-40 dark:bg-slate-800 dark:hover:bg-slate-700"
                     >
-                      <SearchIcon className="!text-sm text-slate-600" />
+                      <SearchIcon className="!text-sm text-slate-600 dark:text-slate-300" />
                     </button>
                   </div>
                   {hostResults.length > 0 && (
-                    <ul className="rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+                    <ul className="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
                       {hostResults.map((r) => (
                         <li key={r.id}>
                           <button
@@ -521,10 +523,10 @@ export default function NewVisitPage() {
                               setHostResults([]);
                               setHostQuery("");
                             }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-blue-50 text-sm font-semibold text-slate-900 transition-colors"
+                            className="w-full px-3 py-2.5 text-left text-sm font-semibold text-slate-900 transition-colors hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-blue-500/10"
                           >
                             {r.givenName} {r.surname}
-                            <span className="ml-2 text-xs text-slate-400 font-normal">
+                            <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
                               {r.roleName}
                             </span>
                           </button>
@@ -568,14 +570,14 @@ export default function NewVisitPage() {
               ))}
             </select>
             {selectedKeycard && (
-              <span className="flex items-center gap-1 px-3 py-2 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg whitespace-nowrap">
+              <span className="flex items-center gap-1 whitespace-nowrap rounded-lg bg-emerald-100 px-3 py-2 text-xs font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                 <CheckCircleIcon className="!text-sm" /> Kaart on vaba
               </span>
             )}
           </div>
 
-          <div className="flex gap-2 px-3 py-3 bg-blue-50 rounded-lg text-xs text-slate-600">
-            <InfoOutlinedIcon className="!text-base text-blue-500 shrink-0 mt-0.5" />
+          <div className="flex gap-2 rounded-lg bg-blue-50 px-3 py-3 text-xs text-slate-600 dark:bg-blue-500/10 dark:text-slate-300">
+            <InfoOutlinedIcon className="mt-0.5 shrink-0 !text-base text-blue-500 dark:text-blue-300" />
             <span>
               Võtmekaardi väljastamisel aktiveerub see koheselt valitud
               pääsupunktides. Külaline on kohustatud kaardi tagastama külastuse
@@ -586,7 +588,7 @@ export default function NewVisitPage() {
 
         {/* Error */}
         {submitError && (
-          <p className="text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
+          <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300">
             {submitError}
           </p>
         )}
@@ -617,7 +619,7 @@ export default function NewVisitPage() {
 
 // ── Shared styles ──────────────────────────────────────────
 const inputCls =
-  "w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 transition focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500";
 
 // ── Sub-components ─────────────────────────────────────────
 function Card({
@@ -630,8 +632,8 @@ function Card({
   readonly children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-      <h3 className="flex items-center gap-2 text-base font-bold text-slate-800">
+    <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h3 className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
         {icon} {title}
       </h3>
       {children}
@@ -651,7 +653,7 @@ function Field({
 
   return (
     <fieldset className="space-y-1.5">
-      <legend className="block text-sm font-medium text-slate-700">
+      <legend className="block text-sm font-medium text-slate-700 dark:text-slate-300">
         {visibleLabel}
         {isRequired && <span className="text-rose-600"> *</span>}
       </legend>
