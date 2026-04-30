@@ -1,10 +1,9 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import React from "react";
 import EditKeycardPage from "@/app/(protected)/keys/[id]/edit/page";
 import { getKeycard, updateKeycard } from "@/lib/api/keycards";
 import { useCurrentUser } from "@/components/layout/current-user-provider";
-import { useRouter } from "next/navigation";
 
 // 1. MOCKID - Defineerime push funktsiooni väljaspool, et sellele ligi pääseda
 const mockPush = jest.fn();
