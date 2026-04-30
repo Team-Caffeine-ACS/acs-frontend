@@ -1,19 +1,86 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  getDashboardSummary,
+  getRecentVisits,
+  DashboardSummaryResponse,
+  DashboardRecentVisitResponse,
+} from "@/lib/api/dashboard";
+
+import { AccessPointResponse, getAccessPoints } from "@/lib/api/accessPoints";
+
 import Link from "next/link";
 import GroupsIcon from "@mui/icons-material/Groups";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import LocalParkingIcon from "@mui/icons-material/LocalParking";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
-import MapIcon from "@mui/icons-material/Map";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import { Button } from "@/components/ui/button";
+import { primaryCtaButtonClassName } from "@/components/ui/button-styles";
+import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
+
+const DynamicAccessPointMap = dynamic(
+  () => import("@/components/AccessPointMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[320px] w-full animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800 sm:h-[400px]" />
+    ),
+  },
+);
 
 export default function DashboardPage() {
+  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
+  const [visits, setVisits] = useState<DashboardRecentVisitResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState("");
+  const [accessPoints, setAccessPoints] = useState<AccessPointResponse[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setCurrentDate(
+          new Date().toLocaleDateString("et-EE", {
+            day: "numeric",
+            month: "long",
+          }),
+        );
+        setLoading(true);
+        // Teeme mõlemad päringud korraga
+        const [summaryData, visitsData, apData] = await Promise.all([
+          getDashboardSummary(),
+          getRecentVisits(undefined, 5), // Küsime näiteks 5 viimast
+          getAccessPoints(),
+        ]);
+
+        setSummary(summaryData);
+        setAccessPoints(apData);
+        setVisits(visitsData);
+      } catch (error) {
+        console.error("Dashboardi andmete laadimine ebaõnnestus:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+        Laadin andmeid...
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto space-y-8 animate-in fade-in duration-500">
       {/* 1. BREADCRUMBS & PEALKIRI */}
@@ -35,134 +102,125 @@ export default function DashboardPage() {
           </ol>
         </nav>
 
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               Töölaud
             </h2>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tight">
               Ülevaade külastustest ja ligipääsudest täna,{" "}
-              <span className="text-primary font-bold">24. mai</span>
+              <span className="text-primary font-bold">{currentDate}</span>
             </p>
           </div>
-          <Link href="/visits/new">
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white font-black rounded-xl shadow-lg gap-2 uppercase tracking-widest text-xs px-6 py-5">
-              <AddIcon className="!text-base" /> Lisa külastus
+          <Link href="/visits/new" className="w-full sm:w-auto">
+            <Button
+              className={cn(
+                primaryCtaButtonClassName,
+                "w-full rounded-xl sm:w-auto",
+              )}
+            >
+              <AddIcon className="!text-lg" /> Lisa külastus
             </Button>
           </Link>
         </div>
       </div>
 
       {/* 2. KPI CARDS GRID (Sinu uued andmed) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <KpiCard
           title="Aktiivsed külastajad"
-          value="124"
-          change="5%"
+          value={summary?.activeVisitors ?? "--"}
+          change={summary?.trendIndicators?.visitors ?? "0%"}
           icon={<GroupsIcon />}
-          trend="up"
         />
         <KpiCard
           title="Broneeringud täna"
-          value="45"
-          change="2%"
+          value={summary?.bookingsToday ?? "--"}
           icon={<CalendarTodayIcon />}
-          trend="down"
         />
         <KpiCard
           title="Ootel taotlused"
-          value="8"
-          change="10%"
+          value={summary?.pendingRequests ?? "--"}
           icon={<PendingActionsIcon />}
-          trend="down"
-        />
-        <KpiCard
-          title="Vabad kohad"
-          value="12"
-          change="0%"
-          icon={<LocalParkingIcon />}
-          trend="neutral"
         />
       </div>
 
       {/* 3. VIIMASED KÜLASTUSED & KAART (Kõrvuti vaade suurel ekraanil) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:gap-8">
         {/* TABEL - võtab 2/3 laiust */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="space-y-4 xl:col-span-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wide">
               Viimased külastused
             </h3>
             <Button
+              asChild
               variant="link"
-              className="text-sm font-bold text-primary px-0"
+              className="w-fit px-0 text-sm font-bold text-primary"
             >
-              Vaata kõiki
+              <Link href="/visits">Vaata kõiki</Link>
             </Button>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50/80 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                <tr>
-                  <th className="px-6 py-4">Külastaja</th>
-                  <th className="px-6 py-4">Kellaaeg</th>
-                  <th className="px-6 py-4 text-center">Staatus</th>
-                  <th className="px-6 py-4"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                <VisitorRow
-                  name="Karl Tamm"
-                  org="Riigikantselei"
-                  initials="KT"
-                  time="09:15 - 11:30"
-                  status="Sees"
-                  color="emerald"
-                />
-                <VisitorRow
-                  name="Mari Lepik"
-                  org="MKM"
-                  initials="ML"
-                  time="08:45 - 09:45"
-                  status="Väljas"
-                  color="slate"
-                />
-                <VisitorRow
-                  name="Jüri Sepp"
-                  org="Cybernetica AS"
-                  initials="JS"
-                  time="10:00 - ..."
-                  status="Ootel"
-                  color="amber"
-                />
-              </tbody>
-            </table>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+                <thead className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4">Külastaja</th>
+                    <th className="px-6 py-4">Kellaaeg</th>
+                    <th className="px-6 py-4 text-center">Staatus</th>
+                    <th className="px-6 py-4">Pääsupunkt</th>
+                    <th className="px-6 py-4 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {visits.length > 0 ? (
+                    visits.map((visit, index) => {
+                      return (
+                        <VisitorRow
+                          key={visit.id || `visit-${index}`}
+                          name={visit.fullName || "Tundmatu"}
+                          initials={getInitials(visit.fullName)}
+                          org="Külastaja"
+                          time={
+                            visit.entryTime
+                              ? new Date(visit.entryTime).toLocaleTimeString(
+                                  "et-EE",
+                                  { hour: "2-digit", minute: "2-digit" },
+                                )
+                              : "--:--"
+                          }
+                          status={visit.status || "Sees"}
+                          accessPointName={visit.accessPointName || " "}
+                          accessPointAddress={visit.accessPointAddress || " "}
+                          color="emerald"
+                        />
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-6 py-14 text-center text-sm font-semibold text-slate-500 dark:text-slate-400"
+                      >
+                        Tänaseid külastusi ei leitud.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
         {/* KAART - võtab 1/3 laiust */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wide">
-            Hoone täituvus
+          <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white sm:mb-6">
+            Pääsupunktide asukohad
           </h3>
-          <div className="relative h-[320px] w-full overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-800 border-2 border-white shadow-inner flex items-center justify-center">
-            <div className="text-center opacity-30">
-              <MapIcon className="text-6xl mb-2 text-primary" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
-                A-Korpus: 1. korrus
-              </p>
-            </div>
-            {/* Täpid kaardil */}
-            <div className="absolute top-10 left-1/4 h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_12px_#10b981] animate-pulse"></div>
-            <div className="absolute bottom-24 right-1/4 h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_12px_#f43f5e]"></div>
-          </div>
+          <DynamicAccessPointMap accessPoints={accessPoints} />
         </div>
       </div>
-
-      {/* FLOATING ACTION BUTTON (Arvutis võiks see olla kuskil nurgas) */}
-      <button className="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-2xl hover:scale-110 active:scale-95 transition-all shadow-primary/40">
-        <AddIcon className="!text-3xl" />
-      </button>
     </div>
   );
 }
@@ -170,9 +228,8 @@ export default function DashboardPage() {
 interface KpiCardProps {
   readonly title: string;
   readonly value: string | number;
-  readonly change: string;
-  readonly icon: React.ReactNode; // Ikooni jaoks
-  readonly trend: "up" | "down" | "neutral"; // Lubame ainult need kolm varianti
+  readonly change?: string;
+  readonly icon: React.ReactNode;
 }
 
 interface VisitorRowProps {
@@ -180,32 +237,53 @@ interface VisitorRowProps {
   readonly org: string;
   readonly initials: string;
   readonly status: string;
-  readonly color: "emerald" | "slate" | "amber"; // Lubame ainult need kolm
+  readonly color: "emerald" | "slate" | "amber";
   readonly time: string;
+  readonly accessPointName: string;
+  readonly accessPointAddress: string;
 }
 
-// ABIKOMPONENDID
-function KpiCard({ title, value, change, icon, trend }: KpiCardProps) {
+function KpiCard({ title, value, change, icon }: KpiCardProps) {
+  type Trend = "up" | "down" | "neutral";
+  const trendColors: Record<Trend, string> = {
+    up: "text-emerald-600 dark:text-emerald-300",
+    down: "text-rose-600 dark:text-rose-300",
+    neutral: "text-slate-400 dark:text-slate-500",
+  };
+
+  let trend: "up" | "down" | "neutral" = "neutral";
+
+  if (change) {
+    if (change.startsWith("+")) trend = "up";
+    else if (change.startsWith("-")) trend = "down";
+    // Kui on "0%" või muu ilma märgita tekst, jääb "neutral"
+  }
+
+  const trendIcons: Record<Trend, React.ReactNode> = {
+    up: <ArrowUpwardIcon className="!text-xs" />,
+    down: <ArrowDownwardIcon className="!text-xs" />,
+    neutral: <HorizontalRuleIcon className="!text-xs" />,
+  };
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex min-h-32 flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
           {title}
         </span>
-        <div className="text-primary/60">{icon}</div>
+        <div className="text-primary/60 dark:text-blue-300/80">{icon}</div>
       </div>
       <div className="flex items-end gap-2">
-        <span className="text-3xl font-black text-slate-900 tracking-tighter">
+        <span className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white">
           {value}
         </span>
-        <span
-          className={`mb-1 flex items-center text-[10px] font-bold ${trend === "up" ? "text-emerald-600" : trend === "down" ? "text-rose-600" : "text-slate-400"}`}
-        >
-          {trend === "up" && <ArrowUpwardIcon className="!text-xs" />}
-          {trend === "down" && <ArrowDownwardIcon className="!text-xs" />}
-          {trend === "neutral" && <HorizontalRuleIcon className="!text-xs" />}
-          {change}
-        </span>
+        {change && change !== "0%" && change !== "--" && (
+          <span
+            className={`mb-1 flex items-center text-[10px] font-bold ${trendColors[trend]}`}
+          >
+            {trendIcons[trend]}
+            {change}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -218,30 +296,35 @@ function VisitorRow({
   status,
   color,
   time,
+  accessPointName,
+  accessPointAddress,
 }: VisitorRowProps) {
   const statusStyles: Record<string, string> = {
-    emerald: "bg-emerald-100 text-emerald-700",
-    slate: "bg-slate-100 text-slate-600",
-    amber: "bg-amber-100 text-amber-700",
+    emerald:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+    slate:
+      "bg-slate-100 text-slate-600 dark:bg-slate-700/70 dark:text-slate-300",
+    amber:
+      "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
   };
   return (
-    <tr className="hover:bg-slate-50 transition-colors">
-      <td className="px-6 py-4">
+    <tr className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+      <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xs">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-xs font-black text-primary dark:bg-primary/20 dark:text-blue-200">
             {initials}
           </div>
           <div>
-            <div className="font-bold text-slate-900 text-sm tracking-tight">
+            <div className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
               {name}
             </div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+            <div className="text-[10px] font-bold uppercase tracking-tighter text-slate-400 dark:text-slate-500">
               {org}
             </div>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 text-xs text-slate-500 italic font-medium">
+      <td className="px-6 py-4 text-xs font-medium text-slate-500 italic dark:text-slate-400">
         {time}
       </td>
       <td className="px-6 py-4 text-center">
@@ -251,11 +334,36 @@ function VisitorRow({
           {status}
         </span>
       </td>
+      <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
+        {accessPointName && (
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
+            {accessPointName}
+          </div>
+        )}
+        {accessPointAddress && <div>{accessPointAddress}</div>}
+      </td>
       <td className="px-6 py-4 text-right">
-        <button className="text-slate-300 hover:text-primary">
+        <button
+          type="button"
+          aria-label="Ava külastuse tegevused"
+          className="rounded-lg text-slate-300 transition-colors hover:text-primary dark:text-slate-600 dark:hover:text-slate-300"
+        >
           <MoreVertIcon />
         </button>
       </td>
     </tr>
   );
+}
+
+function getInitials(name: string | undefined | null) {
+  if (!name) return "??";
+
+  return name
+    .trim() // Eemaldab tühikud nime algusest ja lõpust
+    .split(" ")
+    .filter((n) => n.length > 0) // Välistab tühjad osad topelt-tühikute puhul
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
 }
