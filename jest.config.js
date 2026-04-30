@@ -3,10 +3,23 @@ const config = {
   testEnvironment: "jsdom",
 
   transform: {
-    "^.+\\.(ts|tsx)$": ["@swc/jest"],
+    "^.+\\.(ts|tsx)$": [
+      "@swc/jest",
+      {
+        jsc: {
+          transform: {
+            react: {
+              runtime: "automatic",
+            },
+          },
+        },
+      },
+    ],
   },
-
-  // ... muud seaded ...
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/$1",
+  },
+  setupFilesAfterEnv: ["<rootDir>/setupTests.ts"],
 
   collectCoverage: true,
   collectCoverageFrom: [
@@ -17,7 +30,7 @@ const config = {
     "!**/*.d.ts",
     "!app/layout.tsx", // Tavaliselt ignoreeritakse layouti, kui seal loogikat pole
   ],
-  
+
   coverageReporters: ["lcov", "text-summary"],
   coverageDirectory: "coverage",
 };

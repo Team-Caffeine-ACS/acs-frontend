@@ -21,13 +21,13 @@ const ALLOWED_ROLES = ["ADMIN", "SECURITY_CHIEF"] as const;
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition";
 
-function parseDateFromIso(iso: string | null): Date | undefined {
+export function parseDateFromIso(iso: string | null): Date | undefined {
   if (!iso) return undefined;
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-function parseTimeFromIso(iso: string | null): string {
+export function parseTimeFromIso(iso: string | null): string {
   if (!iso) return "00:00";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "00:00";
