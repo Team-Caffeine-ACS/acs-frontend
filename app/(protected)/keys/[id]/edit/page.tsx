@@ -41,8 +41,10 @@ export default function EditKeycardPage() {
   const { user, status: userStatus } = useCurrentUser();
 
   const [keycard, setKeycard] = useState<KeycardDetailResponse | null>(null);
-  const [isLoadingKeycard, setIsLoadingKeycard] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoadingKeycard, setIsLoadingKeycard] = useState(!!keycardId);
+  const [loadError, setLoadError] = useState<string | null>(
+    keycardId ? null : "Võtmekaardi ID puudub.",
+  );
 
   const [keycardNumber, setKeycardNumber] = useState("");
   const [active, setActive] = useState(true);
@@ -53,12 +55,6 @@ export default function EditKeycardPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!keycardId) {
-      setIsLoadingKeycard(false);
-      setLoadError("Võtmekaardi ID puudub.");
-      return;
-    }
-
     let isMounted = true;
 
     const load = async () => {
