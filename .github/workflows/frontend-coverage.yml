@@ -38,8 +38,7 @@ jobs:
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.tests=tests
-            -Dsonar.test.inclusions=**/*.test.tsx,**/*.test.ts
-            -Dsonar.exclusions=**/*.test.tsx,**/*.test.ts,jest.config.js
+            -Dsonar.exclusions=**/*.test.tsx,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts,jest.config.js,**/__tests__/**
 
       - name: Upload coverage artifact (optional but useful)
         uses: actions/upload-artifact@v4
