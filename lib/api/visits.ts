@@ -26,6 +26,10 @@ export interface CreateVisitResponse {
   keycardNumber: string | null;
 }
 
+interface RegisterVisitDepartureRequest {
+  exitTime: string;
+}
+
 export interface VisitListItemResponse {
   id: string;
   fullName: string | null;
@@ -35,6 +39,18 @@ export interface VisitListItemResponse {
   exitTime: string | null;
   status: string | null;
   visitorId: string | null;
+}
+
+export interface VisitPageMetadata {
+  size: number;
+  number: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface VisitListPage {
+  content: VisitListItemResponse[];
+  page: VisitPageMetadata | null;
 }
 
 export function createVisit(
@@ -117,6 +133,38 @@ function getNullableString(
   return null;
 }
 
+function getNullableNumber(
+  record: Record<string, unknown>,
+  ...keys: string[]
+): number | null {
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === "string" && value.trim()) {
+      const parsedValue = Number(value);
+      if (Number.isFinite(parsedValue)) {
+        return parsedValue;
+      }
+    }
+  }
+
+  return null;
+}
+
+function toLocalDateTimeValue(date: Date): string {
+  const pad = (value: number, length = 2) =>
+    String(value).padStart(length, "0");
+
+  return [
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}`,
+  ].join("T");
+}
+
 function normalizeVisitDetailResponse(raw: unknown): VisitDetailResponse {
   if (!isRecord(raw)) {
     return {
@@ -184,21 +232,60 @@ function normalizeVisitListItem(
   };
 }
 
-function normalizeVisitListResponse(raw: unknown): VisitListItemResponse[] {
+function normalizeVisitPageMetadata(raw: unknown): VisitPageMetadata | null {
+  if (!isRecord(raw)) {
+    return null;
+  }
+
+  const size = getNullableNumber(raw, "size", "pageSize");
+  const number = getNullableNumber(raw, "number", "page", "pageNumber");
+  const totalElements = getNullableNumber(
+    raw,
+    "totalElements",
+    "totalItems",
+    "total",
+  );
+  const totalPages = getNullableNumber(raw, "totalPages", "pages");
+
+  if (
+    size === null &&
+    number === null &&
+    totalElements === null &&
+    totalPages === null
+  ) {
+    return null;
+  }
+
+  return {
+    size: Math.max(0, size ?? 0),
+    number: Math.max(0, number ?? 0),
+    totalElements: Math.max(0, totalElements ?? 0),
+    totalPages: Math.max(0, totalPages ?? 0),
+  };
+}
+
+function normalizeVisitListResponse(raw: unknown): VisitListPage {
   if (Array.isArray(raw)) {
-    return raw.filter(isRecord).map(normalizeVisitListItem);
+    return {
+      content: raw.filter(isRecord).map(normalizeVisitListItem),
+      page: null,
+    };
   }
 
   if (!isRecord(raw)) {
-    return [];
+    return { content: [], page: null };
   }
 
   const nestedCollection = raw.content ?? raw.items ?? raw.data;
-  if (!Array.isArray(nestedCollection)) {
-    return [];
-  }
+  const content = Array.isArray(nestedCollection)
+    ? nestedCollection.filter(isRecord).map(normalizeVisitListItem)
+    : [];
+  const pageSource = isRecord(raw.page) ? raw.page : raw;
 
-  return nestedCollection.filter(isRecord).map(normalizeVisitListItem);
+  return {
+    content,
+    page: normalizeVisitPageMetadata(pageSource),
+  };
 }
 
 function normalizeTimelineEvent(
@@ -312,18 +399,23 @@ export async function getVisitTimeline(
 }
 
 export async function registerVisitDeparture(visitId: string): Promise<void> {
-  await apiClient.put<void>(`/api/visits/${visitId}/exit`);
+  await apiClient.put<void, RegisterVisitDepartureRequest>(
+    `/api/visits/${visitId}/exit`,
+    { exitTime: toLocalDateTimeValue(new Date()) },
+  );
 }
 
 export async function getVisits(
   params?: {
     search?: string;
     status?: string;
+    dateFrom?: string;
+    dateTo?: string;
     page?: number;
     size?: number;
   },
   signal?: AbortSignal,
-): Promise<VisitListItemResponse[]> {
+): Promise<VisitListPage> {
   const searchParams = new URLSearchParams();
 
   if (params?.search) {
@@ -334,6 +426,14 @@ export async function getVisits(
     searchParams.set("status", params.status);
   }
 
+  if (params?.dateFrom) {
+    searchParams.set("dateFrom", params.dateFrom);
+  }
+
+  if (params?.dateTo) {
+    searchParams.set("dateTo", params.dateTo);
+  }
+
   searchParams.set("page", String(params?.page ?? 0));
   searchParams.set("size", String(params?.size ?? 50));
 
@@ -342,4 +442,21 @@ export async function getVisits(
   const raw = await apiClient.get<unknown>(path, { signal });
 
   return normalizeVisitListResponse(raw);
+}
+
+export interface EditVisitRequest {
+  hostId?: string;
+  assignorId?: string | null;
+  accessPointId?: string;
+  entryTime?: string;
+  exitTime?: string;
+  comment?: string;
+}
+
+export async function editVisit(
+  visitId: string,
+  body: EditVisitRequest,
+): Promise<VisitDetailResponse> {
+  const raw = await apiClient.put<unknown>(`/api/visits/${visitId}/edit`, body);
+  return normalizeVisitDetailResponse(raw);
 }

@@ -20,6 +20,8 @@ export interface CreatePersonRequest {
   givenName: string;
   surname: string;
   email: string;
+  organization?: string;
+  socialSecurityNumber?: string;
   documentTypeId?: string;
   documentNumber?: string;
 }

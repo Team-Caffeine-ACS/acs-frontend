@@ -11,7 +11,9 @@ import LinkIcon from "@mui/icons-material/Link";
 import HistoryIcon from "@mui/icons-material/History";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
+import EditIcon from "@mui/icons-material/Edit";
 import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/components/layout/current-user-provider";
 import { ApiError } from "@/lib/api/error";
 import {
   getKeycard,
@@ -19,9 +21,15 @@ import {
   type KeycardDetailResponse,
 } from "@/lib/api/keycards";
 
+const ALLOWED_ROLES = ["ADMIN", "SECURITY_CHIEF"] as const;
+
 export default function KeycardDetailsPage() {
   const params = useParams<{ id: string }>();
   const keycardId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const { user } = useCurrentUser();
+  const canEdit = user
+    ? ALLOWED_ROLES.includes(user.role as (typeof ALLOWED_ROLES)[number])
+    : false;
 
   const [keycard, setKeycard] = useState<KeycardDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -115,7 +123,7 @@ export default function KeycardDetailsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 animate-in fade-in duration-500">
       <div className="space-y-4">
-        <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+        <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
           <Link href="/" className="transition-colors hover:text-primary">
             Pääsla
           </Link>
@@ -130,15 +138,17 @@ export default function KeycardDetailsPage() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="font-display text-3xl font-black tracking-tight text-slate-900">
+              <h1 className="font-display text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
                 Võtmekaardi üksikasjad
               </h1>
               <StatusBadge status={keycard.status} />
             </div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+            <p className="text-sm font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
               ID: {keycard.id}
             </p>
-            <p className="max-w-2xl text-slate-500">{currentStateText}</p>
+            <p className="max-w-2xl text-slate-500 dark:text-slate-400">
+              {currentStateText}
+            </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -150,6 +160,14 @@ export default function KeycardDetailsPage() {
                 </Link>
               </Button>
             ) : null}
+            {canEdit && (
+              <Button asChild variant="outline" className="gap-2 rounded-xl">
+                <Link href={`/keys/${keycard.id}/edit`}>
+                  <EditIcon className="!text-base" />
+                  Muuda
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="outline" className="gap-2 rounded-xl">
               <Link href="/keys">
                 <ArrowBackIcon className="!text-base" />
@@ -257,10 +275,14 @@ function PageState({
 }>) {
   return (
     <div className="mx-auto flex min-h-[50vh] max-w-3xl items-center justify-center">
-      <div className="rounded-3xl border border-slate-200 bg-white px-8 py-10 text-center shadow-sm">
-        <p className="text-lg font-bold text-slate-900">{title}</p>
+      <div className="rounded-3xl border border-slate-200 bg-white px-8 py-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {title}
+        </p>
         {description ? (
-          <p className="mt-2 max-w-lg text-sm text-slate-500">{description}</p>
+          <p className="mt-2 max-w-lg text-sm text-slate-500 dark:text-slate-400">
+            {description}
+          </p>
         ) : null}
       </div>
     </div>
@@ -277,9 +299,9 @@ function SectionCard({
   children: ReactNode;
 }>) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="mb-5 flex items-center gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-500">
+        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
           {icon} {title}
         </h2>
       </div>
@@ -309,7 +331,7 @@ function DetailField({
 
   return (
     <div className={`space-y-1 rounded-2xl px-4 py-4 ${containerClass}`}>
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
         {label}
       </p>
       <p className={`break-all text-sm font-semibold ${valueClass}`}>{value}</p>
@@ -326,21 +348,21 @@ type DetailFieldTone =
   | "muted";
 
 const detailFieldContainerToneClass: Record<DetailFieldTone, string> = {
-  default: "bg-slate-50",
-  success: "bg-emerald-50",
-  info: "bg-blue-50",
-  warning: "bg-amber-50",
-  danger: "bg-rose-50",
-  muted: "bg-slate-100",
+  default: "bg-slate-50 dark:bg-slate-800/70",
+  success: "bg-emerald-50 dark:bg-emerald-500/15",
+  info: "bg-blue-50 dark:bg-blue-500/15",
+  warning: "bg-amber-50 dark:bg-amber-500/15",
+  danger: "bg-rose-50 dark:bg-rose-500/15",
+  muted: "bg-slate-100 dark:bg-slate-800",
 };
 
 const detailFieldValueToneClass: Record<DetailFieldTone, string> = {
-  default: "text-slate-900",
-  success: "text-emerald-700",
-  info: "text-blue-700",
-  warning: "text-amber-700",
-  danger: "text-rose-700",
-  muted: "text-slate-600",
+  default: "text-slate-900 dark:text-slate-100",
+  success: "text-emerald-700 dark:text-emerald-300",
+  info: "text-blue-700 dark:text-blue-300",
+  warning: "text-amber-700 dark:text-amber-300",
+  danger: "text-rose-700 dark:text-rose-300",
+  muted: "text-slate-600 dark:text-slate-300",
 };
 
 function getDetailFieldClasses({
@@ -354,8 +376,9 @@ function getDetailFieldClasses({
 }>) {
   if (isMissing) {
     return {
-      containerClass: "bg-slate-100 text-slate-500",
-      valueClass: "text-slate-500",
+      containerClass:
+        "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+      valueClass: "text-slate-500 dark:text-slate-400",
     };
   }
 
@@ -388,14 +411,20 @@ function SummaryEvent({
       >
         {icon}
       </div>
-      <div className="min-w-0 flex-1 rounded-2xl bg-slate-50 px-4 py-4">
+      <div className="min-w-0 flex-1 rounded-2xl bg-slate-50 px-4 py-4 dark:bg-slate-800/70">
         <div className="flex items-start gap-2">
-          <LinkIcon className="mt-0.5 !text-base text-slate-400" />
+          <LinkIcon className="mt-0.5 !text-base text-slate-400 dark:text-slate-500" />
           <div>
-            <p className="text-sm font-bold text-slate-900">{title}</p>
-            <p className="mt-1 text-sm font-semibold text-slate-700">{value}</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              {title}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              {value}
+            </p>
             {description ? (
-              <p className="mt-2 text-sm text-slate-500">{description}</p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                {description}
+              </p>
             ) : null}
           </div>
         </div>
@@ -408,10 +437,14 @@ function StatusBadge({
   status,
 }: Readonly<{ status: KeycardDetailResponse["status"] }>) {
   const styles: Record<KeycardDetailResponse["status"], string> = {
-    available: "border-emerald-100 bg-emerald-50 text-emerald-700",
-    in_use: "border-blue-100 bg-blue-50 text-blue-700",
-    disabled: "border-rose-100 bg-rose-50 text-rose-700",
-    expired: "border-amber-100 bg-amber-50 text-amber-700",
+    available:
+      "border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300",
+    in_use:
+      "border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/15 dark:text-blue-300",
+    disabled:
+      "border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300",
+    expired:
+      "border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300",
   };
 
   return (
