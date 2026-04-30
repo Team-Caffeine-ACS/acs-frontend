@@ -27,6 +27,13 @@ jobs:
       - name: Run Jest tests with coverage
         run: npm test -- --coverage --coverageReporters=lcov
 
+      - name: Verify coverage file exists
+        run: |
+          echo "Listing coverage folder:"
+          ls -R coverage || echo "Coverage folder missing"
+          echo "Checking lcov.info:"
+          cat coverage/lcov.info || echo "lcov.info missing"
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8
         env:
@@ -38,6 +45,8 @@ jobs:
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.tests=__tests__
+            -Dsonar.test.inclusions=__tests__/**/*.test.tsx,__tests__/**/*.test.ts
+            -Dsonar.exclusions=jest.config.js,**/node_modules/**
 
       - name: Upload coverage artifact (optional but useful)
         uses: actions/upload-artifact@v4
