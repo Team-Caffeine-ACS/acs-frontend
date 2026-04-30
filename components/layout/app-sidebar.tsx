@@ -1,15 +1,15 @@
-"use client"; // 1. Lisa see rida faili algusesse, et kasutada konksusid
+"use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // 2. Impordi asukoha kontrollija
+import { usePathname } from "next/navigation";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import KeyIcon from "@mui/icons-material/Key";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
+import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 
 export function AppSidebar() {
-  const pathname = usePathname(); // 3. Haara praegune aadress (nt "/" või "/visitors")
+  const pathname = usePathname();
 
-  // 4. Mugavam on hoida linke massiivis
   const menuItems = [
     {
       name: "Ülevaade",
@@ -20,6 +20,11 @@ export function AppSidebar() {
       name: "Külastused",
       href: "/visits",
       icon: <AssignmentOutlinedIcon className="text-[20px]" />,
+    },
+    {
+      name: "Grupp külastused",
+      href: "/visit-group",
+      icon: <GroupsOutlinedIcon className="text-[20px]" />,
     },
     {
       name: "Võtmekaardid",
@@ -46,7 +51,6 @@ export function AppSidebar() {
 
       <nav className="flex flex-col gap-1">
         {menuItems.map((item) => {
-          // 5. Kontrollime, kas see rida on parajasti aktiivne
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -56,8 +60,8 @@ export function AppSidebar() {
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all ${
                 isActive
-                  ? "bg-primary/10 text-primary font-semibold shadow-sm" // Aktiivne stiil
-                  : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800" // Tavaline stiil
+                  ? "bg-primary/10 text-primary font-semibold shadow-sm"
+                  : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
             >
               {item.icon}
