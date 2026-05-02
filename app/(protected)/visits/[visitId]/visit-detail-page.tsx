@@ -683,7 +683,7 @@ function EditVisitModal({
       accessPointId: accessPointId || detail?.accessPointId || undefined,
       assignorId: selectedAssignor.id,
       entryTime: entryTime ? fromDatetimeLocal(entryTime) : undefined,
-      exitTime: exitTime ? fromDatetimeLocal(exitTime) : undefined,
+      //exitTime: exitTime ? fromDatetimeLocal(exitTime) : undefined,
       comment:
         comment.trim() === ""
           ? detail?.visitReason || undefined
