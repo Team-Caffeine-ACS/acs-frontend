@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import {
   getDashboardSummary,
-  getRecentVisits,
   DashboardSummaryResponse,
-  DashboardRecentVisitResponse,
 } from "@/lib/api/dashboard";
-
+import { VisitListItemResponse, getRecentVisits } from "@/lib/api/visits";
 import { AccessPointResponse, getAccessPoints } from "@/lib/api/accessPoints";
+import "leaflet/dist/leaflet.css";
 
 import Link from "next/link";
 import GroupsIcon from "@mui/icons-material/Groups";
@@ -18,7 +17,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,7 @@ const DynamicAccessPointMap = dynamic(
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
-  const [visits, setVisits] = useState<DashboardRecentVisitResponse[]>([]);
+  const [visits, setVisits] = useState<VisitListItemResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState("");
   const [accessPoints, setAccessPoints] = useState<AccessPointResponse[]>([]);
@@ -56,13 +55,13 @@ export default function DashboardPage() {
         // Teeme mõlemad päringud korraga
         const [summaryData, visitsData, apData] = await Promise.all([
           getDashboardSummary(),
-          getRecentVisits(undefined, 5), // Küsime näiteks 5 viimast
+          getRecentVisits({ page: 0, size: 5 }), // Küsime näiteks 5 viimast
           getAccessPoints(),
         ]);
 
         setSummary(summaryData);
         setAccessPoints(apData);
-        setVisits(visitsData);
+        setVisits(visitsData.content);
       } catch (error) {
         console.error("Dashboardi andmete laadimine ebaõnnestus:", error);
       } finally {
@@ -161,55 +160,54 @@ export default function DashboardPage() {
               <Link href="/visits">Vaata kõiki</Link>
             </Button>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                <thead className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-500">
-                  <tr>
-                    <th className="px-6 py-4">Külastaja</th>
-                    <th className="px-6 py-4">Kellaaeg</th>
-                    <th className="px-6 py-4 text-center">Staatus</th>
-                    <th className="px-6 py-4">Pääsupunkt</th>
-                    <th className="px-6 py-4 text-right"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {visits.length > 0 ? (
-                    visits.map((visit, index) => {
-                      return (
-                        <VisitorRow
-                          key={visit.id || `visit-${index}`}
-                          name={visit.fullName || "Tundmatu"}
-                          initials={getInitials(visit.fullName)}
-                          org="Külastaja"
-                          time={
-                            visit.entryTime
-                              ? new Date(visit.entryTime).toLocaleTimeString(
-                                  "et-EE",
-                                  { hour: "2-digit", minute: "2-digit" },
-                                )
-                              : "--:--"
-                          }
-                          status={visit.status || "Sees"}
-                          accessPointName={visit.accessPointName || " "}
-                          accessPointAddress={visit.accessPointAddress || " "}
-                          color="emerald"
-                        />
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-6 py-14 text-center text-sm font-semibold text-slate-500 dark:text-slate-400"
-                      >
-                        Tänaseid külastusi ei leitud.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800">
+            <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Leitud <span className="text-slate-900">{visits.length}</span>{" "}
+                külastust
+              </p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Andmeallikas:{" "}
+                <span className="text-slate-900">GET /api/visits</span>
+              </p>
             </div>
+
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50/80 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <tr>
+                  <th className="px-6 py-4">Külastaja</th>
+                  <th className="px-6 py-4">Kellaaeg</th>
+                  <th className="px-6 py-4 text-center">Staatus</th>
+                  <th className="px-6 py-4 t">Pääsupunkt</th>
+                  <th className="px-6 py-4 text-right"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {visits.map((visit, index) => {
+                  return (
+                    <VisitorRow
+                      key={visit.id || `visit-${index}`}
+                      name={visit.fullName || "Tundmatu"}
+                      initials={getInitials(visit.fullName)}
+                      org="Külastaja"
+                      time={
+                        visit.entryTime
+                          ? new Date(visit.entryTime).toLocaleTimeString(
+                              "et-EE",
+                              { hour: "2-digit", minute: "2-digit" },
+                            )
+                          : "--:--"
+                      }
+                      status={visit.status || "Sees"}
+                      accessPointName={visit.accessPointName || " "}
+                      accessPointAddress={visit.accessPointAddress || " "}
+                      color="emerald"
+                      visitId={visit.id}
+                    />
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -241,6 +239,7 @@ interface VisitorRowProps {
   readonly time: string;
   readonly accessPointName: string;
   readonly accessPointAddress: string;
+  readonly visitId: string;
 }
 
 function KpiCard({ title, value, change, icon }: KpiCardProps) {
@@ -298,6 +297,7 @@ function VisitorRow({
   time,
   accessPointName,
   accessPointAddress,
+  visitId,
 }: VisitorRowProps) {
   const statusStyles: Record<string, string> = {
     emerald:
@@ -343,13 +343,16 @@ function VisitorRow({
         {accessPointAddress && <div>{accessPointAddress}</div>}
       </td>
       <td className="px-6 py-4 text-right">
-        <button
-          type="button"
-          aria-label="Ava külastuse tegevused"
-          className="rounded-lg text-slate-300 transition-colors hover:text-primary dark:text-slate-600 dark:hover:text-slate-300"
-        >
-          <MoreVertIcon />
-        </button>
+        <Link href={`/visits/${visitId}`}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-primary hover:bg-primary/5 rounded-xl"
+            aria-label="Ava külastuse detail"
+          >
+            <VisibilityOutlinedIcon />
+          </Button>
+        </Link>
       </td>
     </tr>
   );

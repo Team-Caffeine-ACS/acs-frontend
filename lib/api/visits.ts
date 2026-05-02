@@ -34,11 +34,15 @@ export interface VisitListItemResponse {
   id: string;
   fullName: string | null;
   documentNumber: string | null;
+  organizationName: string | null;
   hostName: string | null;
   entryTime: string | null;
   exitTime: string | null;
   status: string | null;
   visitorId: string | null;
+  accessPointId: string | null;
+  accessPointName: string | null;
+  accessPointAddress: string | null;
 }
 
 export interface VisitPageMetadata {
@@ -60,6 +64,17 @@ export function createVisit(
     "/api/visits",
     body,
   );
+}
+
+export interface Page<T> {
+  content: T[]; // Sinu andmete massiiv (VisitListItemResponse[])
+  totalElements: number; // Mitmu kirjet on kokku andmebaasis
+  totalPages: number; // Mitmele lehele need andmed jagunevad
+  size: number; // Mitu elementi on ühel lehel
+  number: number; // Praeguse lehekülje number (0-põhine)
+  first: boolean;
+  last: boolean;
+  empty: boolean;
 }
 
 type VisitDetailValue = string | null | undefined;
@@ -224,11 +239,19 @@ function normalizeVisitListItem(
     id: getNullableString(raw, "id", "visitId") ?? "",
     fullName: getNullableString(raw, "fullName"),
     documentNumber: getNullableString(raw, "documentNumber"),
+    organizationName: getNullableString(
+      raw,
+      "organizationName",
+      "organization",
+    ),
     hostName: getNullableString(raw, "hostName"),
     entryTime: getNullableString(raw, "entryTime", "arrivalTime"),
     exitTime: getNullableString(raw, "exitTime", "departureTime"),
     status: getNullableString(raw, "status"),
     visitorId: getNullableString(raw, "visitorId", "personId"),
+    accessPointId: getNullableString(raw, "accessPointId"),
+    accessPointName: getNullableString(raw, "accessPointName"),
+    accessPointAddress: getNullableString(raw, "accessPointAddress"),
   };
 }
 
@@ -285,6 +308,25 @@ function normalizeVisitListResponse(raw: unknown): VisitListPage {
   return {
     content,
     page: normalizeVisitPageMetadata(pageSource),
+  };
+}
+
+function normalizeVisitListPage(raw: unknown): Page<VisitListItemResponse> {
+  // Kontrollime, et 'raw' on üldse objekt, et vältida runtime vigu
+  const data = isRecord(raw) ? raw : {};
+  const content = Array.isArray(data.content)
+    ? data.content.map(normalizeVisitListItem)
+    : [];
+
+  return {
+    content: content,
+    totalElements: Number(data.totalElements ?? 0),
+    totalPages: Number(data.totalPages ?? 0),
+    size: Number(data.size ?? 0),
+    number: Number(data.number ?? 0),
+    first: Boolean(data.first),
+    last: Boolean(data.last),
+    empty: Boolean(data.empty),
   };
 }
 
@@ -444,19 +486,23 @@ export async function getVisits(
   return normalizeVisitListResponse(raw);
 }
 
-export interface EditVisitRequest {
-  hostId?: string;
-  assignorId?: string | null;
-  accessPointId?: string;
-  entryTime?: string;
-  exitTime?: string;
-  comment?: string;
-}
+export async function getRecentVisits(
+  params?: { page?: number; size?: number },
+  signal?: AbortSignal,
+): Promise<Page<VisitListItemResponse>> {
+  const searchParams = new URLSearchParams();
 
-export async function editVisit(
-  visitId: string,
-  body: EditVisitRequest,
-): Promise<VisitDetailResponse> {
-  const raw = await apiClient.put<unknown>(`/api/visits/${visitId}/edit`, body);
-  return normalizeVisitDetailResponse(raw);
+  // Dashboardi jaoks tahame tavaliselt sorteerida entryTime järgi kahanevalt
+  searchParams.set("sort", "entryTime,desc");
+  searchParams.set("page", String(params?.page ?? 0));
+  searchParams.set("size", String(params?.size ?? 20));
+
+  const query = searchParams.toString();
+  const path = query ? `/api/visits?${query}` : "/api/visits";
+
+  // Kutsume välja apiClient-i
+  const raw = await apiClient.get<unknown>(path, { signal });
+
+  // Kasutame uut normaliseerijat
+  return normalizeVisitListPage(raw);
 }
