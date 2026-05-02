@@ -21,13 +21,13 @@ const ALLOWED_ROLES = ["ADMIN", "SECURITY_CHIEF"] as const;
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition";
 
-function parseDateFromIso(iso: string | null): Date | undefined {
+export function parseDateFromIso(iso: string | null): Date | undefined {
   if (!iso) return undefined;
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-function parseTimeFromIso(iso: string | null): string {
+export function parseTimeFromIso(iso: string | null): string {
   if (!iso) return "00:00";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "00:00";
@@ -41,8 +41,10 @@ export default function EditKeycardPage() {
   const { user, status: userStatus } = useCurrentUser();
 
   const [keycard, setKeycard] = useState<KeycardDetailResponse | null>(null);
-  const [isLoadingKeycard, setIsLoadingKeycard] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoadingKeycard, setIsLoadingKeycard] = useState(!!keycardId);
+  const [loadError, setLoadError] = useState<string | null>(
+    keycardId ? null : "Võtmekaardi ID puudub.",
+  );
 
   const [keycardNumber, setKeycardNumber] = useState("");
   const [active, setActive] = useState(true);
@@ -53,12 +55,6 @@ export default function EditKeycardPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!keycardId) {
-      setIsLoadingKeycard(false);
-      setLoadError("Võtmekaardi ID puudub.");
-      return;
-    }
-
     let isMounted = true;
 
     const load = async () => {

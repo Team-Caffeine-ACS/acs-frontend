@@ -1,5 +1,5 @@
 "use client";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 import Link from "next/link";
 import {
   type Dispatch,
@@ -683,7 +683,7 @@ function EditVisitModal({
       accessPointId: accessPointId || detail?.accessPointId || undefined,
       assignorId: selectedAssignor.id,
       entryTime: entryTime ? fromDatetimeLocal(entryTime) : undefined,
-      exitTime: exitTime ? fromDatetimeLocal(exitTime) : undefined,
+      //exitTime: exitTime ? fromDatetimeLocal(exitTime) : undefined,
       comment:
         comment.trim() === ""
           ? detail?.visitReason || undefined

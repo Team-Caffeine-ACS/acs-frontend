@@ -61,8 +61,9 @@ export default function KeycardDetailsPage() {
 
         setKeycard(detail);
       } catch (err) {
-        if (!isMounted) return;
-
+        if (!isMounted) {
+          return;
+        }
         if (err instanceof ApiError && err.status === 404) {
           queueMicrotask(() => setIsNotFound(true));
           return;

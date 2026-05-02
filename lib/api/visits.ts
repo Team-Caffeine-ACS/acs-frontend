@@ -506,3 +506,28 @@ export async function getRecentVisits(
   // Kasutame uut normaliseerijat
   return normalizeVisitListPage(raw);
 }
+/**
+ * Liides visiidi muutmise päringu jaoks.
+ * Kasutatakse visit-detail-page.tsx poolt visiidi andmete uuendamisel.
+ */
+export interface EditVisitRequest {
+  hostId?: string | null;
+  assignorId?: string;
+  accessPointId?: string;
+  entryTime?: string;
+  comment?: string;
+}
+
+/**
+ * Funktsioon olemasoleva visiidi muutmiseks.
+ * Teeb PUT päringu /api/visits/{visitId}/edit otspunkti.
+ */
+export async function editVisit(
+  visitId: string,
+  body: EditVisitRequest,
+): Promise<VisitDetailResponse> {
+  const raw = await apiClient.put<unknown>(`/api/visits/${visitId}/edit`, body);
+
+  // Kasutame olemasolevat normaliseerijat, et tagada andmete õige kuju
+  return normalizeVisitDetailResponse(raw);
+}

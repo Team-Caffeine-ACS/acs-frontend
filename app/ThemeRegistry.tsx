@@ -6,9 +6,9 @@ import createCache from "@emotion/cache";
 
 export default function ThemeRegistry({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   const cache = React.useMemo(
     () =>
       createCache({
