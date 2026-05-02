@@ -38,44 +38,46 @@ export default function KeycardDetailsPage() {
 
   useEffect(() => {
     if (!keycardId) {
-      setIsLoading(false);
-      setIsNotFound(true);
+      queueMicrotask(() => {
+        setIsLoading(false);
+        setIsNotFound(true);
+      });
       return;
     }
 
     let isMounted = true;
 
     const loadKeycard = async () => {
-      setIsLoading(true);
-      setError(null);
-      setIsNotFound(false);
+      queueMicrotask(() => {
+        setIsLoading(true);
+        setError(null);
+        setIsNotFound(false);
+      });
 
       try {
         const detail = await getKeycard(keycardId);
 
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         setKeycard(detail);
       } catch (err) {
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         if (err instanceof ApiError && err.status === 404) {
-          setIsNotFound(true);
+          queueMicrotask(() => setIsNotFound(true));
           return;
         }
 
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : "Võtmekaardi detailide laadimine ebaõnnestus.",
+        queueMicrotask(() =>
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : "Võtmekaardi detailide laadimine ebaõnnestus.",
+          ),
         );
       } finally {
         if (isMounted) {
-          setIsLoading(false);
+          queueMicrotask(() => setIsLoading(false));
         }
       }
     };
