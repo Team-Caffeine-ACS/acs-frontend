@@ -9,6 +9,14 @@ export interface CreateVisitRequest {
   arrivalTime?: string;
 }
 
+export interface EditVisitRequest {
+  accessPointId?: string;
+  assignorId: string;
+  entryTime?: string;
+  exitTime?: string;
+  comment?: string;
+}
+
 export interface CreateVisitResponse {
   visitId: string;
   personId: string;
@@ -62,6 +70,16 @@ export function createVisit(
 ): Promise<CreateVisitResponse> {
   return apiClient.post<CreateVisitResponse, CreateVisitRequest>(
     "/api/visits",
+    body,
+  );
+}
+
+export function editVisit(
+  visitId: string,
+  body: EditVisitRequest,
+): Promise<VisitDetailResponse> {
+  return apiClient.put<VisitDetailResponse, EditVisitRequest>(
+    `/api/visits/${visitId}`,
     body,
   );
 }
