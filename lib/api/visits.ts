@@ -146,6 +146,24 @@ export type VisitStatusKey =
   | "cancelled"
   | "unknown";
 
+const VISIT_STATUS_ALL = "all";
+const DEFAULT_VISITS_PAGE = 0;
+const DEFAULT_VISITS_PAGE_SIZE = 50;
+const DEFAULT_RECENT_VISITS_PAGE_SIZE = 20;
+const DEFAULT_RECENT_VISITS_SORT = "entryTime,desc";
+
+type VisitListResponsePayload = Record<string, unknown> | unknown[];
+
+interface VisitListQueryParams {
+  search?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -305,7 +323,7 @@ function normalizeVisitPageMetadata(raw: unknown): VisitPageMetadata | null {
   };
 }
 
-function normalizeVisitListResponse(raw: unknown): VisitListPage {
+function normalizeVisitCollectionResponse(raw: unknown): VisitListPage {
   if (Array.isArray(raw)) {
     return {
       content: raw.filter(isRecord).map(normalizeVisitListItem),
@@ -329,7 +347,9 @@ function normalizeVisitListResponse(raw: unknown): VisitListPage {
   };
 }
 
-function normalizeVisitListPage(raw: unknown): Page<VisitListItemResponse> {
+function normalizePagedVisitCollectionResponse(
+  raw: unknown,
+): Page<VisitListItemResponse> {
   // Kontrollime, et 'raw' on üldse objekt, et vältida runtime vigu
   const data = isRecord(raw) ? raw : {};
   const content = Array.isArray(data.content)
@@ -346,6 +366,60 @@ function normalizeVisitListPage(raw: unknown): Page<VisitListItemResponse> {
     last: Boolean(data.last),
     empty: Boolean(data.empty),
   };
+}
+
+function sanitizePageNumber(
+  value: number | undefined,
+  fallback: number,
+): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.trunc(value));
+}
+
+function sanitizePageSize(value: number | undefined, fallback: number): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(1, Math.trunc(value));
+}
+
+function buildVisitsPath(params?: VisitListQueryParams): string {
+  const url = new URL("/api/visits", "http://localhost");
+
+  if (params?.search) {
+    url.searchParams.set("search", params.search);
+  }
+
+  if (params?.status && params.status !== VISIT_STATUS_ALL) {
+    url.searchParams.set("status", params.status);
+  }
+
+  if (params?.dateFrom) {
+    url.searchParams.set("dateFrom", params.dateFrom);
+  }
+
+  if (params?.dateTo) {
+    url.searchParams.set("dateTo", params.dateTo);
+  }
+
+  if (params?.sort) {
+    url.searchParams.set("sort", params.sort);
+  }
+
+  url.searchParams.set(
+    "page",
+    String(sanitizePageNumber(params?.page, DEFAULT_VISITS_PAGE)),
+  );
+  url.searchParams.set(
+    "size",
+    String(sanitizePageSize(params?.size, DEFAULT_VISITS_PAGE_SIZE)),
+  );
+
+  return `${url.pathname}${url.search}`;
 }
 
 function normalizeTimelineEvent(
@@ -476,51 +550,33 @@ export async function getVisits(
   },
   signal?: AbortSignal,
 ): Promise<VisitListPage> {
-  const searchParams = new URLSearchParams();
+  const path = buildVisitsPath({
+    ...params,
+    page: sanitizePageNumber(params?.page, DEFAULT_VISITS_PAGE),
+    size: sanitizePageSize(params?.size, DEFAULT_VISITS_PAGE_SIZE),
+  });
+  const raw = await apiClient.get<VisitListResponsePayload>(path, { signal });
 
-  if (params?.search) {
-    searchParams.set("search", params.search);
-  }
+  return normalizeVisitCollectionResponse(raw);
+}
 
-  if (params?.status && params.status !== "all") {
-    searchParams.set("status", params.status);
-  }
+export async function getLatestVisits(
+  params?: { page?: number; size?: number },
+  signal?: AbortSignal,
+): Promise<Page<VisitListItemResponse>> {
+  const path = buildVisitsPath({
+    page: sanitizePageNumber(params?.page, DEFAULT_VISITS_PAGE),
+    size: sanitizePageSize(params?.size, DEFAULT_RECENT_VISITS_PAGE_SIZE),
+    sort: DEFAULT_RECENT_VISITS_SORT,
+  });
+  const raw = await apiClient.get<VisitListResponsePayload>(path, { signal });
 
-  if (params?.dateFrom) {
-    searchParams.set("dateFrom", params.dateFrom);
-  }
-
-  if (params?.dateTo) {
-    searchParams.set("dateTo", params.dateTo);
-  }
-
-  searchParams.set("page", String(params?.page ?? 0));
-  searchParams.set("size", String(params?.size ?? 50));
-
-  const query = searchParams.toString();
-  const path = query ? `/api/visits?${query}` : "/api/visits";
-  const raw = await apiClient.get<unknown>(path, { signal });
-
-  return normalizeVisitListResponse(raw);
+  return normalizePagedVisitCollectionResponse(raw);
 }
 
 export async function getRecentVisits(
   params?: { page?: number; size?: number },
   signal?: AbortSignal,
 ): Promise<Page<VisitListItemResponse>> {
-  const searchParams = new URLSearchParams();
-
-  // Dashboardi jaoks tahame tavaliselt sorteerida entryTime järgi kahanevalt
-  searchParams.set("sort", "entryTime,desc");
-  searchParams.set("page", String(params?.page ?? 0));
-  searchParams.set("size", String(params?.size ?? 20));
-
-  const query = searchParams.toString();
-  const path = query ? `/api/visits?${query}` : "/api/visits";
-
-  // Kutsume välja apiClient-i
-  const raw = await apiClient.get<unknown>(path, { signal });
-
-  // Kasutame uut normaliseerijat
-  return normalizeVisitListPage(raw);
+  return getLatestVisits(params, signal);
 }
