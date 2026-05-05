@@ -5,7 +5,7 @@ import {
   getDashboardSummary,
   DashboardSummaryResponse,
 } from "@/lib/api/dashboard";
-import { VisitListItemResponse, getRecentVisits } from "@/lib/api/visits";
+import { VisitListItemResponse, getLatestVisits } from "@/lib/api/visits";
 import { AccessPointResponse, getAccessPoints } from "@/lib/api/accessPoints";
 import "leaflet/dist/leaflet.css";
 
@@ -55,7 +55,7 @@ export default function DashboardPage() {
         // Teeme mõlemad päringud korraga
         const [summaryData, visitsData, apData] = await Promise.all([
           getDashboardSummary(),
-          getRecentVisits({ page: 0, size: 5 }), // Küsime näiteks 5 viimast
+          getLatestVisits({ page: 0, size: 5 }), // Küsime näiteks 5 viimast
           getAccessPoints(),
         ]);
 
